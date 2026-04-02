@@ -53,7 +53,14 @@
       "Bash(docker run --rm -d --name test-api -p 8000:8000 registry.digitalocean.com/minerta-k8s/yuwaosm-api:dev1)",
       "Bash(docker stop test-api)",
       "Bash(docker rm test-api)",
-      "Bash(git clone https://gitlab.com/minerta/thaqi-phc-v2-hss-api.git)"
+      "Bash(git clone https://gitlab.com/minerta/thaqi-phc-v2-hss-api.git)",
+      "Bash(git push -u origin main)",
+      "Bash(git config --global credential.helper)",
+      "Bash(git remote set-url origin https://github.com/minertatechnology/THAI_PHC_HSS_API.git)",
+      "Bash(rundll32.exe keymgr.dll,KRShowKeyMgr)",
+      "Bash(gh auth status)",
+      "Bash(git config --global --list)",
+      "Bash(git config --global credential.helper manager)"
     ]
   }
 }
