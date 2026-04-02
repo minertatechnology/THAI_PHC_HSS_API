@@ -1,0 +1,297 @@
+# ===================================================================
+# CronJob: Daily Cache Warm-up (replaces crontab on master node)
+# คำสั่ง: kubectl -n aorsormor-system apply -f cronjob-cache-warmup.yaml
+#
+# รวม 2 jobs:
+#   1. cache-warmup       — refresh dashboard cache ทุกระดับ (ตี 1 ทุกวัน)
+#   2. volunteer-gender   — refresh volunteer gender report (เที่ยงคืน ทุกวัน)
+#
+# ใช้ internal service URL โดยตรง ไม่ต้องพึ่ง DNS ภายนอก
+# ไม่ใช้ jq — parse JSON ด้วย sed/grep เท่านั้น (เพราะ pod DNS ไม่สามารถ
+# resolve external repos เพื่อ install package ได้)
+# ===================================================================
+
+---
+# ===========================================
+# 1. ConfigMap: shared credentials & settings
+# ===========================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cronjob-cache-config
+  namespace: aorsormor-system
+  labels:
+    app: cache-cronjobs
+data:
+  API_BASE: "http://osm-thai-phc-hss-api-service/api/v1"
+  CACHE_USERNAME: "1234567890123"
+  CACHE_CLIENT_ID: "048d7011-46df-4375-bdc8-da5306a9efb6"
+  CACHE_USER_TYPE: "officer"
+  CACHE_SLEEP_SECONDS: "0.2"
+  GEO_PAGE_SIZE: "250"
+  TOKEN_REFRESH_INTERVAL_SECONDS: "300"
+
+---
+# ===========================================
+# 2. Secret: password (แยกจาก ConfigMap)
+# ===========================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cronjob-cache-secret
+  namespace: aorsormor-system
+  labels:
+    app: cache-cronjobs
+type: Opaque
+stringData:
+  CACHE_PASSWORD: "password"
+
+---
+# ===========================================
+# 3. ConfigMap: shell scripts (no jq needed)
+# ===========================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cronjob-scripts
+  namespace: aorsormor-system
+  labels:
+    app: cache-cronjobs
+data:
+  cache-warmup.sh: |
+    #!/bin/sh
+    set -eu
+
+    log() { echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] $*" >&2; }
+
+    # --- JSON helpers (no jq) ---
+    # Extract a string value: json_val '{"key":"val"}' key  →  val
+    json_val() { echo "$1" | sed -n 's/.*"'"$2"'"\s*:\s*"\([^"]*\)".*/\1/p' | head -1; }
+    # Extract a number value: json_num '{"total":5}' total  →  5
+    json_num() { echo "$1" | sed -n 's/.*"'"$2"'"\s*:\s*\([0-9]*\).*/\1/p' | head -1; }
+    # Extract all values of a field from a JSON array of objects
+    json_arr_vals() { echo "$1" | tr ',' '\n' | tr '[' '\n' | tr '{' '\n' | sed -n 's/.*"'"$2"'"\s*:\s*"\([^"]*\)".*/\1/p'; }
+    # Count items in array (count occurrences of a field)
+    json_arr_count() { echo "$1" | tr ',' '\n' | grep -c "\"$2\"" || echo 0; }
+
+    CURRENT_BE_YEAR=$(( $(date +%Y) + 543 ))
+
+    LOGIN_PAYLOAD="{\"username\":\"${CACHE_USERNAME}\",\"password\":\"${CACHE_PASSWORD}\",\"client_id\":\"${CACHE_CLIENT_ID}\",\"user_type\":\"${CACHE_USER_TYPE}\",\"scope\":[\"openid\",\"profile\"]}"
+
+    ACCESS_TOKEN=""
+    ACCESS_TOKEN_ISSUED_AT=0
+
+    authenticate() {
+      log "Requesting access token"
+      response=$(curl -sS -X POST "${API_BASE}/auth/login/json" \
+        -H "Content-Type: application/json" \
+        --data "${LOGIN_PAYLOAD}")
+      ACCESS_TOKEN=$(json_val "${response}" "access_token")
+      if [ -z "${ACCESS_TOKEN}" ]; then
+        log "ERROR: Failed to obtain access token. Response: ${response}"
+        exit 1
+      fi
+      ACCESS_TOKEN_ISSUED_AT=$(date +%s)
+    }
+
+    ensure_token() {
+      now=$(date +%s)
+      if [ -z "${ACCESS_TOKEN}" ] || [ $((now - ACCESS_TOKEN_ISSUED_AT)) -ge "${TOKEN_REFRESH_INTERVAL_SECONDS}" ]; then
+        authenticate
+      fi
+    }
+
+    summary_refresh() {
+      query=$1
+      ensure_token
+      curl -sS -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+        "${API_BASE}/dashboard/summary?year=${CURRENT_BE_YEAR}&${query}&forceRefresh=true" \
+        >/dev/null
+    }
+
+    fetch_codes() {
+      endpoint=$1
+      field=$2
+      offset=0
+      while true; do
+        ensure_token
+        response=$(curl -sS -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+          "${API_BASE}${endpoint}?offset=${offset}&limit=${GEO_PAGE_SIZE}")
+        count=$(json_arr_count "${response}" "${field}")
+        [ "${count}" -eq 0 ] && break
+        json_arr_vals "${response}" "${field}"
+        total=$(json_num "${response}" "total")
+        total=${total:-0}
+        offset=$((offset + count))
+        [ "${count}" -lt "${GEO_PAGE_SIZE}" ] && break
+        [ "${total}" -gt 0 ] && [ "${offset}" -ge "${total}" ] && break
+      done
+    }
+
+    refresh_geo_collection() {
+      endpoint=$1
+      field=$2
+      param=$3
+      label=$4
+      gc=0
+      fetch_codes "${endpoint}" "${field}" | while read -r code; do
+        [ -z "${code}" ] && continue
+        gc=$((gc + 1))
+        log "Refreshing ${label} ${code} (${gc})"
+        summary_refresh "${param}=${code}"
+        sleep "${CACHE_SLEEP_SECONDS}"
+      done
+      log "Finished ${label} cache refresh"
+    }
+
+    log "=== Starting Cache Warm-up for ${CURRENT_BE_YEAR} ==="
+
+    log "Step 1/3: Province-level"
+    summary_refresh "forceRefresh=true"
+    sleep 1
+
+    log "Step 2/3: District-level"
+    refresh_geo_collection "/geo-management/districts" "district_code" "districtCode" "district"
+
+    log "Step 3/3: Subdistrict-level"
+    refresh_geo_collection "/geo-management/subdistricts" "subdistrict_code" "subdistrictCode" "subdistrict"
+
+    log "=== Cache Warm-up Complete for ${CURRENT_BE_YEAR} ==="
+
+  volunteer-gender.sh: |
+    #!/bin/sh
+    set -eu
+
+    log() { echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] $*" >&2; }
+
+    # Extract a string value from JSON (no jq needed)
+    json_val() { echo "$1" | sed -n 's/.*"'"$2"'"\s*:\s*"\([^"]*\)".*/\1/p' | head -1; }
+
+    LOGIN_PAYLOAD="{\"username\":\"${CACHE_USERNAME}\",\"password\":\"${CACHE_PASSWORD}\",\"client_id\":\"${CACHE_CLIENT_ID}\",\"user_type\":\"${CACHE_USER_TYPE}\",\"scope\":[\"openid\",\"profile\"]}"
+
+    log "Authenticating..."
+    response=$(curl -sS -X POST "${API_BASE}/auth/login/json" \
+      -H "Content-Type: application/json" \
+      --data "${LOGIN_PAYLOAD}")
+    ACCESS_TOKEN=$(json_val "${response}" "access_token")
+
+    if [ -z "${ACCESS_TOKEN}" ]; then
+      log "ERROR: Failed to obtain access token. Response: ${response}"
+      exit 1
+    fi
+
+    log "Refreshing volunteer-gender report..."
+    RESPONSE=$(
+      curl -sS -X POST "${API_BASE}/reports/volunteer-gender/refresh" \
+        -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+        -H "Content-Type: application/json"
+    )
+
+    log "Response: ${RESPONSE}"
+    log "Volunteer-gender report refresh complete."
+
+---
+# ===========================================
+# 4. CronJob: cache-warmup (ตี 1 ทุกวัน)
+# ===========================================
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cache-warmup
+  namespace: aorsormor-system
+  labels:
+    app: cache-cronjobs
+spec:
+  schedule: "0 1 * * *"
+  timeZone: "Asia/Bangkok"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 7200
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: cache-warmup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: cache-warmup
+            image: alpine/curl:latest
+            command: ["sh", "/scripts/cache-warmup.sh"]
+            envFrom:
+            - configMapRef:
+                name: cronjob-cache-config
+            - secretRef:
+                name: cronjob-cache-secret
+            volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            resources:
+              requests:
+                cpu: "50m"
+                memory: "64Mi"
+              limits:
+                cpu: "200m"
+                memory: "128Mi"
+          volumes:
+          - name: scripts
+            configMap:
+              name: cronjob-scripts
+              defaultMode: 0755
+
+---
+# ===========================================
+# 5. CronJob: volunteer-gender (เที่ยงคืน ทุกวัน)
+# ===========================================
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: volunteer-gender-refresh
+  namespace: aorsormor-system
+  labels:
+    app: cache-cronjobs
+spec:
+  schedule: "0 0 * * *"
+  timeZone: "Asia/Bangkok"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 600
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: volunteer-gender-refresh
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: volunteer-gender
+            image: alpine/curl:latest
+            command: ["sh", "/scripts/volunteer-gender.sh"]
+            envFrom:
+            - configMapRef:
+                name: cronjob-cache-config
+            - secretRef:
+                name: cronjob-cache-secret
+            volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            resources:
+              requests:
+                cpu: "50m"
+                memory: "64Mi"
+              limits:
+                cpu: "200m"
+                memory: "128Mi"
+          volumes:
+          - name: scripts
+            configMap:
+              name: cronjob-scripts
+              defaultMode: 0755

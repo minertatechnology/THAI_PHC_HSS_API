@@ -1,0 +1,388 @@
+{
+  "metrics": {
+    "http_req_failed": {
+      "contains": "default",
+      "values": {
+        "rate": 0.46834643073034016,
+        "passes": 17045,
+        "fails": 19349
+      },
+      "type": "rate"
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 1198.091493,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 0.5627111391163391,
+        "min": 0,
+        "med": 0
+      }
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 4963.770736,
+        "p(90)": 0.000265,
+        "p(95)": 0.000323,
+        "avg": 1.2661722752651554,
+        "min": 0.000074,
+        "med": 0.000201
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 16993,
+        "rate": 55.55515633503318
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 36394,
+        "rate": 118.98277877109383
+      }
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 5492189,
+        "rate": 17955.594569325578
+      }
+    },
+    "iteration_duration": {
+      "values": {
+        "p(95)": 2559.8216362,
+        "avg": 1863.8881292675815,
+        "min": 1181.87145,
+        "med": 1773.081686,
+        "max": 9680.814713,
+        "p(90)": 2335.4753156
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 3.0379370796010488,
+        "min": -1.199972,
+        "med": 0.0693575,
+        "max": 3442.997206,
+        "p(90)": 0.6462779000000001,
+        "p(95)": 1.3112192499999984
+      }
+    },
+    "group_duration": {
+      "values": {
+        "min": 63.354738,
+        "med": 74.1508935,
+        "max": 5330.090045,
+        "p(90)": 369.89046310000003,
+        "p(95)": 563.1493152999999,
+        "avg": 157.1672290296345
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "min": 1,
+        "max": 200,
+        "value": 1
+      }
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "max": 200,
+        "value": 200,
+        "min": 200
+      }
+    },
+    "login_duration": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 682.652739089799,
+        "min": 101.754627,
+        "med": 612.972755,
+        "max": 4978.143529,
+        "p(90)": 1084.4805144000002,
+        "p(95)": 1237.7612671999998
+      },
+      "thresholds": {
+        "p(95)<2000": {
+          "ok": true
+        }
+      }
+    },
+    "errors": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 16692,
+        "fails": 17294,
+        "rate": 0.4911434119931737
+      },
+      "thresholds": {
+        "rate<0.05": {
+          "ok": false
+        }
+      }
+    },
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 63.228903,
+        "med": 382.698944,
+        "max": 4978.143529,
+        "p(90)": 914.1702727,
+        "p(95)": 1090.9141084999999,
+        "avg": 401.6594934394099
+      },
+      "thresholds": {
+        "p(95)<3000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_sending": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 0.07266448623399434,
+        "min": 0.014625,
+        "med": 0.0686755,
+        "max": 2.041134,
+        "p(90)": 0.0971274,
+        "p(95)": 0.11533705
+      }
+    },
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.982083037255101,
+        "passes": 19349,
+        "fails": 353
+      }
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 162.35808955356936,
+        "min": 63.228903,
+        "med": 74.13012,
+        "max": 4978.143529,
+        "p(90)": 387.38486500000016,
+        "p(95)": 582.4384235999999
+      }
+    },
+    "http_req_tls_handshaking": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 4781.904308,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 0.6993778871517287,
+        "min": 0,
+        "med": 0
+      }
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 32818474,
+        "rate": 107293.32394204801
+      }
+    },
+    "http_req_waiting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 398.54889187357895,
+        "min": 62.848171,
+        "med": 381.606171,
+        "max": 3588.20935,
+        "p(90)": 909.2802543,
+        "p(95)": 1082.1103348499996
+      }
+    }
+  },
+  "root_group": {
+    "groups": [
+      {
+        "name": "Health",
+        "path": "::Health",
+        "id": "087575d619a6bec7b96caf45fac08f7b",
+        "groups": [],
+        "checks": [
+            {
+              "name": "health 200",
+              "path": "::Health::health 200",
+              "id": "f5d9b90362ad450cea885da05c9321f0",
+              "passes": 16993,
+              "fails": 0
+            }
+          ]
+      },
+      {
+        "name": "Auth - Me",
+        "path": "::Auth - Me",
+        "id": "c515ca94802a3c4e53ad9ddae14fc3c4",
+        "groups": [],
+        "checks": [
+            {
+              "fails": 0,
+              "name": "me 200",
+              "path": "::Auth - Me::me 200",
+              "id": "6490aa7c593319ee033c0bfaa30de3f2",
+              "passes": 301
+            }
+          ]
+      },
+      {
+        "name": "Curriculums",
+        "path": "::Curriculums",
+        "id": "4038229a68c78191f3ef4c491155eb4b",
+        "groups": [],
+        "checks": [
+            {
+              "name": "curriculums 200",
+              "path": "::Curriculums::curriculums 200",
+              "id": "626e95fd0b3417d044810ddf9ad9014a",
+              "passes": 301,
+              "fails": 0
+            }
+          ]
+      },
+      {
+        "id": "ce862383b72246b6f8cf6b97eb95feac",
+        "groups": [],
+        "checks": [
+            {
+              "path": "::Groups::groups 200",
+              "id": "54f2e20a88ff636cda658e6ebaad86a0",
+              "passes": 301,
+              "fails": 0,
+              "name": "groups 200"
+            }
+          ],
+        "name": "Groups",
+        "path": "::Groups"
+      },
+      {
+        "name": "Banners",
+        "path": "::Banners",
+        "id": "ccefdb4b03f015e28abc2f21539115a6",
+        "groups": [],
+        "checks": [
+            {
+              "name": "banners 200",
+              "path": "::Banners::banners 200",
+              "id": "f87f555c6b2d55938b5d3a0c9fd21173",
+              "passes": 301,
+              "fails": 0
+            }
+          ]
+      },
+      {
+        "groups": [],
+        "checks": [
+            {
+              "id": "408cfe91437005e0227fd713936a7f18",
+              "passes": 0,
+              "fails": 301,
+              "name": "news 200",
+              "path": "::News::news 200"
+            }
+          ],
+        "name": "News",
+        "path": "::News",
+        "id": "2a7338f118e0e56a0ca258030215eb1c"
+      },
+      {
+        "name": "Enrollments - My",
+        "path": "::Enrollments - My",
+        "id": "9b8f5686c6b04f5acc76916b0b5c651b",
+        "groups": [],
+        "checks": [
+            {
+              "name": "my enrollments 200",
+              "path": "::Enrollments - My::my enrollments 200",
+              "id": "ac8e7b4a0d0aabfa7427c889046561d0",
+              "passes": 301,
+              "fails": 0
+            }
+          ]
+      },
+      {
+        "name": "Certificates - My",
+        "path": "::Certificates - My",
+        "id": "a6590bf9a1a0cc92c25c111c00412167",
+        "groups": [],
+        "checks": [
+            {
+              "id": "43048bee7078b5f5e9a51efb97f89ba5",
+              "passes": 249,
+              "fails": 52,
+              "name": "my certificates 200",
+              "path": "::Certificates - My::my certificates 200"
+            }
+          ]
+      }
+    ],
+    "checks": [
+      {
+        "name": "elearning login 200",
+        "path": "::elearning login 200",
+        "id": "ecaefbccedb7c5c3bea6a90487ffac26",
+        "passes": 301,
+        "fails": 0
+      },
+      {
+        "passes": 301,
+        "fails": 0,
+        "name": "elearning returns access_token",
+        "path": "::elearning returns access_token",
+        "id": "6f7efc4c70b3dd53ca9cc430ab959915"
+      }
+    ],
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "options": {
+    "summaryTimeUnit": "",
+    "noColor": false,
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)"
+    ]
+  },
+  "state": {
+    "isStdOutTTY": false,
+    "isStdErrTTY": false,
+    "testRunDurationMs": 305876.198017
+  }
+}

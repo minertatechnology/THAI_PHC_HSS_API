@@ -1,0 +1,21 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: aorsormor-rabbitmq
+  namespace: aorsormor-system
+spec:
+  replicas: 3
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: 1
+      memory: 2Gi
+  rabbitmq:
+    additionalConfig: |
+      default_user = user_app
+      default_pass = 9NQBb5a@4p3UR
+  persistence:
+    storageClassName: "do-block-storage"
+    storage: "10Gi"

@@ -1,0 +1,51 @@
+# =============================================================
+# K6 Load Test - รันภายใน K8s cluster
+# =============================================================
+#
+# ใช้ ConfigMap เก็บ credentials + env vars
+# ใช้ Job รัน k6 test แต่ละตัว
+#
+# วิธีใช้:
+#   1. Build & push k6 image (ครั้งแรก / เมื่อ scripts เปลี่ยน):
+#      cd tests/k6s
+#      docker build -t registry.digitalocean.com/minerta-k8s/k6-loadtest:latest .
+#      docker push registry.digitalocean.com/minerta-k8s/k6-loadtest:latest
+#
+#   2. Apply ConfigMap (ครั้งแรก / เมื่อ config เปลี่ยน):
+#      kubectl apply -f k8s/k6-loadtest-job.yaml
+#
+#   3. รัน test ด้วย helper script:
+#      bash tests/k6s/run-k8s.sh thaiphc2 smoke
+#      bash tests/k6s/run-k8s.sh thaiphc2 stress
+#      bash tests/k6s/run-k8s.sh smartosmapi smoke
+#      bash tests/k6s/run-k8s.sh elearning admin
+#
+# =============================================================
+
+# --- ConfigMap: credentials & service URLs ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-loadtest-config
+  namespace: aorsormor-system
+data:
+  # Credentials (เหมือนกันทุก project)
+  USERNAME: "1234567890123"
+  PASSWORD: "password"
+  CLIENT_ID: "6acd9b4a-bc0f-4a09-b7fa-a6f5ea4d8b7f"
+  USER_TYPE: "officer"
+  RESULT_MODE: "cluster"
+
+  # --- Service URLs ภายใน cluster (same namespace ไม่ต้องใส่ FQDN) ---
+  # thaiphc2 → service/osm-thai-phc-hss-api-service (port 80)
+  THAIPHC2_BASE_URL: "http://osm-thai-phc-hss-api-service"
+
+  # smartosmapi → service/osm-api (port 80)
+  SMARTOSM_BASE_URL: "http://osm-api"
+  # login ผ่าน thaiphc2
+  SMARTOSM_LOGIN_URL: "http://osm-thai-phc-hss-api-service"
+
+  # elearning → service/elearning-api (port 80)
+  ELEARNING_BASE_URL: "http://elearning-api"
+  # login ผ่าน thaiphc2
+  ELEARNING_LOGIN_URL: "http://osm-thai-phc-hss-api-service"

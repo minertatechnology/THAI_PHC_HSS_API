@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1400" />
+    <title>Conceptual Design - Smart อสม. ระยะที่ ๒</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: "Segoe UI", Tahoma, sans-serif; background: #f0f4f8; padding: 20px; }
+      .page {
+        width: 1300px; margin: 0 auto; background: #fff;
+        border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 30px;
+      }
+
+      /* Title */
+      .title-bar {
+        background: linear-gradient(135deg, #1a5276, #2980b9);
+        color: #fff; padding: 16px 24px; border-radius: 8px; margin-bottom: 28px;
+        display: flex; justify-content: space-between; align-items: center;
+      }
+      .title-bar h1 { font-size: 22px; }
+      .title-bar .subtitle { font-size: 13px; opacity: 0.85; }
+
+      /* Layer */
+      .layer {
+        border: 2px solid #ddd; border-radius: 10px; padding: 16px 20px;
+        margin-bottom: 16px; position: relative; background: #fafcfe;
+      }
+      .layer-label {
+        position: absolute; top: -11px; left: 20px;
+        background: #2c3e80; color: #fff; padding: 2px 14px;
+        border-radius: 4px; font-size: 11px; font-weight: 700;
+      }
+      .layer-label.green { background: #1e8449; }
+      .layer-label.orange { background: #d35400; }
+      .layer-label.purple { background: #6c3483; }
+      .layer-label.teal { background: #16a085; }
+      .layer-label.blue { background: #2471a3; }
+
+      /* Arrow */
+      .arrow { text-align: center; font-size: 22px; color: #2980b9; margin: 6px 0; }
+      .arrow-text { text-align: center; font-size: 10px; color: #888; margin: -4px 0 4px; }
+
+      /* User cards */
+      .user-row { display: flex; gap: 20px; justify-content: center; }
+      .user-card {
+        text-align: center; padding: 12px 16px; border-radius: 8px;
+        background: #eaf2f8; border: 2px solid #2980b9; flex: 1; max-width: 200px;
+      }
+      .user-card .u-icon { font-size: 32px; }
+      .user-card .u-role { font-size: 13px; font-weight: 700; color: #1a5276; margin: 4px 0; }
+      .user-card .u-count { font-size: 11px; color: #666; }
+
+      /* Platform bar */
+      .platform-bar {
+        display: flex; gap: 12px; justify-content: center; margin-top: 8px;
+      }
+      .platform-tag {
+        background: #fff; border: 1px solid #2980b9; border-radius: 20px;
+        padding: 4px 16px; font-size: 11px; color: #1a5276; font-weight: 600;
+      }
+
+      /* System grid */
+      .sys-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+      .sys-card {
+        border-radius: 8px; padding: 10px 12px; text-align: center;
+        border: 2px solid #ddd; background: #fff;
+      }
+      .sys-card .s-icon { font-size: 24px; }
+      .sys-card .s-name { font-size: 12px; font-weight: 700; color: #1a5276; margin: 4px 0; }
+      .sys-card .s-desc { font-size: 9px; color: #888; }
+      .sys-card .s-domain {
+        font-size: 9px; color: #0e6655; font-weight: 600;
+        margin-top: 4px; background: #e8f6f3; padding: 2px 6px; border-radius: 3px;
+        display: inline-block;
+      }
+      .sys-card.mobile { border-color: #27ae60; background: #f0faf4; }
+      .sys-card.web { border-color: #2980b9; background: #f0f7fd; }
+      .sys-card.both { border-color: #8e44ad; background: #faf5ff; }
+
+      /* Service row */
+      .svc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .svc-group { border-radius: 8px; padding: 12px 16px; }
+      .svc-group.api { background: #fdf2f2; border: 2px solid #e74c3c; }
+      .svc-group.web-svc { background: #f0f7fd; border: 2px solid #3498db; }
+      .svc-group .svc-title {
+        font-size: 12px; font-weight: 700; margin-bottom: 6px;
+      }
+      .svc-group.api .svc-title { color: #e74c3c; }
+      .svc-group.web-svc .svc-title { color: #2471a3; }
+      .svc-list { font-size: 10px; color: #555; line-height: 1.8; }
+      .svc-list b { color: #333; }
+
+      /* Infra row */
+      .infra-row { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+      .infra-tag {
+        background: #fff3e0; border: 1px solid #f39c12; border-radius: 6px;
+        padding: 6px 14px; font-size: 10px; font-weight: 600; color: #d35400;
+        text-align: center;
+      }
+
+      /* DB section */
+      .db-row { display: flex; gap: 16px; align-items: stretch; }
+      .db-card {
+        flex: 1; border-radius: 8px; padding: 12px 16px;
+        background: #faf5ff; border: 2px solid #8e44ad; text-align: center;
+      }
+      .db-card .db-icon { font-size: 28px; display: flex; justify-content: center; }
+      .db-card .db-name { font-size: 12px; font-weight: 700; color: #6c3483; margin: 4px 0; }
+      .db-card .db-detail { font-size: 10px; color: #666; line-height: 1.6; }
+
+      /* External */
+      .ext-row { display: flex; gap: 12px; }
+      .ext-card {
+        flex: 1; border-radius: 8px; padding: 12px 16px;
+        border: 2px solid #ddd; background: #fff;
+      }
+      .ext-card .e-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+      .ext-card .e-detail { font-size: 10px; color: #555; line-height: 1.6; }
+
+      /* Description */
+      .desc-section {
+        border: 2px dashed #bbb; border-radius: 10px;
+        padding: 14px 20px; margin-top: 16px; background: #fafafa;
+      }
+      .desc-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 10px; }
+      .desc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+      .desc-item { text-align: center; }
+      .desc-item .d-icon { font-size: 28px; margin-bottom: 2px; }
+      .desc-item .d-label { font-size: 10px; color: #555; line-height: 1.5; }
+      .desc-item .d-label b { color: #333; }
+
+      /* Footer */
+      .footer {
+        margin-top: 14px; padding-top: 10px; border-top: 2px solid #eee;
+        display: flex; justify-content: space-between; font-size: 10px; color: #999;
+      }
+
+      .port-badge {
+        display: inline-block; background: #fff3e0; border: 1px solid #e67e22;
+        border-radius: 3px; padding: 1px 6px; font-size: 9px; font-weight: 700; color: #e67e22;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <!-- TITLE -->
+      <div class="title-bar">
+        <div>
+          <h1>Conceptual Design</h1>
+          <div class="subtitle">
+            โครงการพัฒนานวัตกรรมดิจิทัลระบบ Smart อสม. ระยะที่ ๒
+            กรมสนับสนุนบริการสุขภาพ ประจำปีงบประมาณ พ.ศ. ๒๕๖๘
+          </div>
+        </div>
+        <div style="text-align: right">
+          <div style="font-size: 12px">Version 1.0</div>
+          <div style="font-size: 11px; opacity: 0.8">Updated: 13 March 2026</div>
+        </div>
+      </div>
+
+      <!-- ========== LAYER 1: USERS ========== -->
+      <div class="layer">
+        <div class="layer-label">ผู้ใช้งาน (Users)</div>
+        <div class="user-row" style="margin-top: 8px;">
+          <div class="user-card">
+            <div class="u-icon">&#129309;</div>
+            <div class="u-role">อสม.</div>
+            <div class="u-count">1,070,000 คน</div>
+          </div>
+          <div class="user-card">
+            <div class="u-icon">&#128102;</div>
+            <div class="u-role">ยุวอสม.</div>
+            <div class="u-count">นักเรียน อสม. รุ่นใหม่</div>
+          </div>
+          <div class="user-card">
+            <div class="u-icon">&#128188;</div>
+            <div class="u-role">เจ้าหน้าที่ สบส.</div>
+            <div class="u-count">กรมสนับสนุนบริการสุขภาพ</div>
+          </div>
+          <div class="user-card">
+            <div class="u-icon">&#128736;</div>
+            <div class="u-role">ผู้ดูแลระบบ</div>
+            <div class="u-count">Admin / Developer</div>
+          </div>
+        </div>
+        <div class="platform-bar">
+          <span class="platform-tag">&#128241; iOS</span>
+          <span class="platform-tag">&#128241; Android</span>
+          <span class="platform-tag">&#128241; HarmonyOS</span>
+          <span class="platform-tag">&#128187; Web Browser</span>
+        </div>
+      </div>
+
+      <div class="arrow">&darr;</div>
+      <div class="arrow-text">HTTPS :443 &mdash; *.hss.moph.go.th &rarr; Public IP 110.164.229.82</div>
+
+      <!-- ========== LAYER 2: 7 SYSTEMS ========== -->
+      <div class="layer">
+        <div class="layer-label blue">7 ระบบงาน (Applications)</div>
+        <div class="sys-grid" style="margin-top: 8px;">
+          <div class="sys-card both">
+            <div class="s-icon">&#128241;</div>
+            <div class="s-name">Smart อสม.</div>
+            <div class="s-desc">ระบบ Smart อสม. (Mobile App)</div>
+            <div class="s-domain">api-smartosm.hss.moph.go.th</div>
+          </div>
+          <div class="sys-card web">
+            <div class="s-icon">&#128203;</div>
+            <div class="s-name">ระบบทะเบียน อสม.</div>
+            <div class="s-desc">ThaiPHC &mdash; ทะเบียนประวัติ อสม.</div>
+            <div class="s-domain">thaiphc.hss.moph.go.th</div>
+          </div>
+          <div class="sys-card web">
+            <div class="s-icon">&#128202;</div>
+            <div class="s-name">Dashboard</div>
+            <div class="s-desc">แสดงผลข้อมูลภาพรวม</div>
+            <div class="s-domain">dashboard.hss.moph.go.th</div>
+          </div>
+          <div class="sys-card web">
+            <div class="s-icon">&#128221;</div>
+            <div class="s-name">รายงานผลงาน</div>
+            <div class="s-desc">Work Report &mdash; รายงานผลปฏิบัติงาน</div>
+            <div class="s-domain">osm-workreport.hss.moph.go.th</div>
+          </div>
+          <div class="sys-card web">
+            <div class="s-icon">&#127891;</div>
+            <div class="s-name">E-Learning</div>
+            <div class="s-desc">ระบบอบรมออนไลน์</div>
+            <div class="s-domain">phc-learning.hss.moph.go.th</div>
+          </div>
+          <div class="sys-card both">
+            <div class="s-icon">&#127775;</div>
+            <div class="s-name">ยุวอสม.</div>
+            <div class="s-desc">GEN-H Health Hero (Mobile &amp; Web)</div>
+            <div class="s-domain">genh.hss.moph.go.th</div>
+          </div>
+          <div class="sys-card web">
+            <div class="s-icon">&#9881;</div>
+            <div class="s-name">บริหารจัดการ</div>
+            <div class="s-desc">Admin Console &mdash; จัดการข้อมูลระบบ</div>
+            <div class="s-domain">phc-management.hss.moph.go.th</div>
+          </div>
+          <div class="sys-card web">
+            <div class="s-icon">&#128279;</div>
+            <div class="s-name">API มาตรฐาน</div>
+            <div class="s-desc">HSS API &mdash; เชื่อมต่อข้อมูลกลาง</div>
+            <div class="s-domain">api-thaiphc.hss.moph.go.th</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">&darr;</div>
+
+      <!-- ========== LAYER 3: BACKEND SERVICES ========== -->
+      <div class="layer">
+        <div class="layer-label orange">Backend Services</div>
+        <div class="svc-grid" style="margin-top: 8px;">
+          <div class="svc-group api">
+            <div class="svc-title">API Services (FastAPI :8000)</div>
+            <div class="svc-list">
+              <b>HSS API</b> &mdash; ระบบทะเบียน, Dashboard, Admin, API มาตรฐาน<br />
+              <b>Smart OSM API</b> &mdash; Mobile App Smart อสม.<br />
+              <b>E-Learning API</b> &mdash; ระบบอบรมออนไลน์<br />
+              <b>YUWA OSM API</b> &mdash; ระบบยุวอสม. (GEN-H)
+            </div>
+          </div>
+          <div class="svc-group web-svc">
+            <div class="svc-title">Web Services (React :3000)</div>
+            <div class="svc-list">
+              <b>Thai PHC Web</b> &mdash; ระบบทะเบียน อสม.<br />
+              <b>Dashboard Web</b> &mdash; แสดงผลข้อมูลภาพรวม<br />
+              <b>E-Learning Web</b> &mdash; หน้าเว็บอบรมออนไลน์<br />
+              <b>Work Report Web</b> &mdash; รายงานผลงาน<br />
+              <b>YUWA Web</b> &mdash; ยุวอสม.<br />
+              <b>PHC Management</b> &mdash; Admin Console
+            </div>
+          </div>
+        </div>
+        <div class="infra-row">
+          <div class="infra-tag">&#9881; Kubernetes v1.30.14</div>
+          <div class="infra-tag">&#128424; 1 Master + 3 Workers</div>
+          <div class="infra-tag">&#128274; nginx-ingress :443</div>
+          <div class="infra-tag">&#9889; Redis Cache</div>
+          <div class="infra-tag">&#128190; Longhorn Storage</div>
+        </div>
+      </div>
+
+      <div class="arrow">&darr;</div>
+
+      <!-- ========== LAYER 4: DATABASE ========== -->
+      <div class="layer" style="border-color: #8e44ad;">
+        <div class="layer-label purple">Database Layer</div>
+        <div class="db-row" style="margin-top: 8px;">
+          <div class="db-card">
+            <div class="db-icon"><svg width="32" height="36" viewBox="0 0 32 36"><ellipse cx="16" cy="6" rx="14" ry="6" fill="#d2b4de" stroke="#8e44ad" stroke-width="1.5"/><path d="M2 6v24c0 3.3 6.3 6 14 6s14-2.7 14-6V6" fill="#d2b4de" stroke="#8e44ad" stroke-width="1.5"/><ellipse cx="16" cy="30" rx="14" ry="6" fill="none" stroke="#8e44ad" stroke-width="1.5"/><ellipse cx="16" cy="6" rx="14" ry="6" fill="#e8daef" stroke="#8e44ad" stroke-width="1.5"/></svg></div>
+            <div class="db-name">aorsormor_db</div>
+            <div class="db-detail">HSS API<br />ระบบทะเบียน, Dashboard, Admin</div>
+          </div>
+          <div class="db-card">
+            <div class="db-icon"><svg width="32" height="36" viewBox="0 0 32 36"><ellipse cx="16" cy="6" rx="14" ry="6" fill="#d2b4de" stroke="#8e44ad" stroke-width="1.5"/><path d="M2 6v24c0 3.3 6.3 6 14 6s14-2.7 14-6V6" fill="#d2b4de" stroke="#8e44ad" stroke-width="1.5"/><ellipse cx="16" cy="30" rx="14" ry="6" fill="none" stroke="#8e44ad" stroke-width="1.5"/><ellipse cx="16" cy="6" rx="14" ry="6" fill="#e8daef" stroke="#8e44ad" stroke-width="1.5"/></svg></div>
+            <div class="db-name">smart_osm</div>
+            <div class="db-detail">Smart OSM API<br />Mobile App Smart อสม.</div>
+          </div>
+          <div class="db-card">
+            <div class="db-icon"><svg width="32" height="36" viewBox="0 0 32 36"><ellipse cx="16" cy="6" rx="14" ry="6" fill="#d2b4de" stroke="#8e44ad" stroke-width="1.5"/><path d="M2 6v24c0 3.3 6.3 6 14 6s14-2.7 14-6V6" fill="#d2b4de" stroke="#8e44ad" stroke-width="1.5"/><ellipse cx="16" cy="30" rx="14" ry="6" fill="none" stroke="#8e44ad" stroke-width="1.5"/><ellipse cx="16" cy="6" rx="14" ry="6" fill="#e8daef" stroke="#8e44ad" stroke-width="1.5"/></svg></div>
+            <div class="db-name">yuwa_osm</div>
+            <div class="db-detail">YUWA OSM API<br />ระบบยุวอสม.</div>
+          </div>
+          <div class="db-card">
+            <div class="db-icon"><svg width="32" height="36" viewBox="0 0 32 36"><ellipse cx="16" cy="6" rx="14" ry="6" fill="#d2b4de" stroke="#8e44ad" stroke-width="1.5"/><path d="M2 6v24c0 3.3 6.3 6 14 6s14-2.7 14-6V6" fill="#d2b4de" stroke="#8e44ad" stroke-width="1.5"/><ellipse cx="16" cy="30" rx="14" ry="6" fill="none" stroke="#8e44ad" stroke-width="1.5"/><ellipse cx="16" cy="6" rx="14" ry="6" fill="#e8daef" stroke="#8e44ad" stroke-width="1.5"/></svg></div>
+            <div class="db-name">elearning_db</div>
+            <div class="db-detail">E-Learning API<br />ระบบอบรมออนไลน์</div>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 10px; font-size: 10px; color: #888;">
+          PostgreSQL 16.13 &mdash; PgBouncer 1.22 (transaction mode) &mdash; osmdatabase 192.168.88.61 &mdash; 32 vCPU / 125 GB / 2 TB
+        </div>
+      </div>
+
+      <!-- ========== LAYER 5: EXTERNAL ========== -->
+      <div class="layer" style="border-color: #1a5276; margin-top: 20px;">
+        <div class="layer-label" style="background: #1a5276;">External Services</div>
+        <div class="ext-row" style="margin-top: 8px;">
+          <div class="ext-card" style="border-color: #1a5276;">
+            <div class="e-title" style="color: #1a5276;">&#128274; ThaiD Authentication (DOPA)</div>
+            <div class="e-detail">
+              <b>OAuth2 + OpenID Connect</b> <span class="port-badge">:443</span><br />
+              imauth.bora.dopa.go.th<br />
+              ยืนยันตัวตนผ่านบัตรประชาชนดิจิทัล
+            </div>
+          </div>
+          <div class="ext-card" style="border-color: #d35400;">
+            <div class="e-title" style="color: #d35400;">&#127760; DNS &amp; Network</div>
+            <div class="e-detail">
+              <b>*.hss.moph.go.th</b> &rarr; 110.164.229.82<br />
+              กรมสนับสนุนบริการสุขภาพ (สบส.)<br />
+              HTTPS :443 encrypted &rarr; nginx-ingress &rarr; K8s
+            </div>
+          </div>
+          <div class="ext-card" style="border-color: #16a085;">
+            <div class="e-title" style="color: #16a085;">&#128190; Persistent Storage</div>
+            <div class="e-detail">
+              <b>Longhorn v1.9.1</b> &mdash; uploads-pvc 250 GiB (RWX)<br />
+              /app/uploads &mdash; รูปภาพ, ข่าว, ใบประกาศ<br />
+              ข้อมูลคงอยู่แม้ระบบ restart
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== DESCRIPTION ========== -->
+      <div class="desc-section">
+        <div class="desc-title">Description</div>
+        <div class="desc-grid">
+          <div class="desc-item">
+            <div class="d-icon">&#128100;</div>
+            <div class="d-label"><b>End Users</b><br />ผู้ใช้งานระบบ<br />อสม. / ยุวอสม. / เจ้าหน้าที่</div>
+          </div>
+          <div class="desc-item">
+            <div class="d-icon">&#128187; &#128241;</div>
+            <div class="d-label"><b>Web &amp; Mobile</b><br />อุปกรณ์เข้าถึงระบบ<br />Browser / App</div>
+          </div>
+          <div class="desc-item">
+            <div class="d-icon">&#8594;</div>
+            <div class="d-label"><b>Call-One-Way</b><br />เรียกใช้งานฝั่งเดียว</div>
+          </div>
+          <div class="desc-item">
+            <div class="d-icon">&#8596;</div>
+            <div class="d-label"><b>Call-Two-Way</b><br />เรียกใช้งานสองฝั่ง</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <div>
+          โครงการพัฒนานวัตกรรมดิจิทัลระบบ Smart อสม. ระยะที่ ๒ &mdash;
+          กรมสนับสนุนบริการสุขภาพ กระทรวงสาธารณสุข
+        </div>
+        <div>7 ระบบ | 4 API | 6 Web | 4 Databases | 10 Ingress Rules</div>
+      </div>
+    </div>
+  </body>
+</html>

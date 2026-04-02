@@ -1,0 +1,388 @@
+{
+  "options": {
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)"
+    ],
+    "summaryTimeUnit": "",
+    "noColor": false
+  },
+  "state": {
+    "isStdOutTTY": false,
+    "isStdErrTTY": false,
+    "testRunDurationMs": 152683.219371
+  },
+  "metrics": {
+    "iteration_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 8085.602823,
+        "p(90)": 1786.640089,
+        "p(95)": 2197.38594,
+        "avg": 1577.3749613998427,
+        "min": 1379.135304,
+        "med": 1449.866484
+      }
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 213.30327,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 0.8239858383889879,
+        "min": 0,
+        "med": 0
+      }
+    },
+    "group_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 68.205485,
+        "med": 81.8308555,
+        "max": 2047.752221,
+        "p(90)": 341.743879,
+        "p(95)": 366.01172324999993,
+        "avg": 141.0338535371622
+      }
+    },
+    "http_req_duration": {
+      "values": {
+        "min": 68.064206,
+        "med": 407.701953,
+        "max": 3462.324652,
+        "p(90)": 619.9313734000002,
+        "p(95)": 723.8892206999999,
+        "avg": 378.96656503237267
+      },
+      "thresholds": {
+        "p(95)<3000": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 74.332606,
+        "med": 83.598582,
+        "max": 1513.230732,
+        "p(90)": 411.9966442,
+        "p(95)": 510.67836779999976,
+        "avg": 166.81327161986303
+      }
+    },
+    "http_req_receiving": {
+      "contains": "time",
+      "values": {
+        "min": 0.017045,
+        "med": 0.073368,
+        "max": 1462.625652,
+        "p(90)": 0.5349726,
+        "p(95)": 1.056559199999998,
+        "avg": 2.698772898037216
+      },
+      "type": "trend"
+    },
+    "data_sent": {
+      "values": {
+        "count": 1062959,
+        "rate": 6961.858705750436
+      },
+      "type": "counter",
+      "contains": "data"
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 4659416,
+        "rate": 30516.88338243796
+      }
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0.000212,
+        "max": 409.027057,
+        "p(90)": 0.0003,
+        "p(95)": 0.000381,
+        "avg": 1.7717091514147403,
+        "min": 0.000115
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "min": 1,
+        "max": 50,
+        "value": 1
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.7022686719347438,
+        "passes": 2755,
+        "fails": 1168
+      }
+    },
+    "http_req_sending": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 0.024137,
+        "med": 0.094658,
+        "max": 0.708472,
+        "p(90)": 0.1241252,
+        "p(95)": 0.14019199999999993,
+        "avg": 0.0936463117512109
+      }
+    },
+    "http_req_waiting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 376.17414582258505,
+        "min": 67.733577,
+        "med": 407.360225,
+        "max": 3460.921133,
+        "p(90)": 619.7532838000002,
+        "p(95)": 719.6624009999996
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 16.969775792480593,
+        "count": 2591
+      }
+    },
+    "login_duration": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "p(95)": 772.562368,
+        "avg": 499.8485287143959,
+        "min": 377.981726,
+        "med": 443.175163,
+        "max": 3462.324652,
+        "p(90)": 674.030551
+      },
+      "thresholds": {
+        "p(95)<2000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_tls_handshaking": {
+      "contains": "time",
+      "values": {
+        "avg": 0.9435842378281925,
+        "min": 0,
+        "med": 0,
+        "max": 202.31156,
+        "p(90)": 0,
+        "p(95)": 0
+      },
+      "type": "trend"
+    },
+    "errors": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.8988682000730194,
+        "passes": 2462,
+        "fails": 277
+      },
+      "thresholds": {
+        "rate<0.05": {
+          "ok": false
+        }
+      }
+    },
+    "checks": {
+      "values": {
+        "rate": 0.7891891891891892,
+        "passes": 1168,
+        "fails": 312
+      },
+      "type": "rate",
+      "contains": "default"
+    },
+    "vus_max": {
+      "contains": "default",
+      "values": {
+        "value": 50,
+        "min": 50,
+        "max": 50
+      },
+      "type": "gauge"
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 3923,
+        "rate": 25.693720738672855
+      }
+    }
+  },
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [
+      {
+        "groups": [],
+        "checks": [
+            {
+              "passes": 129,
+              "fails": 19,
+              "name": "dashboard stats 200",
+              "path": "::Admin - Dashboard Stats::dashboard stats 200",
+              "id": "3aae80e0f0fbf6b66198e8c0865ebbd0"
+            }
+          ],
+        "name": "Admin - Dashboard Stats",
+        "path": "::Admin - Dashboard Stats",
+        "id": "7481da510972b52c619e694b048ef593"
+      },
+      {
+        "name": "Admin - Monthly Courses",
+        "path": "::Admin - Monthly Courses",
+        "id": "789f6c431b496a92a1ea4c14c1a7d01c",
+        "groups": [],
+        "checks": [
+            {
+              "fails": 20,
+              "name": "monthly courses 200",
+              "path": "::Admin - Monthly Courses::monthly courses 200",
+              "id": "dd891d87d9fecd0787ba08f27791488d",
+              "passes": 128
+            }
+          ]
+      },
+      {
+        "name": "Admin - Monthly News",
+        "path": "::Admin - Monthly News",
+        "id": "336f18b52230347611e4010fb8b7f874",
+        "groups": [],
+        "checks": [
+            {
+              "id": "e8006befe296bee9738b6e849f07a3b6",
+              "passes": 120,
+              "fails": 28,
+              "name": "monthly news 200",
+              "path": "::Admin - Monthly News::monthly news 200"
+            }
+          ]
+      },
+      {
+        "name": "Admin - Registrations Chart",
+        "path": "::Admin - Registrations Chart",
+        "id": "9410d7da26389a55ba37318071e13931",
+        "groups": [],
+        "checks": [
+            {
+              "path": "::Admin - Registrations Chart::registrations 200",
+              "id": "407bdd86bf01b47983377ef3b0688bf8",
+              "passes": 120,
+              "fails": 28,
+              "name": "registrations 200"
+            }
+          ]
+      },
+      {
+        "name": "Admin - Essay Grading Curriculums",
+        "path": "::Admin - Essay Grading Curriculums",
+        "id": "5b831283d3273be2035b4d5ca202f31f",
+        "groups": [],
+        "checks": [
+            {
+              "name": "essay curriculums 200",
+              "path": "::Admin - Essay Grading Curriculums::essay curriculums 200",
+              "id": "8a70a709510c6b2b998f9359774ceeb3",
+              "passes": 118,
+              "fails": 30
+            }
+          ]
+      },
+      {
+        "checks": [
+          {
+            "name": "cert templates 200",
+            "path": "::Certificate Templates::cert templates 200",
+            "id": "64c33de2f2c3e40a3d04d1ed3a471f7b",
+            "passes": 147,
+            "fails": 1
+          }
+        ],
+        "name": "Certificate Templates",
+        "path": "::Certificate Templates",
+        "id": "a97e2a36a0c2252da60c0a93f2e51731",
+        "groups": []
+      },
+      {
+        "name": "Evaluations Stats",
+        "path": "::Evaluations Stats",
+        "id": "808859fe8dc04813e23e6a4ab0815247",
+        "groups": [],
+        "checks": [
+            {
+              "id": "b0a6e61ee012e722de2349098b3f7ca5",
+              "passes": 110,
+              "fails": 38,
+              "name": "eval stats 200",
+              "path": "::Evaluations Stats::eval stats 200"
+            }
+          ]
+      },
+      {
+        "path": "::Auth - Users (admin)",
+        "id": "4af26e28a3b6e1817c1acec97a969db1",
+        "groups": [],
+        "checks": [
+            {
+              "name": "users 200",
+              "path": "::Auth - Users (admin)::users 200",
+              "id": "aeb912593caa612ecacb8d3c6e9e52b3",
+              "passes": 0,
+              "fails": 148
+            }
+          ],
+        "name": "Auth - Users (admin)"
+      }
+    ],
+    "checks": [
+      {
+        "passes": 148,
+        "fails": 0,
+        "name": "elearning login 200",
+        "path": "::elearning login 200",
+        "id": "ecaefbccedb7c5c3bea6a90487ffac26"
+      },
+      {
+        "name": "elearning returns access_token",
+        "path": "::elearning returns access_token",
+        "id": "6f7efc4c70b3dd53ca9cc430ab959915",
+        "passes": 148,
+        "fails": 0
+      }
+    ]
+  }
+}

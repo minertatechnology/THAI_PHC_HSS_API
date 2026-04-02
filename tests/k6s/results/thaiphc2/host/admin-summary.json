@@ -1,0 +1,403 @@
+{
+  "metrics": {
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 1480,
+        "fails": 4292,
+        "rate": 0.2564102564102564
+      }
+    },
+    "errors": {
+      "values": {
+        "rate": 0.7368421052631579,
+        "passes": 2072,
+        "fails": 740
+      },
+      "thresholds": {
+        "rate<0.05": {
+          "ok": false
+        }
+      },
+      "type": "rate",
+      "contains": "default"
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 1332,
+        "rate": 0.625,
+        "passes": 2220
+      }
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 14426792,
+        "rate": 92320.60916012763
+      }
+    },
+    "group_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 278.72574494894855,
+        "min": 72.384349,
+        "med": 85.316938,
+        "max": 3381.750426,
+        "p(90)": 1355.9630856,
+        "p(95)": 1425.87139625
+      }
+    },
+    "http_req_sending": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 0.11436120000000002,
+        "p(95)": 0.12700540000000002,
+        "avg": 0.08534794481981962,
+        "min": 0.027574,
+        "med": 0.08456949999999999,
+        "max": 0.896202
+      }
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "rate": 4679.654333952861,
+        "count": 731282
+      }
+    },
+    "iteration_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 1601.803579,
+        "max": 11354.649439,
+        "p(90)": 2557.8609069000013,
+        "p(95)": 3494.9200433,
+        "avg": 1851.6856694468452,
+        "min": 1380.063205
+      }
+    },
+    "http_req_duration": {
+      "values": {
+        "avg": 530.1641910391332,
+        "min": 72.270611,
+        "med": 445.961149,
+        "max": 3380.686807,
+        "p(90)": 1145.7542085000002,
+        "p(95)": 1413.42657825
+      },
+      "thresholds": {
+        "p(95)<3000": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 1428.9778907,
+        "avg": 331.1089826448947,
+        "min": 72.270611,
+        "med": 94.854022,
+        "max": 3380.686807,
+        "p(90)": 1358.7845189
+      }
+    },
+    "http_req_tls_handshaking": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 0,
+        "med": 0,
+        "max": 210.077758,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 0.6582324090653153
+      }
+    },
+    "login_duration": {
+      "type": "trend",
+      "contains": "default",
+      "values": {
+        "avg": 681.120898500901,
+        "min": 379.15022,
+        "med": 566.237489,
+        "max": 2666.601253,
+        "p(90)": 1117.3356586,
+        "p(95)": 1393.5463027999988
+      },
+      "thresholds": {
+        "p(95)<2000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 0.020595,
+        "med": 0.08539949999999999,
+        "max": 2929.47721,
+        "p(90)": 1.5701365000000016,
+        "p(95)": 4.427386449999991,
+        "avg": 6.351796717623874
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 3552,
+        "rate": 22.730126263466843
+      }
+    },
+    "http_req_waiting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 72.194726,
+        "med": 443.081869,
+        "max": 2645.823621,
+        "p(90)": 1135.9222436000002,
+        "p(95)": 1404.42054775,
+        "avg": 523.7270463766903
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1,
+        "min": 1,
+        "max": 50
+      }
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "max": 50,
+        "value": 50,
+        "min": 50
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2220,
+        "rate": 14.206328914666777
+      }
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "max": 1197.773714,
+        "p(90)": 0,
+        "p(95)": 0,
+        "avg": 0.8944037494369367,
+        "min": 0
+      }
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 0.000351,
+        "avg": 1.5552873400900982,
+        "min": 0.000103,
+        "med": 0.000209,
+        "max": 1373.019241,
+        "p(90)": 0.000285
+      }
+    }
+  },
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [
+      {
+        "name": "Admin - Users",
+        "path": "::Admin - Users",
+        "id": "8d99e0dde2359911c6c610716036984a",
+        "groups": [],
+        "checks": [
+            {
+              "passes": 148,
+              "fails": 0,
+              "name": "admin users 200",
+              "path": "::Admin - Users::admin users 200",
+              "id": "ab882fd9bfd22bb7112b0d47c0877fdc"
+            }
+          ]
+      },
+      {
+        "path": "::Admin - Groups",
+        "id": "f83e5c51aae2d98cf7809c2ce8407508",
+        "groups": [],
+        "checks": [
+            {
+              "passes": 148,
+              "fails": 0,
+              "name": "admin groups 200",
+              "path": "::Admin - Groups::admin groups 200",
+              "id": "c5946aae96f0d2cb92d67a76e57a04b7"
+            }
+          ],
+        "name": "Admin - Groups"
+      },
+      {
+        "name": "Admin - Roles",
+        "path": "::Admin - Roles",
+        "id": "07f87beb7a95ff9e62f77463d03ce2ce",
+        "groups": [],
+        "checks": [
+            {
+              "name": "admin roles 200",
+              "path": "::Admin - Roles::admin roles 200",
+              "id": "fc1b170ed4de9c885f19d72c095a7ec6",
+              "passes": 148,
+              "fails": 0
+            }
+          ]
+      },
+      {
+        "path": "::Admin - Menus Main",
+        "id": "7c734f14b3831b594fa511a98c08752a",
+        "groups": [],
+        "checks": [
+            {
+              "name": "admin menus 200",
+              "path": "::Admin - Menus Main::admin menus 200",
+              "id": "46b1899d67266ac31090c71237d5eee6",
+              "passes": 148,
+              "fails": 0
+            }
+          ],
+        "name": "Admin - Menus Main"
+      },
+      {
+        "groups": [],
+        "checks": [
+            {
+              "id": "ec05f2df8ddaeb68ab853f2367af941a",
+              "passes": 148,
+              "fails": 0,
+              "name": "admin sub menus 200",
+              "path": "::Admin - Menus Sub::admin sub menus 200"
+            }
+          ],
+        "name": "Admin - Menus Sub",
+        "path": "::Admin - Menus Sub",
+        "id": "6a2f360750e4bd88445dcb2c0df9fb63"
+      },
+      {
+        "name": "Admin - Menu Assignees",
+        "path": "::Admin - Menu Assignees",
+        "id": "22f274560f19b75b3df375334b277e38",
+        "groups": [],
+        "checks": [
+            {
+              "fails": 148,
+              "name": "admin assignees 200",
+              "path": "::Admin - Menu Assignees::admin assignees 200",
+              "id": "b6e45b92e743cced7cb23b5089cfa78c",
+              "passes": 0
+            }
+          ]
+      },
+      {
+        "path": "::Dashboard - Summary",
+        "id": "5979de9ba9e77b282378bf85762fe1d9",
+        "groups": [],
+        "checks": [
+            {
+              "name": "dashboard summary 200",
+              "path": "::Dashboard - Summary::dashboard summary 200",
+              "id": "88dc816ffb520dd9238ce1a5c6ba001b",
+              "passes": 148,
+              "fails": 0
+            }
+          ],
+        "name": "Dashboard - Summary"
+      },
+      {
+        "groups": [],
+        "checks": [
+            {
+              "name": "dashboard assignments 200",
+              "path": "::Dashboard - Assignments::dashboard assignments 200",
+              "id": "939cbfecb0d9061ef43c301343d827e1",
+              "passes": 148,
+              "fails": 0
+            }
+          ],
+        "name": "Dashboard - Assignments",
+        "path": "::Dashboard - Assignments",
+        "id": "f1d30793a61b820d10fb48dafe48a7fb"
+      },
+      {
+        "name": "Area Info - Provinces",
+        "path": "::Area Info - Provinces",
+        "id": "3332c70b7e42c9dd5642b4b3fdb0d593",
+        "groups": [],
+        "checks": [
+            {
+              "name": "area provinces 200",
+              "path": "::Area Info - Provinces::area provinces 200",
+              "id": "f8b81ae2128e92913a172f3d03ce8e12",
+              "passes": 148,
+              "fails": 0
+            }
+          ]
+      }
+    ],
+    "checks": [
+      {
+        "name": "login status 200",
+        "path": "::login status 200",
+        "id": "a9f04e9f501317c68a9f824e04811bea",
+        "passes": 148,
+        "fails": 2072
+      },
+      {
+        "path": "::login returns access_token",
+        "id": "029a0a699aaa6c4b71876bf6c551726b",
+        "passes": 148,
+        "fails": 2072,
+        "name": "login returns access_token"
+      }
+    ]
+  },
+  "options": {
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)"
+    ],
+    "summaryTimeUnit": "",
+    "noColor": false
+  },
+  "state": {
+    "isStdOutTTY": false,
+    "isStdErrTTY": false,
+    "testRunDurationMs": 156268.379631
+  }
+}

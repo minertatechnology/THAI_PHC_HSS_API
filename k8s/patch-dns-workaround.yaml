@@ -1,0 +1,31 @@
+# ===================================================================
+# Workaround: CoreDNS ไม่สามารถ resolve external domain ได้
+# ใช้ hostAliases เป็น /etc/hosts ใน pod เพื่อ bypass DNS
+#
+# วิธีใช้:
+#   kubectl -n aorsormor-system patch deployment osm-thai-phc-hss-api-deployment \
+#     --patch-file patch-dns-workaround.yaml
+#
+# เมื่อ CoreDNS กลับมาทำงานปกติ → ลบ hostAliases ออกด้วย:
+#   kubectl -n aorsormor-system patch deployment osm-thai-phc-hss-api-deployment \
+#     --type=json -p='[{"op":"remove","path":"/spec/template/spec/hostAliases"}]'
+#
+# IP มาจาก: nslookup imauth.bora.dopa.go.th → 110.78.30.243, 110.78.30.249, 110.78.30.242, 110.78.30.248
+# ===================================================================
+spec:
+  template:
+    spec:
+      hostAliases:
+        # DOPA Production (ทุก IP จาก nslookup)
+        - ip: "110.78.30.243"
+          hostnames:
+            - "imauth.bora.dopa.go.th"
+        - ip: "110.78.30.249"
+          hostnames:
+            - "imauth.bora.dopa.go.th"
+        - ip: "110.78.30.242"
+          hostnames:
+            - "imauth.bora.dopa.go.th"
+        - ip: "110.78.30.248"
+          hostnames:
+            - "imauth.bora.dopa.go.th"

@@ -1,0 +1,435 @@
+# =============================================================================
+# HPA Optimized - คำนวณจาก actual usage + เผื่อ peak ระดับประเทศ
+# Cluster: 3 workers × (16 cores, 64Gi RAM) = 48 cores, 192Gi RAM
+# Worst case ทุก service max พร้อมกัน: ~15 cores (31%), ~62Gi (32%) = ยังเหลือเยอะ
+#
+# การเปลี่ยนแปลงหลัก:
+#   1. Memory target: 75% → 85% (ป้องกัน scale loop จาก memory ไม่คืน)
+#   2. maxReplicas เพิ่มขึ้นตาม criticality (API=18-24, Web=10)
+#   3. scaleUp ช้าลง: stabilize 120s, เพิ่มทีละ 2 pods
+#   4. scaleDown ช้าลง: stabilize 600s, ลดทีละ 1 pod ทุก 5 นาที
+#   5. ทุก HPA มี behavior section (เดิมบางตัวไม่มี)
+#
+# *** สำคัญ: ต้องอัพเดท Deployment resource requests ด้วย ***
+#   - osm-api: memory request 768Mi → 1Gi, limit 1Gi → 1.5Gi
+#   - osm-thai-phc-hss-api: memory request 512Mi → 768Mi
+#   - yuwa-osm-web: memory request 128Mi → 192Mi
+# =============================================================================
+
+# =============================================================================
+# osm-thai-phc-hss-api-hpa (API หลัก - ระบบ Thai PHC HSS)
+# actual usage: ~394Mi mem, ~6m cpu per pod
+# memory request เดิม 512Mi → HPA เห็น 77% (เกิน 75%!)
+# แก้: เพิ่ม memory request เป็น 768Mi + target 85% → HPA เห็น ~51%
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: osm-thai-phc-hss-api-hpa
+  namespace: aorsormor-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: osm-thai-phc-hss-api-deployment
+  minReplicas: 3
+  maxReplicas: 18
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+---
+# =============================================================================
+# thai-phc-web-admin-hpa (Web Frontend - Thai PHC)
+# actual usage: ~118Mi mem, ~9m cpu per pod
+# memory request 256Mi → HPA เห็น 46% → ปกติ
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: thai-phc-web-admin-hpa
+  namespace: aorsormor-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: thai-phc-web-admin-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+---
+# =============================================================================
+# dashboard-smart-osm-web-hpa (Web Frontend - Dashboard)
+# actual usage: ~74Mi mem, ~1m cpu per pod
+# memory request 512Mi → HPA เห็น 14% → ปกติมาก
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dashboard-smart-osm-web-hpa
+  namespace: aorsormor-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dashboard-smart-osm-web-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+---
+# =============================================================================
+# e-learning-web-hpa (Web Frontend - E-Learning)
+# actual usage: ~63Mi mem, ~1-2m cpu per pod
+# memory request 128Mi → HPA เห็น 49% → ปกติ
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: e-learning-web-hpa
+  namespace: aorsormor-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: e-learning-web-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+---
+# =============================================================================
+# osm-work-report-web-admin-hpa (Web Frontend - Work Report)
+# actual usage: ~182Mi mem, ~12m cpu per pod
+# memory request 512Mi → HPA เห็น 35% → ปกติ
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: osm-work-report-web-admin-hpa
+  namespace: aorsormor-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: osm-work-report-web-admin-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+---
+# =============================================================================
+# yuwa-osm-web-hpa (Web Frontend - Yuwa)
+# actual usage: ~93Mi mem, ~1-2m cpu per pod
+# memory request เดิม 128Mi → HPA เห็น 73% (ใกล้ trigger!)
+# แก้: เพิ่ม memory request เป็น 192Mi + target 85% → HPA เห็น ~48%
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: yuwa-osm-web-hpa
+  namespace: aorsormor-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: yuwa-osm-web-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+---
+# =============================================================================
+# thaiphc2-admin-console-hpa (Web Frontend - Admin Console)
+# actual usage: ~31Mi mem, ~1m cpu per pod
+# memory request 128Mi → HPA เห็น 24% → ปกติมาก
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: thaiphc2-admin-console-hpa
+  namespace: aorsormor-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: thaiphc2-admin-console-deployment
+  minReplicas: 2
+  maxReplicas: 8
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+---
+# =============================================================================
+# osm-api-hpa (API หลัก - OSM Legacy)
+# *** ตัวที่มีปัญหาหนักสุด - ติด 12 replicas ลงไม่ได้ ***
+# actual usage: ~605Mi mem, ~6m cpu per pod
+# memory request เดิม 768Mi → HPA เห็น 79% > 75% target → scale ชน max!
+# แก้: เพิ่ม memory request เป็น 1Gi + limit 1.5Gi + target 85% → HPA เห็น ~59%
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: osm-api-hpa
+  namespace: aorsormor-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: osm-api
+  minReplicas: 3
+  maxReplicas: 24
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+---
+# =============================================================================
+# e-learning-api-hpa (API - E-Learning)
+# actual usage: ~140Mi mem, ~2m cpu per pod
+# memory request 768Mi → HPA เห็น 18% → ปกติมาก
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: e-learning-api-hpa
+  namespace: aorsormor-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: elearning-api
+  minReplicas: 2
+  maxReplicas: 10
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85

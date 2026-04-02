@@ -1,0 +1,79 @@
+
+running (7m02.2s), 0085/5000 VUs, 229437 complete and 0 interrupted iterations
+capacity_test ↓ [ 100% ] 0208/5000 VUs  7m0s
+
+running (7m03.2s), 0035/5000 VUs, 229487 complete and 0 interrupted iterations
+capacity_test ↓ [ 100% ] 0208/5000 VUs  7m0s
+
+running (7m04.2s), 0012/5000 VUs, 229510 complete and 0 interrupted iterations
+capacity_test ↓ [ 100% ] 0208/5000 VUs  7m0s
+
+running (7m05.2s), 0007/5000 VUs, 229515 complete and 0 interrupted iterations
+capacity_test ↓ [ 100% ] 0208/5000 VUs  7m0s
+
+running (7m06.2s), 0001/5000 VUs, 229521 complete and 0 interrupted iterations
+capacity_test ↓ [ 100% ] 0208/5000 VUs  7m0s
+     █ Health
+
+       ✗ health 200
+        ↳  99% — ✓ 229026 / ✗ 496
+
+time="2026-03-06T23:33:04Z" level=error msg="failed to handle the end-of-test summary" error="Could not save some summary information:\n\t- could not open '/results/cluster/capacity-5000-summary.json': open /results/cluster/capacity-5000-summary.json: no such file or directory"
+     █ Auth - Me
+
+       ✗ me 200
+        ↳  99% — ✓ 229497 / ✗ 25
+
+     █ OSM - My Profile
+
+       ✗ osm me 200
+        ↳  99% — ✓ 229436 / ✗ 86
+
+     █ Lookups - Provinces
+
+       ✗ provinces 200
+        ↳  99% — ✓ 229471 / ✗ 51
+
+     █ Announcements
+
+       ✗ announcements 200
+        ↳  99% — ✓ 229461 / ✗ 61
+
+     █ Dashboard - Summary
+
+       ✗ dashboard 200
+        ↳  99% — ✓ 229483 / ✗ 39
+
+     checks.........................: 99.94%  ✓ 1376374     ✗ 758    
+     data_received..................: 19 GB   44 MB/s
+     data_sent......................: 1.1 GB  2.6 MB/s
+   ✓ errors.........................: 0.05%   ✓ 758         ✗ 1376374
+     group_duration.................: avg=264.88ms min=593.94µs med=8.69ms   max=12.67s   p(90)=515.92ms p(95)=1.58s   
+     http_req_blocked...............: avg=63.67µs  min=771ns    med=2.34µs   max=79.9ms   p(90)=244.79µs p(95)=317.15µs
+     http_req_connecting............: avg=44.74µs  min=0s       med=0s       max=79.87ms  p(90)=177.66µs p(95)=262.65µs
+   ✓ http_req_duration..............: avg=264.73ms min=526.64µs med=8.54ms   max=12.67s   p(90)=515.75ms p(95)=1.58s   
+       { expected_response:true }...: avg=264.62ms min=526.64µs med=8.52ms   max=12.67s   p(90)=516.03ms p(95)=1.58s   
+     ✓ { name:announcements }.......: avg=162.7ms  min=874.18µs med=5.18ms   max=10s      p(90)=268.38ms p(95)=580.67ms
+     ✓ { name:auth_me }.............: avg=413.27ms min=980.08µs med=9.52ms   max=10s      p(90)=1.24s    p(95)=2.94s   
+     ✓ { name:dashboard }...........: avg=245.16ms min=1.24ms   med=9.16ms   max=12.67s   p(90)=440.16ms p(95)=1.11s   
+     ✗ { name:health }..............: avg=332.93ms min=526.64µs med=14.65ms  max=8.21s    p(90)=974.67ms p(95)=2.16s   
+     ✓ { name:lookups }.............: avg=216.55ms min=2.28ms   med=11.96ms  max=10s      p(90)=413.9ms  p(95)=955.8ms 
+     ✓ { name:osm_me }..............: avg=217.76ms min=602.84µs med=5.18ms   max=11.35s   p(90)=324.57ms p(95)=992.7ms 
+     http_req_failed................: 0.05%   ✓ 758         ✗ 1376376
+     http_req_receiving.............: avg=6.37ms   min=0s       med=403.95µs max=645.42ms p(90)=14.15ms  p(95)=38.94ms 
+     http_req_sending...............: avg=516.4µs  min=2.96µs   med=8.83µs   max=487.02ms p(90)=26.49µs  p(95)=49.54µs 
+     http_req_tls_handshaking.......: avg=0s       min=0s       med=0s       max=0s       p(90)=0s       p(95)=0s      
+     http_req_waiting...............: avg=257.83ms min=53.2µs   med=7.59ms   max=12.65s   p(90)=490.49ms p(95)=1.55s   
+     http_reqs......................: 1377134 3230.947139/s
+     iteration_duration.............: avg=6.59s    min=3s       med=5.77s    max=41.45s   p(90)=10.84s   p(95)=13.37s  
+     iterations.....................: 229522  538.490408/s
+     vus............................: 1       min=0         max=5000 
+     vus_max........................: 5000    min=5000      max=5000 
+###JSON_SUMMARY_START###
+{"root_group":{"name":"","path":"","id":"d41d8cd98f00b204e9800998ecf8427e","groups":[{"name":"Health","path":"::Health","id":"087575d619a6bec7b96caf45fac08f7b","groups":[],"checks":[{"fails":496,"name":"health 200","path":"::Health::health 200","id":"f5d9b90362ad450cea885da05c9321f0","passes":229026}]},{"name":"Auth - Me","path":"::Auth - Me","id":"c515ca94802a3c4e53ad9ddae14fc3c4","groups":[],"checks":[{"passes":229497,"fails":25,"name":"me 200","path":"::Auth - Me::me 200","id":"6490aa7c593319ee033c0bfaa30de3f2"}]},{"name":"OSM - My Profile","path":"::OSM - My Profile","id":"39909f1185d1b171888872cf9f315c7a","groups":[],"checks":[{"path":"::OSM - My Profile::osm me 200","id":"192b70d9710c979a5244f2082cdecb5f","passes":229436,"fails":86,"name":"osm me 200"}]},{"id":"640ffda840e3d959c42525f0505d4e17","groups":[],"checks":[{"fails":51,"name":"provinces 200","path":"::Lookups - Provinces::provinces 200","id":"4541e69fc4a1d557b090a7e45ed79688","passes":229471}],"name":"Lookups - Provinces","path":"::Lookups - Provinces"},{"groups":[],"checks":[{"name":"announcements 200","path":"::Announcements::announcements 200","id":"a23436b2a0bde2d0078bdaceb05f445c","passes":229461,"fails":61}],"name":"Announcements","path":"::Announcements","id":"0b2c9bc3a9e615b163faee6f57acab75"},{"id":"5979de9ba9e77b282378bf85762fe1d9","groups":[],"checks":[{"name":"dashboard 200","path":"::Dashboard - Summary::dashboard 200","id":"651906d7723f453865860647113dff88","passes":229483,"fails":39}],"name":"Dashboard - Summary","path":"::Dashboard - Summary"}],"checks":[]},"options":{"noColor":false,"summaryTrendStats":["avg","min","med","max","p(90)","p(95)"],"summaryTimeUnit":""},"state":{"isStdOutTTY":false,"isStdErrTTY":false,"testRunDurationMs":426232.29065},"metrics":{"http_req_tls_handshaking":{"type":"trend","contains":"time","values":{"avg":0,"min":0,"med":0,"max":0,"p(90)":0,"p(95)":0}},"http_req_blocked":{"type":"trend","contains":"time","values":{"p(95)":0.3171573499999999,"avg":0.06367952157524177,"min":0.000771,"med":0.002341,"max":79.908122,"p(90)":0.244798}},"http_req_receiving":{"contains":"time","values":{"med":0.4039555,"max":645.423132,"p(90)":14.1560876,"p(95)":38.944808899999906,"avg":6.379273989077873,"min":0},"type":"trend"},"http_req_failed":{"type":"rate","contains":"default","values":{"rate":0.0005504184777951892,"passes":758,"fails":1376376}},"iterations":{"type":"counter","contains":"default","values":{"count":229522,"rate":538.4904077773677}},"http_req_duration":{"type":"trend","contains":"time","values":{"avg":264.73364793112773,"min":0.526643,"med":8.547674,"max":12670.265971,"p(90)":515.7536764999999,"p(95)":1585.4323185999972},"thresholds":{"p(95)<5000":{"ok":true}}},"http_req_duration{name:osm_me}":{"type":"trend","contains":"time","values":{"min":0.60284,"med":5.188774499999999,"max":11356.035646,"p(90)":324.57403989999995,"p(95)":992.7044560499992,"avg":217.76877088859445},"thresholds":{"p(95)<5000":{"ok":true}}},"http_req_waiting":{"type":"trend","contains":"time","values":{"p(90)":490.4953791,"p(95)":1558.0544165999995,"avg":257.83797083961247,"min":0.053204,"med":7.59637,"max":12659.330131}},"data_received":{"type":"counter","contains":"data","values":{"count":18794906668,"rate":44095454.709304065}},"group_duration":{"values":{"p(90)":515.9292655000004,"p(95)":1585.6825263499995,"avg":264.8840791524139,"min":0.593945,"med":8.697208,"max":12670.346023},"type":"trend","contains":"time"},"http_req_duration{name:lookups}":{"thresholds":{"p(95)<2000":{"ok":true}},"type":"trend","contains":"time","values":{"avg":216.5519338077661,"min":2.289548,"med":11.969119500000001,"max":10001.100208,"p(90)":413.90474279999995,"p(95)":955.8080918999999}},"vus":{"type":"gauge","contains":"default","values":{"value":1,"min":0,"max":5000}},"http_req_sending":{"type":"trend","contains":"time","values":{"max":487.028928,"p(90)":0.026496,"p(95)":0.049543349999999854,"avg":0.5164031024330579,"min":0.002966,"med":0.008833}},"http_req_duration{expected_response:true}":{"type":"trend","contains":"time","values":{"med":8.5284985,"max":12670.265971,"p(90)":516.0307745,"p(95)":1585.9445695,"avg":264.6276369358193,"min":0.526643}},"http_req_duration{name:dashboard}":{"thresholds":{"p(95)<8000":{"ok":true}},"type":"trend","contains":"time","values":{"med":9.1693165,"max":12670.265971,"p(90)":440.16810479999987,"p(95)":1116.1761909999989,"avg":245.16782324804868,"min":1.24322}},"http_req_duration{name:announcements}":{"type":"trend","contains":"time","values":{"avg":162.70269780145688,"min":0.87418,"med":5.1869715,"max":10003.288559,"p(90)":268.3803073999999,"p(95)":580.6785344999995},"thresholds":{"p(95)<3000":{"ok":true}}},"errors":{"type":"rate","contains":"default","values":{"rate":0.0005504192771644258,"passes":758,"fails":1376374},"thresholds":{"rate<0.1":{"ok":true}}},"iteration_duration":{"values":{"avg":6592.180577918125,"min":3009.292915,"med":5779.5562455,"max":41459.487341,"p(90)":10848.031043499997,"p(95)":13373.237601199995},"type":"trend","contains":"time"},"http_req_duration{name:health}":{"type":"trend","contains":"time","values":{"p(90)":974.6713929999995,"p(95)":2163.2306714999995,"avg":332.9322361212788,"min":0.526643,"med":14.6578825,"max":8210.780146},"thresholds":{"p(95)<2000":{"ok":false}}},"http_req_duration{name:auth_me}":{"type":"trend","contains":"time","values":{"max":10000.72264,"p(90)":1245.9597846,"p(95)":2942.480171649992,"avg":413.2792285091337,"min":0.980081,"med":9.5276455},"thresholds":{"p(95)<3000":{"ok":true}}},"http_reqs":{"type":"counter","contains":"default","values":{"count":1377134,"rate":3230.947138941267}},"http_req_connecting":{"values":{"avg":0.04474016134740621,"min":0,"med":0,"max":79.875333,"p(90)":0.17766769999999996,"p(95)":0.262655},"type":"trend","contains":"time"},"data_sent":{"contains":"data","values":{"count":1116356962,"rate":2619128.0822425885},"type":"counter"},"vus_max":{"type":"gauge","contains":"default","values":{"min":5000,"max":5000,"value":5000}},"checks":{"type":"rate","contains":"default","values":{"rate":0.9994495807228356,"passes":1376374,"fails":758}}},"setup_data":{"token":"eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0yMDI1LTEwLTE3IiwidHlwIjoiSldUIn0.eyJzdWIiOiI4N2RjYWU2OS1lMDMxLTQ3MTMtODExNC0yYzUxYzhiMmI4NmMiLCJpYXQiOjE3NzI4Mzk1NTcsImV4cCI6MTc3Mjg0MDE1NywidHlwZSI6ImFjY2VzcyIsImNpZCI6IjZhY2Q5YjRhLWJjMGYtNGEwOS1iN2ZhLWE2ZjVlYTRkOGI3ZiIsInV0Ijoib2ZmaWNlciIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9hcGkvdjEvYXV0aCIsImF1ZCI6Imhzcy1hcGkiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIGFkZHJlc3MifQ.EZB-8Ix_e_s7isZ1ix2dYNjMSM1oEcLZjq5F12dvZSzxq1tyY-qh64whGqhpkXYxVMJ_n6jgP_YrSw6wrw_N6hT-8dNCUwzJPpbT6CDT4vI9dXuO4hN-7-59iEV6DEDA5pUU0FlqBE5CPQKRlgXSbzcuImBecNtThFYH_FkB_sEtlzlDNgi-bUEDHkWYk7zrCjSSOCd0qkUdJWX0SfXuYaLEB0t5gqqTs4bvAnUDvPMoJFWcC71o-M-kFQAqXsYtpuS0ZVkflE32MnphJUxdTusC5TMUHPSrHj0QqYq40QhohPuYhfPxzjjLvF-oWIoNmfKHeytEKvOf9SMnISDlLA"}}
+###JSON_SUMMARY_END###
+
+running (7m06.2s), 0000/5000 VUs, 229522 complete and 0 interrupted iterations
+capacity_test ✓ [ 100% ] 0000/5000 VUs  7m0s
+time="2026-03-06T23:33:06Z" level=error msg="thresholds on metrics 'http_req_duration{name:health}' have been crossed"
+root@osm-master:/var/lib/kube_apply# 

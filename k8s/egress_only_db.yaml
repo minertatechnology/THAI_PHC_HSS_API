@@ -1,0 +1,61 @@
+# ===================================================================
+# NetworkPolicy: อนุญาต egress จาก API pods
+# - PgBouncer (192.168.88.61:6432)
+# - CoreDNS  (53/UDP, 53/TCP) — ให้ pod resolve ชื่อ internal + external
+# - DOPA ThaiD Sandbox (110.78.30.246:443)
+# - DOPA ThaiD Production (110.78.30.242-249:443)
+#
+# คำสั่ง: kubectl -n aorsormor-system apply -f egress_only_db.yaml
+# ===================================================================
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-only-db-egress
+  namespace: aorsormor-system
+spec:
+  podSelector:
+    matchLabels:
+      app: osm-thai-phc-hss-api
+  policyTypes:
+    - Egress
+  egress:
+    # --- PgBouncer ---
+    - to:
+        - ipBlock:
+            cidr: 192.168.88.61/32
+      ports:
+        - port: 6432
+          protocol: TCP
+
+    # --- DNS (CoreDNS cluster IP = 10.96.0.10) ---
+    - to:
+        - ipBlock:
+            cidr: 10.96.0.10/32
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+
+    # --- DOPA ThaiD Sandbox ---
+    - to:
+        - ipBlock:
+            cidr: 110.78.30.246/32
+      ports:
+        - port: 443
+          protocol: TCP
+
+    # --- DOPA ThaiD Production (ทุก IP จาก nslookup) ---
+    - to:
+        - ipBlock:
+            cidr: 110.78.30.243/32
+        - ipBlock:
+            cidr: 110.78.30.249/32
+        - ipBlock:
+            cidr: 110.78.30.242/32
+        - ipBlock:
+            cidr: 110.78.30.248/32
+      ports:
+        - port: 443
+          protocol: TCP

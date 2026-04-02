@@ -1,0 +1,20 @@
+# ===================================================================
+# ThaiD DOPA Integration ConfigMap
+# คำสั่ง: kubectl -n aorsormor-system apply -f thaid-config.yaml
+# ===================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thaid-config
+  namespace: aorsormor-system
+  labels:
+    app: osm-thai-phc-hss-api
+    component: thaid
+data:
+  # ThaiD DOPA Integration (Production)
+  THAID_API_KEY: "lei0WbrRVivufqc5hfCt1YiifbZjFaGM0CCaHbAG"
+  THAID_CLIENT_ID: "ZVl5NzJUQVQ1MXZLaUxITjZXTTVYdnZ5Z2ZrWHN6bjE"
+  THAID_CLIENT_SECRET: "elB5TzZLOXhkTHZOUWdsajVaWVdTcWJxbjFSTHVFWk4wbUw2S3ZZSA"
+  THAID_REQUEST_URI: "https://imauth.bora.dopa.go.th/api/v2/oauth2/token/"
+  THAID_AUTHORIZE_URI: "https://imauth.bora.dopa.go.th/api/v2/oauth2/auth/"
+  THAID_REDIRECT_URI: "https://api-thaiphc.hss.moph.go.th/callback"

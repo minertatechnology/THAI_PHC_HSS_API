@@ -1,0 +1,321 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600;
+  }
+
+  .btn-secondary {
+    @apply btn bg-slate-200 text-slate-800 hover:bg-slate-300 focus-visible:ring-slate-400;
+  }
+
+  .btn-ghost {
+    @apply btn border border-white/70 bg-white/10 text-white hover:bg-white/20 focus-visible:ring-white;
+  }
+
+  .btn-danger {
+    @apply btn bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-600;
+  }
+
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white p-6 shadow-sm;
+  }
+
+  .page-layout {
+    @apply mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-12 pt-6 lg:px-8;
+  }
+
+  .page-header {
+    @apply flex flex-col gap-4 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between;
+  }
+
+  .table-shell {
+    @apply overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  table.data-table {
+    @apply min-w-full divide-y divide-slate-200;
+  }
+
+  table.data-table thead {
+    @apply bg-slate-50;
+  }
+
+  table.data-table th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600;
+  }
+
+  table.data-table tbody tr {
+    @apply border-b border-slate-100 last:border-b-0;
+  }
+
+  table.data-table td {
+    @apply px-4 py-3 align-top text-sm text-slate-700;
+  }
+
+  .status-pill {
+    @apply inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold uppercase;
+  }
+
+  .status-active {
+    @apply status-pill bg-emerald-100 text-emerald-700;
+  }
+
+  .status-inactive {
+    @apply status-pill bg-rose-100 text-rose-700;
+  }
+
+  .form-section {
+    @apply grid gap-4 md:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .form-field {
+    @apply flex flex-col gap-1.5;
+  }
+
+  .form-label {
+    @apply text-sm font-medium text-slate-700;
+  }
+
+  .form-input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40;
+  }
+
+  .page-alert {
+    @apply rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700;
+  }
+
+  .loading-state {
+    @apply flex items-center justify-center py-12 text-sm text-slate-500;
+  }
+
+  .page {
+    @apply page-layout;
+  }
+
+  .muted {
+    @apply text-sm text-slate-500;
+  }
+
+  .muted.small,
+  .small {
+    @apply text-xs text-slate-500;
+  }
+
+  .primary {
+    @apply btn-primary;
+  }
+
+  .secondary {
+    @apply btn-secondary;
+  }
+
+  .danger {
+    @apply btn-danger;
+  }
+
+  .header-actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .page-header button,
+  .header-actions button {
+    @apply btn-secondary;
+  }
+
+  .form {
+    @apply flex flex-col gap-6;
+  }
+
+  .form-grid {
+    @apply grid gap-4 md:grid-cols-2;
+  }
+
+  .form-row {
+    @apply form-field;
+  }
+
+  .form-row label {
+    @apply form-label;
+  }
+
+  .form-row input,
+  .form-row select,
+  .form-row textarea {
+    @apply form-input;
+  }
+
+  .datepicker-trigger {
+    @apply inline-flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-left text-sm font-medium text-slate-800 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200;
+  }
+
+  .datepicker-trigger .placeholder {
+    @apply text-slate-400;
+  }
+
+  .datepicker-trigger svg {
+    @apply h-4 w-4 text-slate-400;
+  }
+
+  .datepicker-trigger:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
+
+  .react-datepicker {
+    @apply rounded-xl border border-slate-200 bg-white text-slate-800 shadow-xl;
+  }
+
+  .react-datepicker__header {
+    @apply mb-2 rounded-t-xl border-b border-slate-200 bg-slate-50 px-4 py-3;
+  }
+
+  .react-datepicker__current-month {
+    @apply text-base font-semibold text-slate-800;
+  }
+
+  .react-datepicker__day-name,
+  .react-datepicker__day {
+    @apply w-10 select-none text-center text-sm font-medium;
+  }
+
+  .react-datepicker__day {
+    @apply rounded-full transition hover:bg-blue-100;
+  }
+
+  .react-datepicker__day--selected,
+  .react-datepicker__day--keyboard-selected {
+    @apply bg-blue-600 text-white hover:bg-blue-600;
+  }
+
+  .react-datepicker__navigation {
+    @apply top-3 h-8 w-8 text-blue-600 hover:text-blue-700;
+  }
+
+  .react-datepicker__navigation-icon::before {
+    @apply border-blue-600;
+  }
+
+  .react-datepicker__triangle {
+    @apply hidden;
+  }
+
+  .form-actions {
+    @apply flex justify-end;
+  }
+
+  .form-actions .primary {
+    @apply btn-primary;
+  }
+
+  .error {
+    @apply page-alert;
+  }
+
+  .loading {
+    @apply loading-state;
+  }
+
+  .search-bar {
+    @apply flex flex-col gap-2 sm:flex-row;
+  }
+
+  .search-bar input {
+    @apply form-input flex-1;
+  }
+
+  .search-bar button {
+    @apply btn-primary;
+  }
+
+  .table-wrapper {
+    @apply overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .table-wrapper table {
+    @apply min-w-full divide-y divide-slate-200;
+  }
+
+  .table-wrapper thead {
+    @apply bg-slate-50;
+  }
+
+  .table-wrapper th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600;
+  }
+
+  .table-wrapper tbody tr {
+    @apply border-b border-slate-100 last:border-b-0;
+  }
+
+  .table-wrapper td {
+    @apply px-4 py-3 align-top text-sm text-slate-700;
+  }
+
+  .status {
+    @apply inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold uppercase;
+  }
+
+  .status.active {
+    @apply bg-emerald-100 text-emerald-700;
+  }
+
+  .status.inactive {
+    @apply bg-rose-100 text-rose-700;
+  }
+
+  .actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .actions button {
+    @apply btn-secondary text-xs;
+  }
+
+  .actions .secondary {
+    @apply btn-secondary text-xs;
+  }
+
+  .actions .danger {
+    @apply btn-danger text-xs;
+  }
+
+  .details-grid {
+    @apply grid gap-6 md:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .details-grid h2 {
+    @apply text-lg font-semibold text-slate-800;
+  }
+
+  .details-grid dl {
+    @apply mt-3 space-y-2;
+  }
+
+  .details-grid dt {
+    @apply text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+
+  .details-grid dd {
+    @apply text-sm text-slate-800;
+  }
+}

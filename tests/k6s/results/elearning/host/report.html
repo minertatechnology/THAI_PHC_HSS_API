@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K6 Report — E-Learning</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b,#334155);padding:20px 32px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #a855f7}
+.header h1{font-size:22px;color:#f1f5f9}.header h1 span{color:#a855f7}
+.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:.2s}
+.btn-pdf{background:#a855f7;color:#fff}.btn-pdf:hover{background:#9333ea}
+.btn-pdf:disabled{background:#475569;cursor:not-allowed}
+.content{padding:24px 32px;max-width:1400px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.card{background:#1e293b;border-radius:12px;padding:16px 20px;border:1px solid #334155}
+.card h3{font-size:12px;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.card-val{font-size:28px;font-weight:700}
+.card-sub{font-size:12px;color:#64748b;margin-top:4px}
+.chart-box{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155;margin-bottom:20px}
+.chart-box h3{font-size:15px;margin-bottom:14px;color:#e2e8f0}
+.chart-wrap{position:relative;height:280px}
+.tbl-box{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155;margin-bottom:20px;overflow-x:auto}
+.tbl-box h3{font-size:15px;margin-bottom:14px;color:#e2e8f0}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:8px 12px;background:#0f172a;color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:8px 12px;border-top:1px solid #334155;font-size:13px}
+tr:hover td{background:#334155}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.b-pass{background:#065f46;color:#6ee7b7}.b-fail{background:#7f1d1d;color:#fca5a5}.b-warn{background:#78350f;color:#fcd34d}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.dot-ok{background:#22c55e}.dot-warn{background:#eab308}.dot-fail{background:#ef4444}
+.section-title{font-size:18px;font-weight:700;margin:28px 0 14px;color:#f1f5f9;padding-bottom:6px;border-bottom:1px solid #334155}
+.accent{color:#a855f7}
+#loading{display:none;position:fixed;inset:0;background:rgba(15,23,42,.9);z-index:9999;align-items:center;justify-content:center}
+#loading.show{display:flex}
+.spinner{width:36px;height:36px;border:4px solid #334155;border-top-color:#a855f7;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="loading"><div style="text-align:center"><div class="spinner" style="margin:0 auto 12px"></div><div style="color:#94a3b8">Generating PDF...</div></div></div>
+
+<div id="report">
+<div class="header">
+  <h1><span>K6</span> Load Test Report — E-Learning</h1>
+  <button class="btn btn-pdf" id="btnPdf" onclick="generatePdf()" disabled>Download PDF</button>
+</div>
+<div class="content" id="mainContent"></div>
+</div>
+
+<script>
+const PROJECT = 'elearning';
+const LABEL = 'E-Learning';
+const COLOR = '#a855f7';
+const TESTS = ['smoke','admin','test','stress'];
+const TEST_LABELS = {smoke:'Smoke (5 VUs)',admin:'Admin (10→50 VUs)',test:'Load (50→200 VUs)',stress:'Stress (500 VUs)'};
+let data = {};
+let charts = [];
+
+function gv(d,key,field){try{return d.metrics[key].values[field]}catch{return null}}
+function fm(v){if(v==null)return'-';return v>=1000?(v/1000).toFixed(2)+'s':v.toFixed(1)+'ms'}
+function fn(v){return v==null?'-':v.toLocaleString()}
+function fp(v){return v==null?'-':(v*100).toFixed(2)+'%'}
+function fb(v){if(v==null)return'-';if(v>1048576)return(v/1048576).toFixed(2)+' MB';if(v>1024)return(v/1024).toFixed(1)+' KB';return v+' B'}
+
+async function loadData(){
+  let ok=0;
+  for(const t of TESTS){
+    try{
+      const r=await fetch(t+'-summary.json');
+      if(r.ok){data[t]=await r.json();ok++}
+    }catch{}
+  }
+  if(ok>0){render();document.getElementById('btnPdf').disabled=false}
+  else{document.getElementById('mainContent').innerHTML='<p style="text-align:center;padding:40px;color:#64748b">ไม่พบไฟล์ JSON — ให้เปิดผ่าน web server (เช่น Laragon)</p>'}
+}
+
+function render(){
+  charts.forEach(c=>c.destroy());charts=[];
+  let h='';
+
+  let totalReqs=0,totalIter=0,worstErr=0,avgP95=0,p95c=0;
+  for(const t of TESTS){
+    if(!data[t])continue;const d=data[t];
+    totalReqs+=(gv(d,'http_reqs','count')||0);
+    totalIter+=(gv(d,'iterations','count')||0);
+    const e=gv(d,'errors','rate')||0;if(e>worstErr)worstErr=e;
+    const p=gv(d,'http_req_duration','p(95)');if(p!=null){avgP95+=p;p95c++}
+  }
+  if(p95c)avgP95/=p95c;
+
+  h+=`<div class="grid">
+    <div class="card"><h3>Total Requests</h3><div class="card-val accent">${fn(totalReqs)}</div></div>
+    <div class="card"><h3>Total Iterations</h3><div class="card-val">${fn(totalIter)}</div></div>
+    <div class="card"><h3>Avg P95 Response</h3><div class="card-val" style="color:${avgP95>1000?'#ef4444':avgP95>500?'#eab308':'#22c55e'}">${fm(avgP95)}</div></div>
+    <div class="card"><h3>Worst Error Rate</h3><div class="card-val" style="color:${worstErr>0.05?'#ef4444':worstErr>0.01?'#eab308':'#22c55e'}">${fp(worstErr)}</div></div>
+  </div>`;
+
+  h+=`<div class="chart-box"><h3>Response Time P95 — ทุก Test Type</h3><div class="chart-wrap"><canvas id="cP95"></canvas></div></div>`;
+  h+=`<div class="chart-box"><h3>Error Rate — ทุก Test Type</h3><div class="chart-wrap"><canvas id="cErr"></canvas></div></div>`;
+  h+=`<div class="chart-box"><h3>HTTP Requests & Iterations</h3><div class="chart-wrap"><canvas id="cReqs"></canvas></div></div>`;
+  h+=`<div class="chart-box"><h3>Response Time Breakdown (avg)</h3><div class="chart-wrap"><canvas id="cBreak"></canvas></div></div>`;
+  h+=`<div class="chart-box"><h3>Data Transfer</h3><div class="chart-wrap"><canvas id="cData"></canvas></div></div>`;
+
+  h+=`<div class="tbl-box"><h3>Summary Table</h3><table>
+    <tr><th>Test</th><th>VUs</th><th>Duration</th><th>Requests</th><th>Req/s</th><th>Avg</th><th>Med</th><th>P90</th><th>P95</th><th>Max</th><th>Error Rate</th><th>Checks</th><th>Threshold</th></tr>`;
+  for(const t of TESTS){
+    if(!data[t])continue;const d=data[t];
+    const vus=gv(d,'vus_max','max')||gv(d,'vus','max')||'-';
+    const dur=d.state?(d.state.testRunDurationMs/1000).toFixed(1)+'s':'-';
+    const reqs=gv(d,'http_reqs','count');const rate=gv(d,'http_reqs','rate');
+    const avg=gv(d,'http_req_duration','avg');const med=gv(d,'http_req_duration','med');
+    const p90=gv(d,'http_req_duration','p(90)');const p95=gv(d,'http_req_duration','p(95)');
+    const max=gv(d,'http_req_duration','max');
+    const err=gv(d,'errors','rate')||0;const chk=gv(d,'checks','rate');
+    const ec=err>0.05?'b-fail':err>0.01?'b-warn':'b-pass';
+    const cc=chk!=null?(chk>=0.95?'b-pass':chk>=0.8?'b-warn':'b-fail'):'';
+    const th=d.metrics?.http_req_duration?.thresholds;
+    let tok=null;if(th)tok=Object.values(th).every(x=>x.ok);
+    h+=`<tr><td>${TEST_LABELS[t]||t}</td><td>${vus}</td><td>${dur}</td><td>${fn(reqs)}</td><td>${rate!=null?rate.toFixed(1):'-'}</td>
+    <td>${fm(avg)}</td><td>${fm(med)}</td><td>${fm(p90)}</td><td>${fm(p95)}</td><td>${fm(max)}</td>
+    <td><span class="badge ${ec}">${fp(err)}</span></td><td>${chk!=null?`<span class="badge ${cc}">${fp(chk)}</span>`:'-'}</td>
+    <td>${tok!=null?(tok?'<span class="dot dot-ok"></span>Pass':'<span class="dot dot-fail"></span>Fail'):'-'}</td></tr>`;
+  }
+  h+='</table></div>';
+
+  for(const t of TESTS){
+    if(!data[t])continue;const d=data[t];
+    h+=`<h2 class="section-title">${TEST_LABELS[t]||t}</h2>`;
+
+    const vus=gv(d,'vus_max','max')||gv(d,'vus','max')||'-';
+    const iter=gv(d,'iterations','count');const reqs=gv(d,'http_reqs','count');
+    const rate=gv(d,'http_reqs','rate');const avg=gv(d,'http_req_duration','avg');
+    const p95=gv(d,'http_req_duration','p(95)');const err=gv(d,'errors','rate')||0;
+    const chk=gv(d,'checks','rate');const sent=gv(d,'data_sent','count');const recv=gv(d,'data_received','count');
+
+    h+=`<div class="grid">
+      <div class="card"><h3>VUs</h3><div class="card-val">${vus}</div></div>
+      <div class="card"><h3>Iterations</h3><div class="card-val">${fn(iter)}</div></div>
+      <div class="card"><h3>Requests</h3><div class="card-val">${fn(reqs)}</div><div class="card-sub">${rate!=null?rate.toFixed(1)+' req/s':''}</div></div>
+      <div class="card"><h3>Avg Response</h3><div class="card-val" style="color:${avg>1000?'#ef4444':avg>500?'#eab308':'#22c55e'}">${fm(avg)}</div><div class="card-sub">P95: ${fm(p95)}</div></div>
+      <div class="card"><h3>Error Rate</h3><div class="card-val" style="color:${err>0.05?'#ef4444':err>0.01?'#eab308':'#22c55e'}">${fp(err)}</div></div>
+      <div class="card"><h3>Checks</h3><div class="card-val" style="color:${chk>=0.95?'#22c55e':chk>=0.8?'#eab308':'#ef4444'}">${chk!=null?fp(chk):'-'}</div></div>
+      <div class="card"><h3>Data Sent</h3><div class="card-val">${fb(sent)}</div></div>
+      <div class="card"><h3>Data Received</h3><div class="card-val">${fb(recv)}</div></div>
+    </div>`;
+
+    h+=`<div class="chart-box"><h3>Response Time Distribution</h3><div class="chart-wrap"><canvas id="cDist_${t}"></canvas></div></div>`;
+
+    const rg=d.root_group;
+    if(rg){
+      const groups=rg.groups||[];const rc=rg.checks||[];
+      if(groups.length||rc.length){
+        h+=`<div class="tbl-box"><h3>Endpoint Checks</h3><table><tr><th>Group / Check</th><th>Passes</th><th>Fails</th><th>Rate</th><th>Status</th></tr>`;
+        for(const g of groups){
+          h+=`<tr><td colspan="5" style="font-weight:700;color:${COLOR};background:#0f172a">${g.name}</td></tr>`;
+          for(const c of(g.checks||[])){
+            const tot=c.passes+c.fails;const r=tot>0?c.passes/tot:0;
+            const bc=r>=1?'b-pass':r>=0.8?'b-warn':'b-fail';const dc=r>=1?'dot-ok':r>=0.8?'dot-warn':'dot-fail';
+            h+=`<tr><td style="padding-left:24px">${c.name}</td><td>${fn(c.passes)}</td><td>${c.fails>0?'<span style="color:#ef4444">'+fn(c.fails)+'</span>':'0'}</td><td><span class="badge ${bc}">${fp(r)}</span></td><td><span class="dot ${dc}"></span>${r>=1?'Pass':'Fail'}</td></tr>`;
+          }
+        }
+        if(rc.length){
+          h+=`<tr><td colspan="5" style="font-weight:700;color:${COLOR};background:#0f172a">Login Checks</td></tr>`;
+          for(const c of rc){
+            const tot=c.passes+c.fails;const r=tot>0?c.passes/tot:0;
+            const bc=r>=1?'b-pass':r>=0.8?'b-warn':'b-fail';const dc=r>=1?'dot-ok':r>=0.8?'dot-warn':'dot-fail';
+            h+=`<tr><td style="padding-left:24px">${c.name}</td><td>${fn(c.passes)}</td><td>${c.fails>0?'<span style="color:#ef4444">'+fn(c.fails)+'</span>':'0'}</td><td><span class="badge ${bc}">${fp(r)}</span></td><td><span class="dot ${dc}"></span>${r>=1?'Pass':'Fail'}</td></tr>`;
+          }
+        }
+        h+='</table></div>';
+      }
+    }
+  }
+
+  document.getElementById('mainContent').innerHTML=h;
+  buildCharts();
+}
+
+function buildCharts(){
+  const labels=TESTS.filter(t=>data[t]).map(t=>TEST_LABELS[t]||t);
+  const active=TESTS.filter(t=>data[t]);
+
+  charts.push(new Chart(document.getElementById('cP95'),{type:'bar',data:{labels,datasets:[{label:'P95 (ms)',data:active.map(t=>gv(data[t],'http_req_duration','p(95)')),backgroundColor:COLOR+'99',borderColor:COLOR,borderWidth:1,borderRadius:4}]},options:chartOpts('ms')}));
+
+  charts.push(new Chart(document.getElementById('cErr'),{type:'bar',data:{labels,datasets:[{label:'Error Rate %',data:active.map(t=>(gv(data[t],'errors','rate')||0)*100),backgroundColor:'#ef444499',borderColor:'#ef4444',borderWidth:1,borderRadius:4}]},options:chartOpts('%')}));
+
+  charts.push(new Chart(document.getElementById('cReqs'),{type:'bar',data:{labels,datasets:[
+    {label:'HTTP Requests',data:active.map(t=>gv(data[t],'http_reqs','count')),backgroundColor:COLOR+'99',borderColor:COLOR,borderWidth:1,borderRadius:4},
+    {label:'Iterations',data:active.map(t=>gv(data[t],'iterations','count')),backgroundColor:'#8b5cf699',borderColor:'#8b5cf6',borderWidth:1,borderRadius:4}
+  ]},options:chartOpts('')}));
+
+  const parts=[
+    {key:'http_req_connecting',label:'Connecting',color:'#f59e0b'},
+    {key:'http_req_tls_handshaking',label:'TLS',color:'#8b5cf6'},
+    {key:'http_req_sending',label:'Sending',color:'#06b6d4'},
+    {key:'http_req_waiting',label:'Waiting (TTFB)',color:'#3b82f6'},
+    {key:'http_req_receiving',label:'Receiving',color:'#22c55e'},
+  ];
+  charts.push(new Chart(document.getElementById('cBreak'),{type:'bar',data:{labels,datasets:parts.map(p=>({label:p.label,data:active.map(t=>gv(data[t],p.key,'avg')||0),backgroundColor:p.color+'99',borderColor:p.color,borderWidth:1}))},options:{...chartOpts('ms'),scales:{x:{stacked:true,ticks:{color:'#94a3b8'},grid:{color:'#334155'}},y:{stacked:true,ticks:{color:'#94a3b8',callback:v=>v+' ms'},grid:{color:'#334155'}}}}}));
+
+  charts.push(new Chart(document.getElementById('cData'),{type:'bar',data:{labels,datasets:[
+    {label:'Sent',data:active.map(t=>(gv(data[t],'data_sent','count')||0)/1024),backgroundColor:'#06b6d499',borderColor:'#06b6d4',borderWidth:1,borderRadius:4},
+    {label:'Received',data:active.map(t=>(gv(data[t],'data_received','count')||0)/1024),backgroundColor:'#22c55e99',borderColor:'#22c55e',borderWidth:1,borderRadius:4}
+  ]},options:chartOpts('KB')}));
+
+  for(const t of active){
+    const cv=document.getElementById('cDist_'+t);if(!cv)continue;
+    const dur=data[t].metrics?.http_req_duration?.values;if(!dur)continue;
+    charts.push(new Chart(cv,{type:'bar',data:{labels:['Min','Avg','Med','P90','P95','Max'],datasets:[{label:'ms',data:[dur.min,dur.avg,dur.med,dur['p(90)'],dur['p(95)'],dur.max],backgroundColor:['#22c55e99','#3b82f699','#06b6d499','#eab30899','#f59e0b99','#ef444499'],borderColor:['#22c55e','#3b82f6','#06b6d4','#eab308','#f59e0b','#ef4444'],borderWidth:1,borderRadius:4}]},options:{...chartOpts('ms'),plugins:{legend:{display:false}}}}));
+  }
+}
+
+function chartOpts(unit){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'#334155'}},y:{ticks:{color:'#94a3b8',callback:v=>v+(unit?' '+unit:'')},grid:{color:'#334155'}}}}}
+
+async function generatePdf(){
+  const el=document.getElementById('loading');el.classList.add('show');
+  try{
+    const{jsPDF}=window.jspdf;
+    const pdf=new jsPDF('l','mm','a4');
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),m=10;
+    const content=document.getElementById('report');
+    const canvas=await html2canvas(content,{backgroundColor:'#0f172a',scale:2,useCORS:true,logging:false,windowWidth:content.scrollWidth,windowHeight:content.scrollHeight});
+    const imgW=pw-m*2;const scale=imgW/canvas.width;const sliceH=Math.floor((ph-15)/scale);
+    let srcY=0;let first=true;
+    while(srcY<canvas.height){
+      if(!first)pdf.addPage('a4','l');first=false;
+      const h=Math.min(sliceH,canvas.height-srcY);
+      const sc=document.createElement('canvas');sc.width=canvas.width;sc.height=h;
+      sc.getContext('2d').drawImage(canvas,0,srcY,canvas.width,h,0,0,canvas.width,h);
+      pdf.addImage(sc.toDataURL('image/jpeg',0.92),'JPEG',m,8,imgW,h*scale);
+      srcY+=h;
+    }
+    pdf.save('k6-report-elearning.pdf');
+  }catch(e){alert('PDF error: '+e.message)}finally{el.classList.remove('show')}
+}
+
+loadData();
+</script>
+</body>
+</html>

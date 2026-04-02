@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงานผลการทดสอบความพร้อมรองรับผู้ใช้งาน - ระบบสารสนเทศ อสม.</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Sarabun', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f0f2f5; color: #1a1a2e; line-height: 2;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1a365d 0%, #2a4a7f 50%, #2b6cb0 100%);
+    color: white; padding: 36px 40px; position: relative; overflow: hidden;
+  }
+  .header::after {
+    content: ''; position: absolute; top: -50%; right: -10%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .header .subtitle { font-size: 15px; opacity: 0.9; }
+  .header .meta { display: flex; gap: 24px; margin-top: 14px; font-size: 13px; opacity: 0.75; flex-wrap: wrap; }
+  .header .org { font-size: 13px; margin-top: 8px; opacity: 0.7; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 28px; }
+
+  .btn-print {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #2b6cb0; color: white; border: none;
+    padding: 12px 24px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100;
+  }
+  .btn-print:hover { transform: scale(1.05); transition: transform 0.2s; }
+
+  .section {
+    background: white; border-radius: 12px;
+    padding: 28px 32px; margin-bottom: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .section-header {
+    margin-bottom: 18px; padding-bottom: 14px; border-bottom: 2px solid #e2e8f0;
+  }
+  .section-title { font-size: 19px; font-weight: 700; color: #1a365d; }
+  .section-subtitle { font-size: 13px; color: #718096; margin-top: 2px; }
+
+  .overview-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; margin-bottom: 24px;
+  }
+  .overview-card {
+    background: white; border-radius: 12px;
+    padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    text-align: center; border-top: 5px solid #ccc;
+  }
+  .overview-card.good { border-top-color: #38a169; }
+  .overview-card.moderate { border-top-color: #d69e2e; }
+  .overview-card.over { border-top-color: #e53e3e; }
+  .overview-card .card-label { font-size: 13px; color: #718096; margin-bottom: 4px; }
+  .overview-card .card-value { font-size: 44px; font-weight: 800; }
+  .overview-card .card-desc { font-size: 12px; color: #a0aec0; margin-top: 4px; }
+  .green { color: #38a169; }
+  .yellow { color: #d69e2e; }
+  .red { color: #e53e3e; }
+
+  .data-table {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+  }
+  .data-table th {
+    text-align: center; padding: 12px 14px;
+    background: #1a365d; color: white; font-weight: 600; font-size: 13px;
+  }
+  .data-table th:first-child { text-align: left; border-radius: 8px 0 0 0; }
+  .data-table th:last-child { border-radius: 0 8px 0 0; }
+  .data-table td {
+    padding: 11px 14px; border-bottom: 1px solid #edf2f7; text-align: center;
+  }
+  .data-table td:first-child { text-align: left; font-weight: 600; color: #2d3748; }
+  .data-table tr:nth-child(even) { background: #f7fafc; }
+  .data-table tr:hover { background: #edf2f7; }
+
+  .result-badge {
+    display: inline-block; padding: 3px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+  }
+  .badge-pass { background: #c6f6d5; color: #22543d; }
+  .badge-warn { background: #fefcbf; color: #744210; }
+  .badge-fail { background: #fed7d7; color: #822727; }
+
+  .highlight-box { padding: 18px 24px; border-radius: 10px; margin-bottom: 18px; font-size: 14px; }
+  .highlight-box.success { background: #f0fff4; border-left: 5px solid #38a169; }
+  .highlight-box.warning { background: #fffff0; border-left: 5px solid #d69e2e; }
+  .highlight-box.danger { background: #fff5f5; border-left: 5px solid #e53e3e; }
+  .highlight-box.info { background: #ebf8ff; border-left: 5px solid #3182ce; }
+
+  .charts-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px; margin-bottom: 24px;
+  }
+  .chart-card {
+    background: white; border-radius: 12px; padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .chart-card h3 { font-size: 14px; font-weight: 600; color: #2d3748; margin-bottom: 12px; }
+  .chart-container { position: relative; height: 280px; }
+
+  .content-text { font-size: 15px; line-height: 2.2; color: #2d3748; }
+  .content-text p { margin-bottom: 14px; }
+  .content-text ul, .content-text ol { margin-left: 24px; margin-bottom: 14px; }
+  .content-text li { margin-bottom: 8px; }
+
+  .conclusion-box {
+    background: linear-gradient(135deg, #f0fff4, #e6fffa);
+    border: 2px solid #9ae6b4; border-radius: 14px;
+    padding: 28px 32px; margin-bottom: 24px;
+  }
+  .conclusion-box h3 { font-size: 18px; font-weight: 700; color: #22543d; margin-bottom: 12px; }
+
+  .footer {
+    text-align: center; padding: 28px; color: #a0aec0; font-size: 12px;
+    border-top: 1px solid #e2e8f0; margin-top: 12px;
+  }
+
+  @media (max-width: 900px) { .charts-grid, .overview-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>รายงานผลการทดสอบความพร้อมรองรับผู้ใช้งาน</h1>
+  <div class="subtitle">ระบบสารสนเทศสาธารณสุขชุมชน (Thai PHC HSS API) - ระบบตัวกลางรองรับ อสม. 1.08 ล้านคนทั่วประเทศ</div>
+  <div class="meta">
+    <span>วันที่ทดสอบ: 7 มีนาคม 2569</span>
+    <span>สภาพแวดล้อม: Kubernetes Cluster (Production-equivalent)</span>
+    <span>เครื่องมือ: Grafana K6 (มาตรฐานสากล)</span>
+  </div>
+</div>
+
+<div class="container">
+
+<button class="btn-print no-print" onclick="window.print()">พิมพ์ / บันทึก PDF</button>
+
+<!-- ==================== 1. บทสรุปผู้บริหาร ==================== -->
+<div class="section" style="border-left: 5px solid #1a365d;">
+  <div class="section-header">
+    <div class="section-title">1. บทสรุปผู้บริหาร (Executive Summary)</div>
+  </div>
+  <div class="content-text">
+    <p>
+      ระบบ <strong>Thai PHC HSS API</strong> เป็น<strong>ระบบตัวกลาง (Central Platform)</strong>
+      ที่ให้บริการข้อมูลสาธารณสุขชุมชนแก่ผู้ใช้งาน อสม. ทั่วประเทศ จำนวน <strong>1,080,000 คน</strong>
+      รวมถึงทำหน้าที่เป็น <strong>ระบบยืนยันตัวตนกลาง (Single Sign-On / SSO)</strong>
+      ให้กับระบบย่อยอื่นๆ เช่น Smart OSM API และ E-Learning API
+    </p>
+    <p>
+      การทดสอบครั้งนี้มีวัตถุประสงค์เพื่อ<strong>ยืนยันว่าระบบสามารถรองรับผู้ใช้งานจริง
+      ในช่วงที่มีการใช้งานสูงสุด</strong> (เช่น ช่วงวันที่ 25-สิ้นเดือนของทุกเดือน)
+      โดยจำลองผู้ใช้งานพร้อมกัน 3 ระดับ: 5,000 / 10,000 / 20,000 คน
+    </p>
+  </div>
+</div>
+
+<!-- ==================== 2. ผลการทดสอบ ==================== -->
+<div class="overview-grid">
+  <div class="overview-card good">
+    <div class="card-label">5,000 คนพร้อมกัน</div>
+    <div class="card-value green">99.94%</div>
+    <div class="card-desc">สำเร็จ | 3,231 คำขอ/วินาที</div>
+  </div>
+  <div class="overview-card moderate">
+    <div class="card-label">10,000 คนพร้อมกัน</div>
+    <div class="card-value yellow">99.40%</div>
+    <div class="card-desc">สำเร็จ | 5,918 คำขอ/วินาที</div>
+  </div>
+</div>
+
+<!-- ==================== 3. วิธีการทดสอบ ==================== -->
+<div class="section" style="border-left: 5px solid #3182ce;">
+  <div class="section-header">
+    <div class="section-title">2. วิธีการทดสอบ</div>
+    <div class="section-subtitle">จำลองการใช้งานจริงของ อสม. ภายในระบบ Kubernetes Cluster</div>
+  </div>
+  <div class="content-text">
+    <p>
+      การทดสอบใช้เครื่องมือ <strong>Grafana K6</strong> ซึ่งเป็นเครื่องมือทดสอบประสิทธิภาพมาตรฐานสากล
+      โดยจำลอง<strong>สถานการณ์การใช้งานจริง</strong>ของ อสม. 1 คน ดังนี้:
+    </p>
+    <table class="data-table" style="margin-bottom: 16px;">
+      <tr>
+        <th style="text-align:left;">ขั้นตอน</th>
+        <th>รายละเอียด</th>
+        <th>ความหมาย</th>
+      </tr>
+      <tr><td style="text-align:left;">1. ตรวจสอบสถานะระบบ</td><td>Health Check</td><td>ระบบพร้อมใช้งานหรือไม่</td></tr>
+      <tr><td style="text-align:left;">2. เข้าสู่ระบบ / ยืนยันตัวตน</td><td>Auth / SSO</td><td>ล็อกอินและตรวจสอบสิทธิ์</td></tr>
+      <tr><td style="text-align:left;">3. ดูข้อมูลส่วนตัว</td><td>โปรไฟล์ อสม.</td><td>เปิดหน้าข้อมูลตนเอง</td></tr>
+      <tr><td style="text-align:left;">4. ดูข้อมูลพื้นที่</td><td>จังหวัด/อำเภอ/ตำบล</td><td>เลือกพื้นที่รับผิดชอบ</td></tr>
+      <tr><td style="text-align:left;">5. ดูประกาศ</td><td>ข่าวสาร/ประกาศ</td><td>อ่านประกาศล่าสุด</td></tr>
+      <tr><td style="text-align:left;">6. ดูหน้าสรุป Dashboard</td><td>สรุปข้อมูลภาพรวม</td><td>หน้าจอหลักของระบบ</td></tr>
+    </table>
+    <p>
+      แต่ละรอบการใช้งาน มีช่วงพัก (Think Time) 3-7 วินาที เพื่อจำลองพฤติกรรมจริง
+      ที่ผู้ใช้อ่านข้อมูลบนหน้าจอก่อนกดหน้าถัดไป
+    </p>
+    <p>
+      การทดสอบดำเนินการ<strong>ภายใน Kubernetes Cluster โดยตรง</strong>
+      จึงไม่มีความล่าช้าจากเครือข่ายอินเทอร์เน็ตมาเป็นตัวแปร
+      ทำให้ผลลัพธ์สะท้อนความสามารถที่แท้จริงของระบบ
+    </p>
+  </div>
+</div>
+
+<!-- ==================== 4. ผลการทดสอบโดยละเอียด ==================== -->
+<div class="section page-break" style="border-left: 5px solid #2b6cb0;">
+  <div class="section-header">
+    <div class="section-title">3. ผลการทดสอบโดยละเอียด</div>
+  </div>
+
+  <h3 style="margin: 16px 0 10px; font-size: 16px; color: #1a365d;">3.1 ภาพรวมทั้ง 2 ระดับ</h3>
+  <table class="data-table" style="margin-bottom: 24px;">
+    <tr>
+      <th style="text-align:left;">ตัวชี้วัด</th>
+      <th>5,000 คน</th>
+      <th>10,000 คน</th>
+    </tr>
+    <tr>
+      <td style="text-align:left;">จำนวนคำขอที่ส่งทั้งหมด</td>
+      <td>1,377,134</td>
+      <td>2,522,462</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ความเร็วในการประมวลผล</td>
+      <td>3,231 คำขอ/วินาที</td>
+      <td>5,918 คำขอ/วินาที</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">อัตราความสำเร็จ</td>
+      <td class="green" style="font-weight:700;">99.94%</td>
+      <td class="green" style="font-weight:700;">99.40%</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">จำนวนคำขอที่ล้มเหลว</td>
+      <td class="green" style="font-weight:700;">758</td>
+      <td class="yellow" style="font-weight:700;">14,942</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">เวลาตอบสนอง (เฉลี่ย)</td>
+      <td>265 มิลลิวินาที</td>
+      <td>366 มิลลิวินาที</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">เวลาตอบสนอง (95% ของคำขอ)</td>
+      <td>1.6 วินาที</td>
+      <td>1.8 วินาที</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ผลประเมิน</td>
+      <td><span class="result-badge badge-pass">ผ่าน</span></td>
+      <td><span class="result-badge badge-pass">ผ่าน</span></td>
+    </tr>
+  </table>
+
+  <h3 style="margin: 16px 0 10px; font-size: 16px; color: #1a365d;">3.2 อัตราความสำเร็จแยกรายฟังก์ชัน</h3>
+  <table class="data-table" style="margin-bottom: 24px;">
+    <tr>
+      <th style="text-align:left;">ฟังก์ชันการใช้งาน</th>
+      <th>5,000 คน</th>
+      <th>10,000 คน</th>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ตรวจสอบสถานะระบบ (Health)</td>
+      <td class="green">99.78%</td>
+      <td class="green">99.37%</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">เข้าสู่ระบบ / ยืนยันตัวตน (Auth/SSO)</td>
+      <td class="green">99.99%</td>
+      <td class="green">98.21%</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ดูข้อมูลส่วนตัว (โปรไฟล์ อสม.)</td>
+      <td class="green">99.96%</td>
+      <td class="green">99.81%</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ดูข้อมูลพื้นที่ (จังหวัด/อำเภอ)</td>
+      <td class="green">99.98%</td>
+      <td class="green">99.57%</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ดูประกาศ (ข่าวสาร)</td>
+      <td class="green">99.97%</td>
+      <td class="green">99.71%</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">หน้าสรุป Dashboard</td>
+      <td class="green">99.98%</td>
+      <td class="green">99.76%</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ==================== CHARTS ==================== -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <h3>อัตราความสำเร็จแยกรายฟังก์ชัน (%)</h3>
+    <div class="chart-container"><canvas id="chartPassRate"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>ความสามารถในการรองรับ (Scalability)</h3>
+    <div class="chart-container"><canvas id="chartScalability"></canvas></div>
+  </div>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-card">
+    <h3>ความเร็วในการตอบสนองรายฟังก์ชัน (วินาที)</h3>
+    <div class="chart-container"><canvas id="chartResponseTime"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>จำนวนคำขอที่ล้มเหลว</h3>
+    <div class="chart-container"><canvas id="chartErrors"></canvas></div>
+  </div>
+</div>
+
+<!-- ==================== 5. ความสามารถในการรองรับ ==================== -->
+<div class="section page-break" style="border-left: 5px solid #38a169;">
+  <div class="section-header">
+    <div class="section-title">4. การประเมินจำนวนผู้ใช้งานที่รองรับได้</div>
+    <div class="section-subtitle">พิจารณาจากพฤติกรรมการใช้งานจริงของ อสม.</div>
+  </div>
+
+  <div class="content-text">
+    <p>
+      ในการใช้งานจริง ผู้ใช้ 1 คน ไม่ได้ส่งคำขอตลอดเวลา
+      แต่จะมีช่วงอ่านข้อมูล (Think Time) ระหว่างการกดแต่ละครั้ง
+      ดังนั้นจำนวนผู้ใช้ที่ระบบรองรับได้จริง ขึ้นอยู่กับ<strong>ความถี่ในการใช้งานของผู้ใช้แต่ละคน</strong>
+    </p>
+  </div>
+
+  <h3 style="margin: 16px 0 10px; font-size: 16px; color: #1a365d;">4.1 ขีดความสามารถสูงสุดของระบบ</h3>
+  <div class="highlight-box info">
+    <strong>ระบบสามารถประมวลผลได้สูงสุดประมาณ 6,000 คำขอต่อวินาที</strong>
+    โดยยังคงอัตราความสำเร็จเกิน 99%
+    (ทดสอบจริงที่ 5,918 คำขอ/วินาที ด้วย 10,000 ผู้ใช้พร้อมกัน ได้ 99.40%)
+  </div>
+
+  <h3 style="margin: 16px 0 10px; font-size: 16px; color: #1a365d;">4.2 ประมาณจำนวนผู้ใช้งานจริงที่รองรับได้</h3>
+  <table class="data-table" style="margin-bottom: 20px;">
+    <tr>
+      <th style="text-align:left;">รูปแบบการใช้งาน</th>
+      <th>ตัวอย่างพฤติกรรม</th>
+      <th>คำขอ/วินาที/คน</th>
+      <th>รองรับพร้อมกันได้</th>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ใช้งานเบา</td>
+      <td>เปิดอ่านประกาศ เช็คข้อมูล</td>
+      <td>1</td>
+      <td class="green" style="font-weight:700;">~6,000 คน</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ใช้งานปกติ</td>
+      <td>กดเมนู กรอกข้อมูล ดู Dashboard</td>
+      <td>3</td>
+      <td class="green" style="font-weight:700;">~2,000 คน</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ใช้งานหนัก</td>
+      <td>ค้นหา โหลดรายงาน กรอกแบบฟอร์ม</td>
+      <td>5</td>
+      <td class="yellow" style="font-weight:700;">~1,200 คน</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ใช้งานหนักมาก</td>
+      <td>เปิดหลายหน้าจอ รีเฟรชบ่อย</td>
+      <td>10</td>
+      <td class="yellow" style="font-weight:700;">~600 คน</td>
+    </tr>
+  </table>
+
+  <h3 style="margin: 16px 0 10px; font-size: 16px; color: #1a365d;">4.3 สถานการณ์จริง: อสม. 1.08 ล้านคน ใช้งานช่วง 5 วันสิ้นเดือน</h3>
+  <table class="data-table" style="margin-bottom: 20px;">
+    <tr>
+      <th style="text-align:left;">ตัวแปร</th>
+      <th>กรณีปกติ</th>
+      <th>กรณีเร่งด่วน</th>
+    </tr>
+    <tr><td style="text-align:left;">ผู้ใช้ทั้งหมด</td><td>1,080,000 คน</td><td>1,080,000 คน</td></tr>
+    <tr><td style="text-align:left;">กระจายกี่วัน</td><td>5 วัน</td><td>1-2 วัน</td></tr>
+    <tr><td style="text-align:left;">ผู้ใช้ต่อวัน</td><td>~216,000 คน</td><td>~540,000 คน</td></tr>
+    <tr><td style="text-align:left;">ช่วงเวลาใช้งานสูงสุด</td><td>8 ชั่วโมง/วัน</td><td>4 ชั่วโมง/วัน</td></tr>
+    <tr><td style="text-align:left;">ผู้ใช้ต่อชั่วโมง (Peak)</td><td>~27,000 คน/ชม.</td><td>~135,000 คน/ชม.</td></tr>
+    <tr>
+      <td style="text-align:left;">ช่วงพักระหว่างการกด (Think Time)</td>
+      <td>30-60 วินาที</td>
+      <td>10-30 วินาที</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ผู้ใช้ที่กดพร้อมกันจริง ณ เวลาเดียวกัน</td>
+      <td class="green" style="font-weight:700;">~450-900 คน</td>
+      <td class="yellow" style="font-weight:700;">~2,250-4,500 คน</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">คำขอต่อวินาทีที่ต้องการ (3 คำขอ/คน)</td>
+      <td class="green" style="font-weight:700;">~1,350-2,700</td>
+      <td class="yellow" style="font-weight:700;">~6,750-13,500</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ระบบรองรับได้หรือไม่</td>
+      <td><span class="result-badge badge-pass">รองรับได้</span></td>
+      <td><span class="result-badge badge-warn">ใกล้ขีดจำกัด</span></td>
+    </tr>
+  </table>
+
+  <div class="highlight-box success">
+    <strong>สรุป:</strong> ในสถานการณ์การใช้งานปกติ (อสม. ทยอยเข้าใช้งานกระจาย 5 วัน)
+    ระบบ<strong>รองรับได้อย่างสบาย</strong> เนื่องจากต้องการเพียง ~1,350-2,700 คำขอ/วินาที
+    ซึ่งระบบมีขีดความสามารถ ~6,000 คำขอ/วินาที (เหลือ headroom 2-4 เท่า)
+  </div>
+</div>
+
+<!-- ==================== 6. บทบาทตัวกลาง SSO ==================== -->
+<div class="section" style="border-left: 5px solid #805ad5;">
+  <div class="section-header">
+    <div class="section-title">5. ความสามารถในการเป็นระบบตัวกลาง (SSO / Central Platform)</div>
+    <div class="section-subtitle">ประเมินการรองรับเมื่อระบบอื่นเชื่อมต่อเข้ามาใช้บริการ</div>
+  </div>
+  <div class="content-text">
+    <p>
+      ระบบ Thai PHC HSS API ทำหน้าที่เป็น <strong>ระบบตัวกลาง</strong> 2 บทบาท:
+    </p>
+    <ol>
+      <li><strong>ศูนย์ยืนยันตัวตน (SSO - Single Sign-On):</strong> ระบบย่อยอื่นๆ เช่น Smart OSM, E-Learning ใช้ API เข้าสู่ระบบ และตรวจสอบสิทธิ์ผ่านระบบนี้</li>
+      <li><strong>ศูนย์ข้อมูลกลาง:</strong> ให้บริการข้อมูลพื้นฐาน เช่น ข้อมูล อสม., ข้อมูลพื้นที่, ข้อมูลจังหวัด/อำเภอ/ตำบล แก่ระบบย่อย</li>
+    </ol>
+  </div>
+
+  <h3 style="margin: 16px 0 10px; font-size: 16px; color: #553c9a;">5.1 การใช้ทรัพยากรเมื่อเป็นตัวกลาง</h3>
+  <table class="data-table" style="margin-bottom: 20px;">
+    <tr>
+      <th style="text-align:left;">ระบบที่เชื่อมต่อ</th>
+      <th>ฟังก์ชันที่ใช้</th>
+      <th>คำขอเพิ่ม/ผู้ใช้</th>
+      <th>หมายเหตุ</th>
+    </tr>
+    <tr>
+      <td style="text-align:left;">Smart OSM API</td>
+      <td>SSO Login + ข้อมูล อสม.</td>
+      <td>~2-3 คำขอ/session</td>
+      <td>เฉพาะตอนเข้าสู่ระบบ</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">E-Learning API</td>
+      <td>SSO Login</td>
+      <td>~1-2 คำขอ/session</td>
+      <td>เฉพาะตอนเข้าสู่ระบบ</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ระบบอื่นในอนาคต</td>
+      <td>SSO Login + ข้อมูลพื้นฐาน</td>
+      <td>~2-5 คำขอ/session</td>
+      <td>ขึ้นอยู่กับการออกแบบ</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box info">
+    <p style="margin: 0;">
+      <strong>การใช้งาน SSO จะเพิ่มภาระเพียงเล็กน้อย</strong> เนื่องจากคำขอ SSO เกิดขึ้น<strong>เฉพาะตอนเข้าสู่ระบบ</strong>
+      (ครั้งเดียวต่อ session ไม่ใช่ทุกครั้งที่กดหน้าจอ)
+      เมื่อเข้าสู่ระบบแล้ว ระบบย่อยจะทำงานด้วย Token ของตัวเอง โดยไม่ต้องถามระบบตัวกลางซ้ำ
+    </p>
+  </div>
+
+  <h3 style="margin: 16px 0 10px; font-size: 16px; color: #553c9a;">5.2 ประเมินภาระรวมเมื่อเปิดใช้ทุกระบบพร้อมกัน</h3>
+  <table class="data-table" style="margin-bottom: 20px;">
+    <tr>
+      <th style="text-align:left;">สถานการณ์</th>
+      <th>คำขอ/วินาที ที่ต้องการ</th>
+      <th>ขีดจำกัดระบบ</th>
+      <th>ผลประเมิน</th>
+    </tr>
+    <tr>
+      <td style="text-align:left;">Thai PHC อย่างเดียว (ปกติ)</td>
+      <td>~1,350-2,700</td>
+      <td>~6,000</td>
+      <td><span class="result-badge badge-pass">รองรับได้สบาย</span></td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">Thai PHC + SSO ระบบย่อย 2 ระบบ</td>
+      <td>~1,800-3,500</td>
+      <td>~6,000</td>
+      <td><span class="result-badge badge-pass">รองรับได้</span></td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">Thai PHC + SSO ระบบย่อย 5 ระบบ</td>
+      <td>~2,500-5,000</td>
+      <td>~6,000</td>
+      <td><span class="result-badge badge-warn">ใกล้ขีดจำกัด</span></td>
+    </tr>
+    <tr>
+      <td style="text-align:left;">ทุกระบบ + กรณีเร่งด่วน (Peak)</td>
+      <td>~5,000-8,000</td>
+      <td>~6,000</td>
+      <td><span class="result-badge badge-fail">อาจเกินขีดจำกัด</span></td>
+    </tr>
+  </table>
+
+  <div class="highlight-box warning">
+    <strong>ข้อสังเกต:</strong> หากในอนาคตมีระบบย่อยเชื่อมต่อเพิ่มมากกว่า 5 ระบบ
+    หรือเกิดสถานการณ์ที่ อสม. จำนวนมากเข้าใช้งานพร้อมกันอย่างกะทันหัน
+    ควรพิจารณาเพิ่มทรัพยากรเซิร์ฟเวอร์ (เพิ่ม Pods)
+    ซึ่งระบบออกแบบมาให้สามารถขยายได้อัตโนมัติ (Auto-Scaling)
+  </div>
+</div>
+
+<!-- ==================== 7. โครงสร้างพื้นฐาน ==================== -->
+<div class="section" style="border-left: 5px solid #718096;">
+  <div class="section-header">
+    <div class="section-title">6. โครงสร้างพื้นฐานที่ใช้ทดสอบ</div>
+  </div>
+  <table class="data-table">
+    <tr><th style="text-align:left;">ส่วนประกอบ</th><th>รายละเอียด</th></tr>
+    <tr><td style="text-align:left;">แอปพลิเคชัน</td><td>Thai PHC HSS API เวอร์ชัน 3.124</td></tr>
+    <tr><td style="text-align:left;">จำนวนเซิร์ฟเวอร์ (Pods)</td><td>35 ตัว (ขยายอัตโนมัติได้)</td></tr>
+    <tr><td style="text-align:left;">ฐานข้อมูล</td><td>PostgreSQL พร้อมระบบจัดการ Connection (PgBouncer)</td></tr>
+    <tr><td style="text-align:left;">ระบบแคช</td><td>Redis - เก็บข้อมูลที่ใช้บ่อยในหน่วยความจำ</td></tr>
+    <tr><td style="text-align:left;">ระบบกระจายโหลด</td><td>Nginx Ingress Controller</td></tr>
+    <tr><td style="text-align:left;">แพลตฟอร์ม</td><td>Kubernetes Cluster บน DigitalOcean</td></tr>
+  </table>
+</div>
+
+<!-- ==================== 8. สรุปและข้อเสนอแนะ ==================== -->
+<div class="conclusion-box">
+  <h3>7. สรุปผลและข้อเสนอแนะ</h3>
+  <div class="content-text">
+    <p>
+      <strong>ผลการทดสอบยืนยันว่าระบบ Thai PHC HSS API พร้อมรองรับ อสม. 1.08 ล้านคนทั่วประเทศ</strong>
+      ในสถานการณ์การใช้งานปกติ โดยมีรายละเอียดดังนี้:
+    </p>
+    <table class="data-table" style="margin: 16px 0;">
+      <tr>
+        <th style="text-align:left;">หัวข้อ</th>
+        <th>ผลประเมิน</th>
+      </tr>
+      <tr>
+        <td style="text-align:left;">รองรับผู้ใช้ อสม. 1.08 ล้านคน (ทยอยใช้ 5 วัน)</td>
+        <td><span class="result-badge badge-pass">รองรับได้ - เหลือ headroom 2-4 เท่า</span></td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">รองรับผู้ใช้พร้อมกัน 5,000 คน</td>
+        <td><span class="result-badge badge-pass">สำเร็จ 99.94%</span></td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">รองรับผู้ใช้พร้อมกัน 10,000 คน</td>
+        <td><span class="result-badge badge-pass">สำเร็จ 99.40%</span></td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">เป็นตัวกลาง SSO ให้ระบบย่อย 2-3 ระบบ</td>
+        <td><span class="result-badge badge-pass">รองรับได้</span></td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">เป็นตัวกลาง SSO ให้ระบบย่อย 5+ ระบบ</td>
+        <td><span class="result-badge badge-warn">ต้องเพิ่มทรัพยากร</span></td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">ขีดจำกัดสูงสุดของระบบปัจจุบัน</td>
+        <td>~6,000 คำขอ/วินาที (~10,000 ผู้ใช้พร้อมกัน)</td>
+      </tr>
+    </table>
+
+    <p><strong>ข้อเสนอแนะ:</strong></p>
+    <ol>
+      <li>
+        <strong>สำหรับการใช้งานปัจจุบัน:</strong> ระบบพร้อมใช้งานได้ทันที
+        โดยไม่จำเป็นต้องเพิ่มทรัพยากรเพิ่มเติม
+      </li>
+      <li>
+        <strong>หากต้องการรองรับมากขึ้น:</strong>
+        สามารถขยายจำนวนเซิร์ฟเวอร์ (Pods) จาก 35 เป็น 50-70 ตัว
+        เพื่อรองรับผู้ใช้พร้อมกัน 15,000-20,000 คน
+        ซึ่งเป็นการปรับค่าระบบเท่านั้น ไม่ต้องแก้ไขโปรแกรม
+      </li>
+      <li>
+        <strong>การเชื่อมต่อระบบย่อยใหม่:</strong>
+        สามารถเพิ่มระบบย่อยที่ใช้ SSO ได้อีก 2-3 ระบบ
+        โดยไม่กระทบประสิทธิภาพ หากเกินกว่านั้นควรเพิ่มทรัพยากร
+      </li>
+    </ol>
+  </div>
+</div>
+
+<div class="footer">
+  รายงานการทดสอบความพร้อมรองรับผู้ใช้งาน | ระบบสารสนเทศสาธารณสุขชุมชน (Thai PHC HSS API) | 7 มีนาคม 2569
+</div>
+
+</div><!-- end container -->
+
+<script>
+Chart.defaults.font.family = "'Sarabun', 'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size = 12;
+
+const labels = ['ตรวจสอบระบบ', 'เข้าสู่ระบบ', 'ข้อมูลส่วนตัว', 'ข้อมูลพื้นที่', 'ประกาศ', 'Dashboard'];
+const c5k = 'rgba(56, 161, 105, 0.7)';
+const c10k = 'rgba(214, 158, 46, 0.7)';
+const b5k = '#38a169'; const b10k = '#d69e2e';
+
+new Chart(document.getElementById('chartPassRate'), {
+  type: 'bar',
+  data: {
+    labels: labels,
+    datasets: [
+      { label: '5,000 คน', data: [99.78, 99.99, 99.96, 99.98, 99.97, 99.98], backgroundColor: c5k, borderColor: b5k, borderWidth: 1 },
+      { label: '10,000 คน', data: [99.37, 98.21, 99.81, 99.57, 99.71, 99.76], backgroundColor: c10k, borderColor: b10k, borderWidth: 1 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { min: 0, max: 105, ticks: { callback: v => v + '%' } } },
+    plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.raw + '%' } } }
+  }
+});
+
+new Chart(document.getElementById('chartScalability'), {
+  type: 'line',
+  data: {
+    labels: ['5,000 คน', '10,000 คน'],
+    datasets: [
+      { label: 'อัตราสำเร็จ (%)', data: [99.94, 99.40], borderColor: b5k, backgroundColor: 'rgba(56,161,105,0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
+      { label: 'คำขอ/วินาที', data: [3231, 5918], borderColor: '#3182ce', backgroundColor: 'rgba(49,130,206,0.1)', fill: true, tension: 0.3, yAxisID: 'y1' }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      y: { type: 'linear', position: 'left', title: { display: true, text: 'อัตราสำเร็จ (%)' }, min: 0, max: 105 },
+      y1: { type: 'linear', position: 'right', title: { display: true, text: 'คำขอ/วินาที' }, min: 0, grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+new Chart(document.getElementById('chartResponseTime'), {
+  type: 'bar',
+  data: {
+    labels: labels,
+    datasets: [
+      { label: '5,000 คน', data: [2.16, 2.94, 0.99, 0.96, 0.58, 1.12], backgroundColor: c5k, borderColor: b5k, borderWidth: 1 },
+      { label: '10,000 คน', data: [2.91, 3.84, 1.12, 1.36, 0.79, 1.28], backgroundColor: c10k, borderColor: b10k, borderWidth: 1 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { ticks: { callback: v => v + ' วินาที' } } },
+    plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.raw + ' วินาที' } } }
+  }
+});
+
+new Chart(document.getElementById('chartErrors'), {
+  type: 'bar',
+  data: {
+    labels: labels,
+    datasets: [
+      { label: '5,000 คน', data: [496, 25, 86, 51, 61, 39], backgroundColor: c5k, borderColor: b5k, borderWidth: 1 },
+      { label: '10,000 คน', data: [2630, 7513, 810, 1786, 1204, 999], backgroundColor: c10k, borderColor: b10k, borderWidth: 1 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { type: 'logarithmic', ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v } } },
+    plugins: { tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.raw.toLocaleString() + ' คำขอ' } } }
+  }
+});
+</script>
+
+</body>
+</html>

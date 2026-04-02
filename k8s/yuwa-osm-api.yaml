@@ -1,0 +1,159 @@
+# kubectl -n aorsormor-system apply -f yuwa-osm-api.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aorsormor-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: yuwa-osm-api-secrets
+  namespace: aorsormor-system
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql+psycopg://smart_osm_user:Q7mZ8pKa42@192.168.88.61:6432/yuwa_osm"
+  DATABASE: "postgresql+psycopg://smart_osm_user:Q7mZ8pKa42@192.168.88.61:6432/yuwa_osm"
+  SECRET_KEY: "your-secret-key-change-this-in-production-make-it-long-and-random"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yuwa-osm-api-config
+  namespace: aorsormor-system
+data:
+  APP_NAME: "YUWA OSM Mobile API"
+  APP_VERSION: "1.0.0"
+  DEBUG: "false"
+  API_V1_PREFIX: "/api/v1"
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  REFRESH_TOKEN_EXPIRE_DAYS: "7"
+  CENTRAL_TOKEN_TTL_MINUTES: "60"
+  CORS_ORIGINS: '["http://localhost:3000","http://localhost:8081","exp://localhost:8081","https://api-genh.hss.moph.go.th","https://genh.hss.moph.go.th"]'
+  NOTIFICATION_WS_URL: "https://api-genh.hss.moph.go.th"
+  BASE_URL: "https://api-genh.hss.moph.go.th"
+  PWD_CONTEXT_SCHEMES: '["bcrypt"]'
+  DISABLE_AUTH: "false"
+  THAIID_SCOPE: "openid profile citizen_id"
+  # Backend-to-backend (internal K8s service — fast, no TLS overhead)
+  LOOKUP_API_BASE_URL: "http://osm-thai-phc-hss-api-service/api/v1/lookups"
+  LOOKUP_API_TIMEOUT: "20.0"
+  # Auth base URL for server-side calls to central auth API (internal)
+  CENTRAL_AUTH_API_URL: "http://osm-thai-phc-hss-api-service/api/v1"
+  # Auth base URL returned to clients/mobile (must be external — mobile can't resolve K8s service names)
+  NEXT_PUBLIC_AUTH_BASE_URL: "https://api-thaiphc.hss.moph.go.th/api/v1"
+  UPLOAD_DIR: "uploads"
+  FILE_DIR: "uploads"
+  VIDEO_DIR: "uploads"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yuwa-osm-api
+  namespace: aorsormor-system
+  labels:
+    app: yuwa-osm-api
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: yuwa-osm-api
+  template:
+    metadata:
+      labels:
+        app: yuwa-osm-api
+    spec:
+      nodeSelector:
+        longhorn: "storage"
+      imagePullSecrets:
+        - name: docr-pull-secret
+
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: uploads-pvc
+
+      containers:
+        - name: yuwa-osm-api
+          image: registry.digitalocean.com/minerta-k8s/yuwaosm-api:dev5
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: yuwa-osm-api-secrets
+            - configMapRef:
+                name: yuwa-osm-api-config
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "1Gi"
+            limits:
+              cpu: "1500m"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            timeoutSeconds: 2
+            periodSeconds: 30
+            failureThreshold: 3
+
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+              subPath: yuwa-osm-api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yuwa-osm-api
+  namespace: aorsormor-system
+spec:
+  type: ClusterIP
+  selector:
+    app: yuwa-osm-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: yuwa-osm-api-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "http://localhost:3000,http://localhost:8081,https://api-genh.hss.moph.go.th,https://genh.hss.moph.go.th,http://yuwa-osm-api,http://yuwa-osm-api.aorsormor-system.svc.cluster.local"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, PUT, POST, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+spec:
+  tls:
+    - hosts:
+        - api-genh.hss.moph.go.th
+      secretName: hss-moph-go-th-tls
+  rules:
+    - host: api-genh.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: yuwa-osm-api
+                port:
+                  number: 80

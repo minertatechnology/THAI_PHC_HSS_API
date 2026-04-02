@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1600" />
+    <title>System Architecture - Smart อสม. ระยะที่ ๒</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: #f0f4f8;
+        padding: 20px;
+      }
+
+      .page {
+        width: 1500px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+      }
+
+      .title-bar {
+        background: linear-gradient(135deg, #1a5276, #2980b9);
+        color: #fff;
+        padding: 16px 24px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .title-bar h1 {
+        font-size: 22px;
+      }
+      .title-bar .subtitle {
+        font-size: 13px;
+        opacity: 0.85;
+      }
+
+      .main-layout {
+        display: grid;
+        grid-template-columns: 240px 1fr 260px;
+        gap: 20px;
+      }
+
+      /* LEFT PANEL */
+      .left-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .info-box {
+        background: #fff;
+        border: 2px solid #2980b9;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .info-box .box-header {
+        background: #2980b9;
+        color: #fff;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .info-box .box-body {
+        padding: 8px 12px;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+      .info-box .box-body b {
+        color: #1a5276;
+      }
+
+      .tools-box {
+        background: #fff;
+        border: 2px solid #27ae60;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .tools-box .box-header {
+        background: #27ae60;
+        color: #fff;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .tools-box .box-body {
+        padding: 10px 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .tool-tag {
+        background: #eafaf1;
+        border: 1px solid #27ae60;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #1e8449;
+      }
+
+      /* CENTER PANEL */
+      .center-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .user-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      .user-box {
+        background: #eaf2f8;
+        border: 2px solid #2980b9;
+        border-radius: 8px;
+        padding: 12px 16px;
+        text-align: center;
+        flex: 1;
+      }
+      .user-box .icon {
+        font-size: 28px;
+        margin-bottom: 4px;
+      }
+      .user-box .label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #1a5276;
+      }
+      .user-box .detail {
+        font-size: 10px;
+        color: #555;
+        margin-top: 2px;
+      }
+
+      .arrow-down {
+        text-align: center;
+        font-size: 24px;
+        color: #2980b9;
+      }
+      .arrow-label {
+        text-align: center;
+        font-size: 11px;
+        color: #666;
+        margin: -4px 0 4px;
+      }
+
+      .domain-bar {
+        background: linear-gradient(90deg, #e8f6f3, #d5f5e3);
+        border: 2px solid #1abc9c;
+        border-radius: 8px;
+        padding: 10px 16px;
+      }
+      .domain-bar .domain-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #0e6655;
+        margin-bottom: 6px;
+      }
+      .domain-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+      }
+      .domain-item {
+        font-size: 10px;
+        color: #333;
+      }
+      .domain-item .dev {
+        color: #7f8c8d;
+      }
+      .domain-item .prod {
+        color: #0e6655;
+        font-weight: 600;
+      }
+
+      .k8s-cluster {
+        border: 3px dashed #2980b9;
+        border-radius: 12px;
+        padding: 16px;
+        background: #fafcfe;
+        position: relative;
+      }
+      .k8s-cluster .cluster-label {
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: #2980b9;
+        color: #fff;
+        padding: 2px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .k8s-row {
+        display: flex;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .server-card {
+        flex: 1;
+        border: 2px solid #34495e;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .server-card.master {
+        border-color: #e67e22;
+      }
+      .server-card.worker {
+        border-color: #2c3e50;
+      }
+      .server-card.db {
+        border-color: #8e44ad;
+      }
+      .server-header {
+        padding: 6px 10px;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .server-card.master .server-header {
+        background: #e67e22;
+      }
+      .server-card.worker .server-header {
+        background: #2c3e50;
+      }
+      .server-card.db .server-header {
+        background: #8e44ad;
+      }
+      .server-header .os-icon {
+        font-size: 14px;
+      }
+      .server-body {
+        padding: 8px 10px;
+        font-size: 10px;
+        line-height: 1.7;
+      }
+      .server-body .spec-label {
+        color: #888;
+      }
+      .server-body .spec-value {
+        color: #222;
+        font-weight: 600;
+      }
+      .server-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: #1a5276;
+        margin-bottom: 2px;
+      }
+      .server-ip {
+        font-size: 11px;
+        color: #666;
+      }
+
+      .software-section {
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px dashed #ddd;
+      }
+      .sw-tag {
+        display: inline-block;
+        background: #eee;
+        border-radius: 3px;
+        padding: 1px 5px;
+        font-size: 9px;
+        margin: 1px;
+        color: #444;
+      }
+
+      /* Pod/Service section */
+      .workload-section {
+        margin-top: 12px;
+      }
+      .workload-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #1a5276;
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+        border-bottom: 2px solid #2980b9;
+      }
+
+      .workload-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .workload-card {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 6px 8px;
+        background: #fff;
+        text-align: center;
+      }
+      .workload-card.api {
+        border-color: #e74c3c;
+        background: #fdf2f2;
+      }
+      .workload-card.web {
+        border-color: #3498db;
+        background: #f0f7fd;
+      }
+      .workload-card.infra {
+        border-color: #f39c12;
+        background: #fef9ed;
+      }
+      .wl-name {
+        font-size: 9px;
+        font-weight: 700;
+        color: #333;
+      }
+      .wl-detail {
+        font-size: 8px;
+        color: #777;
+        margin-top: 2px;
+      }
+      .wl-replicas {
+        font-size: 10px;
+        font-weight: 800;
+        color: #e74c3c;
+      }
+      .wl-replicas.web-r {
+        color: #2980b9;
+      }
+      .wl-replicas.infra-r {
+        color: #f39c12;
+      }
+
+      /* RIGHT PANEL */
+      .right-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .ext-box {
+        border: 2px solid #e74c3c;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .ext-box .box-header {
+        background: #e74c3c;
+        color: #fff;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .ext-box .box-body {
+        padding: 8px 12px;
+        font-size: 11px;
+        line-height: 1.7;
+      }
+
+      .ext-box.thaid {
+        border-color: #1a5276;
+      }
+      .ext-box.thaid .box-header {
+        background: #1a5276;
+      }
+
+      .ext-box.cloudflare {
+        border-color: #f39c12;
+      }
+      .ext-box.cloudflare .box-header {
+        background: #f39c12;
+      }
+
+      .ext-box.docr {
+        border-color: #0069ff;
+      }
+      .ext-box.docr .box-header {
+        background: #0069ff;
+      }
+
+      .ext-box.storage {
+        border-color: #16a085;
+      }
+      .ext-box.storage .box-header {
+        background: #16a085;
+      }
+
+      .port-badge {
+        display: inline-block;
+        background: #fff3e0;
+        border: 1px solid #e67e22;
+        border-radius: 3px;
+        padding: 1px 6px;
+        font-size: 9px;
+        font-weight: 700;
+        color: #e67e22;
+        margin: 1px;
+      }
+
+      /* Connection arrows */
+      .conn-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin: 8px 0;
+      }
+      .conn-line {
+        height: 2px;
+        flex: 1;
+        background: repeating-linear-gradient(
+          90deg,
+          #2980b9 0,
+          #2980b9 8px,
+          transparent 8px,
+          transparent 12px
+        );
+      }
+      .conn-label {
+        font-size: 10px;
+        color: #2980b9;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      /* DB connection */
+      .db-section {
+        margin-top: 12px;
+      }
+      .db-conn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        background: #f5eef8;
+        border: 2px solid #8e44ad;
+        border-radius: 8px;
+      }
+      .db-arrow {
+        font-size: 20px;
+        color: #8e44ad;
+      }
+
+      /* Footer */
+      .footer {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 2px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: #999;
+      }
+
+      .legend {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-top: 12px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+      }
+      .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <!-- TITLE -->
+      <div class="title-bar">
+        <div>
+          <h1>System Architecture Diagram</h1>
+          <div class="subtitle">
+            โครงการพัฒนานวัตกรรมดิจิทัลระบบ Smart อสม. ระยะที่ ๒
+            กรมสนับสนุนบริการสุขภาพ ประจำปีงบประมาณ พ.ศ. ๒๕๖๘
+          </div>
+        </div>
+        <div style="text-align: right">
+          <div style="font-size: 12px">Version 1.0</div>
+          <div style="font-size: 11px; opacity: 0.8">
+            Updated: 13 March 2026
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN 3-COLUMN LAYOUT -->
+      <div class="main-layout">
+        <!-- ===== LEFT PANEL ===== -->
+        <div class="left-panel">
+          <!-- License -->
+          <div class="info-box">
+            <div class="box-header">License</div>
+            <div class="box-body">
+              <b>OS:</b> Ubuntu 24.04.3 LTS<br />
+              <b>DB:</b> PostgreSQL 16.13 (Open Source)<br />
+              <b>K8s:</b> Kubernetes v1.30.14 (Open Source)<br />
+              <b>Storage:</b> Longhorn v1.9.1 (Open Source)<br />
+              <b>Cache:</b> Redis 7 (Open Source)
+            </div>
+          </div>
+
+          <!-- DNS Mapping -->
+          <div class="info-box">
+            <div class="box-header">DNS Mapping (Production)</div>
+            <div class="box-body">
+              <b>*.hss.moph.go.th</b> &rarr; 110.164.229.82<br /><br />
+              <b>WEB:</b><br />
+              thaiphc &bull; dashboard<br />
+              phc-learning &bull; osm-workreport<br />
+              genh &bull; phc-management<br /><br />
+              <b>API:</b><br />
+              api-thaiphc &bull; api-smartosm<br />
+              api-elearning &bull; api-genh
+            </div>
+          </div>
+
+          <!-- Data Storage -->
+          <div class="info-box" style="border-color: #8e44ad">
+            <div class="box-header" style="background: #8e44ad">
+              Data Storage
+            </div>
+            <div class="box-body">
+              <b>PostgreSQL 16.13</b><br />
+              max_connections: 2,000<br />
+              shared_buffers: 32 GB<br />
+              effective_cache: 96 GB<br /><br />
+              <b>Databases:</b><br />
+              aorsormor_db, smart_osm,<br />
+              yuwa_osm, elearning_db<br /><br />
+              <b>PgBouncer 1.22</b> (port 6432)<br />
+              transaction mode<br />
+              max_client: 10,000<br />
+              per-DB pool: 150-300
+            </div>
+          </div>
+
+          <!-- Tools -->
+          <div class="tools-box">
+            <div class="box-header">Tools and Frameworks</div>
+            <div class="box-body">
+              <span class="tool-tag">FastAPI</span>
+              <span class="tool-tag">React</span>
+              <span class="tool-tag">Docker</span>
+              <span class="tool-tag">Kubernetes</span>
+              <span class="tool-tag">Nginx</span>
+              <span class="tool-tag">Redis</span>
+              <span class="tool-tag">Longhorn</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== CENTER PANEL ===== -->
+        <div class="center-panel">
+          <!-- Users -->
+          <div class="user-section">
+            <div class="user-box">
+              <div class="icon">&#128187;</div>
+              <div class="label">Developer & Admin</div>
+              <div class="detail">
+                Internal Network<br />SSH / kubectl / CI-CD
+              </div>
+            </div>
+            <div class="user-box">
+              <div class="icon">&#128187; &#128241;</div>
+              <div class="label">Personal Computer / Mobile</div>
+              <div class="detail">
+                Web Browser / Mobile App<br />Internet via *.hss.moph.go.th
+              </div>
+            </div>
+          </div>
+
+          <div class="arrow-down">&darr;</div>
+          <div class="arrow-label">
+            HTTPS Port 443 &rarr; Public IP 110.164.229.82 &rarr; nginx-ingress
+            :443
+          </div>
+
+          <!-- Domain Bar -->
+          <div class="domain-bar">
+            <div class="domain-title">
+              Ingress Routes &mdash; Production (*.hss.moph.go.th)
+            </div>
+            <div class="domain-grid">
+              <div class="domain-item">
+                <span class="prod">thaiphc.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888"
+                  >— ระบบทะเบียน อสม. (ThaiPHC)</span
+                >
+              </div>
+              <div class="domain-item">
+                <span class="prod">api-thaiphc.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888"
+                  >— API มาตรฐาน (HSS API)</span
+                >
+              </div>
+              <div class="domain-item">
+                <span class="prod">dashboard.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888"
+                  >— ระบบ Dashboard</span
+                >
+              </div>
+              <div class="domain-item">
+                <span class="prod">api-smartosm.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888"
+                  >— API Smart อสม.</span
+                >
+              </div>
+              <div class="domain-item">
+                <span class="prod">phc-learning.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888"
+                  >— ระบบ E-Learning</span
+                >
+              </div>
+              <div class="domain-item">
+                <span class="prod">api-elearning.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888"
+                  >— API E-Learning</span
+                >
+              </div>
+              <div class="domain-item">
+                <span class="prod">osm-workreport.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888"
+                  >— ระบบรายงานผลงาน (Work Report)</span
+                >
+              </div>
+              <div class="domain-item">
+                <span class="prod">api-genh.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888">— API ยุวอสม.</span>
+              </div>
+              <div class="domain-item">
+                <span class="prod">phc-management.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888"
+                  >— ระบบบริหารจัดการ (Admin Console)</span
+                >
+              </div>
+              <div class="domain-item">
+                <span class="prod">genh.hss.moph.go.th</span>
+                <span style="font-size: 9px; color: #888"
+                  >— ระบบยุวอสม. (GEN-H Health Hero)</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="arrow-down">&darr;</div>
+          <div class="arrow-label">
+            nginx-ingress controller (hostNetwork on Master)
+          </div>
+
+          <!-- K8s Cluster -->
+          <div class="k8s-cluster">
+            <div class="cluster-label">
+              Kubernetes Cluster v1.30.14 &mdash; containerd 1.7.28
+            </div>
+
+            <!-- Server Cards Row -->
+            <div class="k8s-row" style="margin-top: 16px">
+              <!-- Master -->
+              <div class="server-card master">
+                <div class="server-header">
+                  <span class="os-icon">&#128424;</span> Ubuntu 24.04 LTS
+                </div>
+                <div class="server-body">
+                  <div class="server-name">osm-master</div>
+                  <div class="server-ip">IP: 192.168.88.62</div>
+                  <div style="margin-top: 4px">
+                    <span class="spec-label">CPU:</span>
+                    <span class="spec-value">10 vCPU</span><br />
+                    <span class="spec-label">RAM:</span>
+                    <span class="spec-value">32 GB</span><br />
+                    <span class="spec-label">Disk:</span>
+                    <span class="spec-value">400 GB</span>
+                  </div>
+                  <div class="software-section">
+                    <span class="spec-label">Role:</span>
+                    <span class="spec-value">Control Plane</span><br />
+                    <span class="sw-tag">kube-apiserver</span>
+                    <span class="sw-tag">etcd</span>
+                    <span class="sw-tag">scheduler</span>
+                    <span class="sw-tag">nginx-ingress</span>
+                  </div>
+                  <div style="margin-top: 4px">
+                    <span class="port-badge">:443</span>
+                    <span class="port-badge">:22</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Worker 1 -->
+              <div class="server-card worker">
+                <div class="server-header">
+                  <span class="os-icon">&#128424;</span> Ubuntu 24.04 LTS
+                </div>
+                <div class="server-body">
+                  <div class="server-name">osm-worker1</div>
+                  <div class="server-ip">IP: 192.168.88.63</div>
+                  <div style="margin-top: 4px">
+                    <span class="spec-label">CPU:</span>
+                    <span class="spec-value">16 vCPU</span><br />
+                    <span class="spec-label">RAM:</span>
+                    <span class="spec-value">64 GB</span><br />
+                    <span class="spec-label">Disk:</span>
+                    <span class="spec-value">600 GB</span>
+                  </div>
+                  <div class="software-section">
+                    <span class="spec-label">Role:</span>
+                    <span class="spec-value">Worker + Longhorn</span><br />
+                    <span class="sw-tag">kubelet</span>
+                    <span class="sw-tag">containerd</span>
+                    <span class="sw-tag">longhorn</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Worker 2 -->
+              <div class="server-card worker">
+                <div class="server-header">
+                  <span class="os-icon">&#128424;</span> Ubuntu 24.04 LTS
+                </div>
+                <div class="server-body">
+                  <div class="server-name">osm-worker2</div>
+                  <div class="server-ip">IP: 192.168.88.64</div>
+                  <div style="margin-top: 4px">
+                    <span class="spec-label">CPU:</span>
+                    <span class="spec-value">16 vCPU</span><br />
+                    <span class="spec-label">RAM:</span>
+                    <span class="spec-value">64 GB</span><br />
+                    <span class="spec-label">Disk:</span>
+                    <span class="spec-value">600 GB</span>
+                  </div>
+                  <div class="software-section">
+                    <span class="spec-label">Role:</span>
+                    <span class="spec-value">Worker + Longhorn</span><br />
+                    <span class="sw-tag">kubelet</span>
+                    <span class="sw-tag">containerd</span>
+                    <span class="sw-tag">longhorn</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Worker 3 -->
+              <div class="server-card worker">
+                <div class="server-header">
+                  <span class="os-icon">&#128424;</span> Ubuntu 24.04 LTS
+                </div>
+                <div class="server-body">
+                  <div class="server-name">osm-worker3</div>
+                  <div class="server-ip">IP: 192.168.88.65</div>
+                  <div style="margin-top: 4px">
+                    <span class="spec-label">CPU:</span>
+                    <span class="spec-value">16 vCPU</span><br />
+                    <span class="spec-label">RAM:</span>
+                    <span class="spec-value">64 GB</span><br />
+                    <span class="spec-label">Disk:</span>
+                    <span class="spec-value">600 GB + 250 GB</span>
+                  </div>
+                  <div class="software-section">
+                    <span class="spec-label">Role:</span>
+                    <span class="spec-value">Worker + Longhorn</span><br />
+                    <span class="sw-tag">kubelet</span>
+                    <span class="sw-tag">containerd</span>
+                    <span class="sw-tag">longhorn</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Workloads -->
+            <div class="workload-section">
+              <div class="workload-title">
+                Application Workloads (namespace: aorsormor-system)
+              </div>
+              <div class="workload-grid">
+                <!-- APIs -->
+                <div class="workload-card api">
+                  <div class="wl-name">HSS API</div>
+                  <div class="wl-detail">osm-thai-phc-hss-api</div>
+                  <div class="wl-replicas">15-35 pods</div>
+                  <div class="wl-detail">v3.124 | :8000</div>
+                </div>
+                <div class="workload-card api">
+                  <div class="wl-name">Smart OSM API</div>
+                  <div class="wl-detail">osm-api</div>
+                  <div class="wl-replicas">30-60 pods</div>
+                  <div class="wl-detail">dev35 | :8000</div>
+                </div>
+                <div class="workload-card api">
+                  <div class="wl-name">E-Learning API</div>
+                  <div class="wl-detail">elearning-api</div>
+                  <div class="wl-replicas">5-32 pods</div>
+                  <div class="wl-detail">dev56 | :8000</div>
+                </div>
+                <div class="workload-card api">
+                  <div class="wl-name">YUWA OSM API</div>
+                  <div class="wl-detail">yuwa-osm-api</div>
+                  <div class="wl-replicas">5-32 pods</div>
+                  <div class="wl-detail">dev1 | :8000</div>
+                </div>
+
+                <!-- Web -->
+                <div class="workload-card web">
+                  <div class="wl-name">Thai PHC Web</div>
+                  <div class="wl-detail">thai-phc-web-admin</div>
+                  <div class="wl-replicas web-r">3-10 pods</div>
+                  <div class="wl-detail">dev45 | :3000</div>
+                </div>
+                <div class="workload-card web">
+                  <div class="wl-name">Dashboard Web</div>
+                  <div class="wl-detail">dashboard-smart-osm-web</div>
+                  <div class="wl-replicas web-r">3-10 pods</div>
+                  <div class="wl-detail">dev15 | :3000</div>
+                </div>
+                <div class="workload-card web">
+                  <div class="wl-name">E-Learning Web</div>
+                  <div class="wl-detail">e-learning-web</div>
+                  <div class="wl-replicas web-r">3-10 pods</div>
+                  <div class="wl-detail">dev30 | :3000</div>
+                </div>
+                <div class="workload-card web">
+                  <div class="wl-name">Work Report Web</div>
+                  <div class="wl-detail">osm-work-report-web</div>
+                  <div class="wl-replicas web-r">3-10 pods</div>
+                  <div class="wl-detail">dev27 | :3000</div>
+                </div>
+
+                <div class="workload-card web">
+                  <div class="wl-name">YUWA Web</div>
+                  <div class="wl-detail">yuwa-osm-web</div>
+                  <div class="wl-replicas web-r">3-10 pods</div>
+                  <div class="wl-detail">dev3 | :3000</div>
+                </div>
+                <div class="workload-card web">
+                  <div class="wl-name">PHC Management</div>
+                  <div class="wl-detail">thaiphc2-admin-console</div>
+                  <div class="wl-replicas web-r">2-8 pods</div>
+                  <div class="wl-detail">dev50 | :3000</div>
+                </div>
+
+                <!-- Infra -->
+                <div class="workload-card infra">
+                  <div class="wl-name">Redis Cache</div>
+                  <div class="wl-detail">redis:7-alpine</div>
+                  <div class="wl-replicas infra-r">1 pod</div>
+                  <div class="wl-detail">512MB | :6379</div>
+                </div>
+                <div class="workload-card infra">
+                  <div class="wl-name">Longhorn Storage</div>
+                  <div class="wl-detail">uploads-pvc (RWX)</div>
+                  <div class="wl-replicas infra-r">250 GiB</div>
+                  <div class="wl-detail">2 replicas | lz4</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="arrow-down" style="margin: -20px 0 -20px">&darr;</div>
+
+          <!-- DB Connection -->
+          <div class="db-section">
+            <div class="conn-section">
+              <div class="conn-line"></div>
+              <div class="conn-label">
+                TCP :6432 (PgBouncer) &mdash; NetworkPolicy:
+                allow-only-db-egress
+              </div>
+              <div class="conn-line"></div>
+            </div>
+
+            <div class="server-card db" style="max-width: 100%">
+              <div class="server-header">
+                <span class="os-icon">&#128424;</span> Ubuntu 24.04 LTS &mdash;
+                Database Server
+              </div>
+              <div class="server-body" style="display: flex; gap: 20px">
+                <div style="flex: 1">
+                  <div class="server-name">osmdatabase</div>
+                  <div class="server-ip">IP: 192.168.88.61</div>
+                  <div style="margin-top: 4px">
+                    <span class="spec-label">CPU:</span>
+                    <span class="spec-value">32 vCPU</span> &nbsp;
+                    <span class="spec-label">RAM:</span>
+                    <span class="spec-value">125 GB</span> &nbsp;
+                    <span class="spec-label">Disk:</span>
+                    <span class="spec-value">2 TB</span>
+                  </div>
+                </div>
+                <div style="flex: 1">
+                  <b style="color: #8e44ad">PostgreSQL 16.13</b>
+                  <span class="port-badge">:5432</span><br />
+                  <span style="font-size: 10px"
+                    >max_conn: 2,000 | shared_buf: 32GB | cache: 96GB</span
+                  >
+                </div>
+                <div style="flex: 1">
+                  <b style="color: #8e44ad">PgBouncer 1.22</b>
+                  <span class="port-badge">:6432</span><br />
+                  <span style="font-size: 10px"
+                    >transaction mode | max_client: 10,000<br />
+                    pools: aorsormor=300, smart_osm=300,<br />
+                    yuwa_osm=150, elearning=150</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== RIGHT PANEL ===== -->
+        <div class="right-panel">
+          <!-- ThaiD -->
+          <div class="ext-box thaid">
+            <div class="box-header">&#128274; Website Authentication</div>
+            <div class="box-body">
+              <b>ThaiD (DOPA)</b><br />
+              <span class="port-badge">:443</span><br /><br />
+              <b>Authorize:</b><br />
+              imauth.bora.dopa.go.th<br />
+              /api/v2/oauth2/auth/<br /><br />
+              <b>Token:</b><br />
+              imauth.bora.dopa.go.th<br />
+              /api/v2/oauth2/token/<br /><br />
+              <b>Callback:</b><br />
+              phc-management.hss.moph.go.th/callback<br /><br />
+              <span style="font-size: 10px; color: #888"
+                >OAuth2 + OpenID Connect</span
+              >
+            </div>
+          </div>
+
+          <!-- DNS Routing -->
+          <div class="ext-box cloudflare">
+            <div class="box-header">&#127760; DNS Routing (Production)</div>
+            <div class="box-body">
+              <b>*.hss.moph.go.th</b><br />
+              <span class="port-badge">:443</span> HTTPS<br /><br />
+              <b>Public IP:</b><br />
+              110.164.229.82<br />
+              (กรมสนับสนุนบริการสุขภาพ)<br /><br />
+              <b>Routing:</b><br />
+              Public IP &rarr; nginx-ingress &rarr; K8s Services
+            </div>
+          </div>
+
+          <!-- Longhorn -->
+          <div class="ext-box storage">
+            <div class="box-header">
+              &#128451; Distributed Storage (Longhorn)
+            </div>
+            <div class="box-body">
+              <b>Longhorn v1.9.1</b><br /><br />
+              <b>Cluster Total:</b> ~1.47 TiB<br />
+              <b>Reserved (30%):</b> ~441 GiB<br />
+              <b>Available:</b> ~700 GiB<br /><br />
+              <b>Per Node:</b> ~491 GiB<br />
+              <b>Replica Count:</b> 2<br />
+              <b>Compression:</b> lz4<br />
+              <b>Snapshot:</b> daily cron<br /><br />
+              <b style="color: #16a085">PVC: uploads-pvc</b><br />
+              <b>Size:</b> 250 GiB (RWX)<br />
+              <b>Mount:</b> /app/uploads<br /><br />
+              <span style="font-size: 10px; color: #888"
+                >Persistent — data survives pod restart<br />Runs on 3 worker
+                nodes</span
+              >
+            </div>
+          </div>
+
+          <!-- Network -->
+          <div class="info-box" style="border-color: #e67e22">
+            <div class="box-header" style="background: #e67e22">
+              Ingress Controller
+            </div>
+            <div class="box-body">
+              <b>nginx-ingress v1.10.1</b><br />
+              hostNetwork on Master<br />
+              <span class="port-badge">:443</span><br /><br />
+              <b>10 Ingress Rules</b><br />
+              *.hss.moph.go.th<br />
+              <span style="font-size: 10px"
+                >Route traffic to K8s Services<br />based on domain name</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: #e74c3c"></div>
+          API Service (FastAPI :8000)
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #3498db"></div>
+          Web Frontend (:3000)
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #f39c12"></div>
+          Infrastructure Service
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #e67e22"></div>
+          Master Node
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #2c3e50"></div>
+          Worker Node
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #8e44ad"></div>
+          Database Server
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #27ae60"></div>
+          Tools/Frameworks
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <div>
+          โครงการพัฒนานวัตกรรมดิจิทัลระบบ Smart อสม. ระยะที่ ๒ &mdash;
+          กรมสนับสนุนบริการสุขภาพ กระทรวงสาธารณสุข
+        </div>
+        <div>
+          Kubernetes v1.30.14 | 1 Master + 3 Workers + 1 DB | Total: 90 vCPU,
+          349 GB RAM, 4.2 TB Storage
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

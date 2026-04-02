@@ -1,0 +1,352 @@
+# =============================================================================
+# Production Domain Ingress — hss.moph.go.th
+# Production domain ingress สำหรับ hss.moph.go.th
+#
+# kubectl -n aorsormor-system apply -f ingress-prod-domains.yaml
+#
+# หมายเหตุ TLS:
+#   - ถ้า domain ผ่าน Cloudflare proxy → Cloudflare จัดการ TLS ให้
+#   - ถ้า domain ชี้ตรงมา cluster → ต้องใส่ tls section + cert-manager
+#   - ตัวอย่าง cert-manager annotation ใส่ไว้ให้แล้ว (comment ไว้ก่อน)
+# =============================================================================
+
+# =============================================================================
+# WEB FRONTENDS
+# =============================================================================
+
+---
+# 1. Thai PHC Web Admin
+# thaiphc.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thai-phc-web-admin-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - thaiphc.hss.moph.go.th
+  #     secretName: thaiphc-hss-moph-tls
+  rules:
+    - host: thaiphc.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: thai-phc-web-admin-service
+                port:
+                  number: 80
+
+---
+# 2. Dashboard Smart OSM Web
+# dashboard.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dashboard-smart-osm-web-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - dashboard.hss.moph.go.th
+  #     secretName: dashboard-hss-moph-tls
+  rules:
+    - host: dashboard.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dashboard-smart-osm-web-service
+                port:
+                  number: 80
+
+---
+# 3. E-Learning Web
+# phc-learning.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: e-learning-web-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - phc-learning.hss.moph.go.th
+  #     secretName: phc-learning-hss-moph-tls
+  rules:
+    - host: phc-learning.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: e-learning-web-service
+                port:
+                  number: 80
+
+---
+# 4. OSM Work Report Web Admin
+# osm-workreport.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: osm-work-report-web-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - osm-workreport.hss.moph.go.th
+  #     secretName: osm-workreport-hss-moph-tls
+  rules:
+    - host: osm-workreport.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: osm-work-report-web-admin-service
+                port:
+                  number: 80
+
+---
+# 5. YUWA OSM Web (Gen H)
+# genh.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: yuwa-osm-web-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - genh.hss.moph.go.th
+  #     secretName: genh-hss-moph-tls
+  rules:
+    - host: genh.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: yuwa-osm-web-service
+                port:
+                  number: 80
+
+# =============================================================================
+# API BACKENDS
+# =============================================================================
+
+---
+# 6. Thai PHC HSS API
+# api-thaiphc.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: osm-thai-phc-hss-api-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://thaiphc.hss.moph.go.th,https://phc-management.hss.moph.go.th,https://dashboard.hss.moph.go.th,https://phc-learning.hss.moph.go.th,https://genh.hss.moph.go.th,https://osm-workreport.hss.moph.go.th"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, PUT, POST, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - api-thaiphc.hss.moph.go.th
+  #     secretName: api-thaiphc-hss-moph-tls
+  rules:
+    - host: api-thaiphc.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: osm-thai-phc-hss-api-service
+                port:
+                  number: 80
+
+---
+# 7. Smart OSM API
+# api-smartosm.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: osm-api-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://dashboard.hss.moph.go.th,https://thaiphc.hss.moph.go.th,https://phc-management.hss.moph.go.th"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, PUT, POST, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - api-smartosm.hss.moph.go.th
+  #     secretName: api-smartosm-hss-moph-tls
+  rules:
+    - host: api-smartosm.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: osm-api
+                port:
+                  number: 80
+
+---
+# 8. E-Learning API
+# api-elearning.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: elearning-api-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://phc-learning.hss.moph.go.th,https://phc-management.hss.moph.go.th"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, PUT, POST, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - api-elearning.hss.moph.go.th
+  #     secretName: api-elearning-hss-moph-tls
+  rules:
+    - host: api-elearning.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: elearning-api
+                port:
+                  number: 80
+
+---
+# 9. YUWA OSM API (Gen H API)
+# api-genh.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: yuwa-osm-api-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://genh.hss.moph.go.th,https://phc-management.hss.moph.go.th"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, PUT, POST, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - api-genh.hss.moph.go.th
+  #     secretName: api-genh-hss-moph-tls
+  rules:
+    - host: api-genh.hss.moph.go.th
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: yuwa-osm-api
+                port:
+                  number: 80
+
+# =============================================================================
+# OAC (Admin Console — split routing)
+# =============================================================================
+
+---
+# 10. PHC Management (Admin Console + API)
+# phc-management.hss.moph.go.th
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thaiphc2-admin-console-prod-ingress
+  namespace: aorsormor-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # tls:
+  #   - hosts:
+  #       - phc-management.hss.moph.go.th
+  #     secretName: phc-management-hss-moph-tls
+  rules:
+    - host: phc-management.hss.moph.go.th
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: osm-thai-phc-hss-api-service
+                port:
+                  number: 80
+          - path: /callback
+            pathType: Prefix
+            backend:
+              service:
+                name: osm-thai-phc-hss-api-service
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: thaiphc2-admin-console-service
+                port:
+                  number: 80

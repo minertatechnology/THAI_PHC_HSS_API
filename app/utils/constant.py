@@ -1,0 +1,1 @@
+ALLOWED_SORT_FIELDS = {"created_at", "first_name", "last_name", "citizen_id"}

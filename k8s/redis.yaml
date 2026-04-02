@@ -1,0 +1,109 @@
+# ===================================================================
+# Redis for shared caching across all API pods
+# คำสั่ง: kubectl -n aorsormor-system apply -f redis.yaml
+# ===================================================================
+
+# --- Secret for Redis password ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+  namespace: aorsormor-system
+type: Opaque
+stringData:
+  REDIS_PASSWORD: "R3d1s@osm2026!"
+
+---
+# --- ConfigMap for Redis config ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: aorsormor-system
+data:
+  redis.conf: |
+    # Memory
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+
+    # Security
+    requirepass R3d1s@osm2026!
+
+    # Performance
+    tcp-keepalive 60
+    timeout 300
+
+    # Persistence (disable for pure cache)
+    save ""
+    appendonly no
+
+    # Connections
+    maxclients 10000
+
+    # Logging
+    loglevel notice
+
+---
+# --- Deployment ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-cache
+  namespace: aorsormor-system
+  labels:
+    app: redis-cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-cache
+  template:
+    metadata:
+      labels:
+        app: redis-cache
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "640Mi"
+          volumeMounts:
+            - name: redis-config
+              mountPath: /usr/local/etc/redis
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "-a", "R3d1s@osm2026!", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "-a", "R3d1s@osm2026!", "ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+
+---
+# --- Service ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cache
+  namespace: aorsormor-system
+spec:
+  selector:
+    app: redis-cache
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP

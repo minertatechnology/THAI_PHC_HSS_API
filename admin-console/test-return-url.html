@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Return URL Test - Thai PHC Registration</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        max-width: 600px;
+        width: 100%;
+      }
+
+      h1 {
+        color: #2d3748;
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        color: #718096;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+
+      .test-section {
+        background: #f7fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .test-section h2 {
+        color: #4a5568;
+        font-size: 18px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .test-section h2::before {
+        content: "✓";
+        background: #48bb78;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+      }
+
+      .test-section.invalid h2::before {
+        content: "✗";
+        background: #f56565;
+      }
+
+      .test-section.default h2::before {
+        content: "○";
+        background: #cbd5e0;
+      }
+
+      .url-display {
+        background: #2d3748;
+        color: #68d391;
+        padding: 12px;
+        border-radius: 8px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        word-break: break-all;
+        margin-bottom: 15px;
+      }
+
+      .info {
+        background: #ebf8ff;
+        border-left: 4px solid #4299e1;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        font-size: 13px;
+        color: #2c5282;
+      }
+
+      .button {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: transform 0.2s, box-shadow 0.2s;
+        font-size: 14px;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      .current-url {
+        background: #fef5e7;
+        border: 2px solid #f9e79f;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 30px;
+      }
+
+      .current-url strong {
+        color: #7d6608;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .current-url code {
+        color: #1a202c;
+        background: white;
+        padding: 6px 10px;
+        border-radius: 4px;
+        display: block;
+        word-break: break-all;
+      }
+
+      .footer {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #e2e8f0;
+        text-align: center;
+        color: #a0aec0;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧪 Return URL Test Page</h1>
+      <p class="subtitle">
+        ทดสอบการทำงานของ Return URL สำหรับระบบลงทะเบียน Thai PHC
+      </p>
+
+      <div class="current-url">
+        <strong>📍 Current Page URL:</strong>
+        <code id="currentUrl"></code>
+      </div>
+
+      <!-- Test 1: Valid localhost -->
+      <div class="test-section">
+        <h2>Test 1: localhost (Valid)</h2>
+        <div class="info">
+          ✓ Expected: กลับมาที่ localhost:3000<br />
+          ✓ Status: จะทำงานได้ปกติ
+        </div>
+        <div class="url-display" id="test1Url"></div>
+        <a href="" id="test1Link" class="button">ทดสอบ Test 1 →</a>
+      </div>
+
+      <!-- Test 2: Valid dev server -->
+      <div class="test-section">
+        <h2>Test 2: Dev Server (Valid)</h2>
+        <div class="info">
+          ✓ Expected: กลับมาที่ thaiphc.hss.moph.go.th<br />
+          ✓ Status: จะทำงานได้ปกติ
+        </div>
+        <div class="url-display" id="test2Url"></div>
+        <a href="" id="test2Link" class="button">ทดสอบ Test 2 →</a>
+      </div>
+
+      <!-- Test 3: Current URL -->
+      <div class="test-section">
+        <h2>Test 3: Current URL</h2>
+        <div class="info">
+          ✓ Expected: กลับมาที่หน้านี้<br />
+          ✓ Status: ขึ้นอยู่กับว่า domain นี้อยู่ใน whitelist หรือไม่
+        </div>
+        <div class="url-display" id="test3Url"></div>
+        <a href="" id="test3Link" class="button">ทดสอบ Test 3 →</a>
+      </div>
+
+      <!-- Test 4: No return URL -->
+      <div class="test-section default">
+        <h2>Test 4: No Return URL (Default)</h2>
+        <div class="info">
+          ○ Expected: ไปที่ /login (พฤติกรรมเริ่มต้น)<br />
+          ○ Status: ทำงานปกติ
+        </div>
+        <div class="url-display" id="test4Url"></div>
+        <a href="" id="test4Link" class="button">ทดสอบ Test 4 →</a>
+      </div>
+
+      <!-- Test 5: Invalid URL -->
+      <div class="test-section invalid">
+        <h2>Test 5: Invalid URL (Security)</h2>
+        <div class="info">
+          ✗ Expected: ไปที่ /login (ปฏิเสธ URL ที่ไม่ปลอดภัย)<br />
+          ✗ Status: ระบบจะปฏิเสธและใช้ค่าเริ่มต้น
+        </div>
+        <div class="url-display" id="test5Url"></div>
+        <a href="" id="test5Link" class="button">ทดสอบ Test 5 →</a>
+      </div>
+
+      <div class="footer">
+        <p>🔐 Allowed Domains: localhost, 127.0.0.1, *.hss.moph.go.th</p>
+        <p style="margin-top: 8px">
+          ระบบจะปฏิเสธ URL ที่ไม่อยู่ใน whitelist โดยอัตโนมัติ
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Base registration URL (change this based on environment)
+      const REGISTER_BASE_URL =
+        "https://phc-management.hss.moph.go.th/register";
+
+      // Get current page URL
+      const currentPageUrl = window.location.href;
+      document.getElementById("currentUrl").textContent = currentPageUrl;
+
+      // Test 1: localhost
+      const test1ReturnUrl = "http://localhost:3000";
+      const test1Url = `${REGISTER_BASE_URL}?returnUrl=${encodeURIComponent(
+        test1ReturnUrl
+      )}`;
+      document.getElementById("test1Url").textContent = test1Url;
+      document.getElementById("test1Link").href = test1Url;
+
+      // Test 2: dev server
+      const test2ReturnUrl = "http://thaiphc.hss.moph.go.th";
+      const test2Url = `${REGISTER_BASE_URL}?returnUrl=${encodeURIComponent(
+        test2ReturnUrl
+      )}`;
+      document.getElementById("test2Url").textContent = test2Url;
+      document.getElementById("test2Link").href = test2Url;
+
+      // Test 3: current URL
+      const test3Url = `${REGISTER_BASE_URL}?returnUrl=${encodeURIComponent(
+        currentPageUrl
+      )}`;
+      document.getElementById("test3Url").textContent = test3Url;
+      document.getElementById("test3Link").href = test3Url;
+
+      // Test 4: no return URL
+      const test4Url = REGISTER_BASE_URL;
+      document.getElementById("test4Url").textContent = test4Url;
+      document.getElementById("test4Link").href = test4Url;
+
+      // Test 5: invalid/malicious URL
+      const test5ReturnUrl = "https://evil-site.com/phishing";
+      const test5Url = `${REGISTER_BASE_URL}?returnUrl=${encodeURIComponent(
+        test5ReturnUrl
+      )}`;
+      document.getElementById("test5Url").textContent = test5Url;
+      document.getElementById("test5Link").href = test5Url;
+
+      // Add click handlers for analytics/logging
+      document.querySelectorAll(".button").forEach((button, index) => {
+        button.addEventListener("click", (e) => {
+          console.log(`Test ${index + 1} clicked:`, button.href);
+        });
+      });
+    </script>
+  </body>
+</html>

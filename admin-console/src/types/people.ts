@@ -1,0 +1,31 @@
+export interface PeopleDetail {
+    id: string;
+    citizen_id: string;
+    yuwa_osm_code?: string | null;
+    prefix?: string | null;
+    first_name: string;
+    last_name: string;
+    gender?: string | null;
+    phone_number?: string | null;
+    email?: string | null;
+    line_id?: string | null;
+    school?: string | null;
+    organization?: string | null;
+    profile_image?: string | null;
+    province_code?: string | null;
+    province_name?: string | null;
+    district_code?: string | null;
+    district_name?: string | null;
+    subdistrict_code?: string | null;
+    subdistrict_name?: string | null;
+    birthday?: string | null;
+    is_active: boolean;
+    is_first_login?: boolean | null;
+    is_transferred?: boolean | null;
+    transferred_at?: string | null;
+    transferred_by?: string | null;
+    transferred_by_name?: string | null;
+    yuwa_osm_id?: string | null;
+    created_at?: string | null;
+    updated_at?: string | null;
+}

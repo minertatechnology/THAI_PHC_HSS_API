@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: osm-thai-phc-hss-api-ingress
+  namespace: aorsormor-system
+  annotations:
+    # --- High Concurrency Settings ---
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # Upstream keepalive connections to API pods
+    nginx.ingress.kubernetes.io/upstream-keepalive-connections: "320"
+    nginx.ingress.kubernetes.io/upstream-keepalive-timeout: "60"
+    nginx.ingress.kubernetes.io/upstream-keepalive-requests: "10000"
+    # Load balancing
+    nginx.ingress.kubernetes.io/load-balance: "ewma"
+spec:
+  # [แก้ไข] ใช้วิธีใหม่ที่ถูกต้องในการระบุ Ingress Controller
+  ingressClassName: "nginx"
+  rules:
+  - host: "api-thaiphc.hss.moph.go.th" # !! สำคัญ: เปลี่ยนเป็นโดเมนเนมของคุณ !!
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            # ชื่อต้องตรงกับ Service ในไฟล์ app-deployment.yaml
+            name: osm-thai-phc-hss-api-service
+            port:
+              # Port ต้องตรงกับ Service port
+              number: 80

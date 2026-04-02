@@ -1,0 +1,163 @@
+# ===================================================================
+# ใช้ทุกครั้งที่ต้องการ Deploy เวอร์ชันใหม่
+# คำสั่ง: kubectl -n aorsormor-system apply -f osm-thai-phc-hss-api.yaml
+# แก้เฉพาะ image: เป็นเวอร์ชันใหม่ก่อน apply
+# ===================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: osm-thai-phc-hss-api-deployment
+  namespace: aorsormor-system
+  labels:
+    app: osm-thai-phc-hss-api
+spec:
+  replicas: 3
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: osm-thai-phc-hss-api
+  template:
+    metadata:
+      labels:
+        app: osm-thai-phc-hss-api
+    spec:
+      nodeSelector:
+        longhorn: "storage"
+      # ถ้าต้องดึง image จาก DOCR ด้วย secret ของ namespace นี้ ให้ uncomment บรรทัดด้านล่าง
+      # imagePullSecrets:
+      #   - name: docr-pull-secret
+
+      volumes:
+        - name: jwt-keys
+          secret:
+            secretName: jwt-keys-secret
+            items:
+              - key: private_key.pem
+                path: private_key.pem
+              - key: public_key.pem
+                path: public_key.pem
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: uploads-pvc
+
+      containers:
+        - name: osm-thai-phc-hss-api
+          # เปลี่ยน tag ตาม image ที่ build ล่าสุด
+          image: registry.digitalocean.com/minerta-k8s/osm-thai-phc-hss-api:v4.01
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "768Mi"
+            limits:
+              cpu: "1500m"
+              memory: "1536Mi"
+
+          # สุขภาพบริการ
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health/
+              port: 8000
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health/
+              port: 8000
+            initialDelaySeconds: 30
+            timeoutSeconds: 2
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # === ENV ===
+          env:
+            # (แก้เฉพาะเรื่อง DATABASE_URL)
+            - name: POSTGRES_PASSWORD_URLENCODED
+              value: "y-aH1j0F9XoR"
+
+            # ดึง user/password จริงจาก secret เหมือนเดิม
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: POSTGRES_PASSWORD
+
+            # === DB Connection Pool (for high concurrency) ===
+            - name: DB_POOL_MIN
+              value: "10"
+            - name: DB_POOL_MAX
+              value: "30"
+            - name: GUNICORN_WORKERS
+              value: "4"
+
+            # === Redis Cache ===
+            - name: REDIS_URL
+              value: "redis://:R3d1s%40osm2026%21@10.98.126.64:6379/0"
+            - name: REDIS_KEY_PREFIX
+              value: "hss:"
+
+            # === RabbitMQ (คงของเดิม) ===
+            - name: RABBITMQ_URL
+              value: "amqp://user_app:$(RABBITMQ_PASSWORD)@aorsormor-rabbitmq:5672/"
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_PASSWORD
+
+            # --- JWT symmetric keys ---
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-keys-secret
+                  key: JWT_SECRET_KEY
+            - name: JWT_FIRST_LOGIN_TOKEN_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-keys-secret
+                  key: JWT_FIRST_LOGIN_TOKEN_SECRET_KEY
+
+            # --- JWT signing keys ---
+            - name: JWT_PRIVATE_KEY_PATH
+              value: /app/keys/private_key.pem
+            - name: JWT_PUBLIC_KEY_PATH
+              value: /app/keys/public_key.pem
+            - name: JWT_ACTIVE_KID
+              value: key-2025-10-17
+
+          # ให้ shell ประกอบ DATABASE_URL แล้วค่อยรัน gunicorn
+          command: ["/bin/sh","-lc"]
+          args:
+            - >
+              export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD_URLENCODED}@192.168.88.61:6432/aorsormor_db";
+              export DB_POOL_MIN="${DB_POOL_MIN:-10}";
+              export DB_POOL_MAX="${DB_POOL_MAX:-30}";
+              exec gunicorn -w ${GUNICORN_WORKERS:-4} -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000 --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 100;
+
+          envFrom:
+            - configMapRef:
+                name: app-configmap
+            - configMapRef:
+                name: thaid-config
+            - secretRef:
+                name: rabbitmq-secret
+
+          volumeMounts:
+            - name: jwt-keys
+              mountPath: /app/keys
+              readOnly: true
+            - name: uploads
+              mountPath: /app/uploads
+              subPath: hss-api

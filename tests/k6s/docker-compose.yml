@@ -1,0 +1,242 @@
+services:
+  # ===================== thaiphc2 =====================
+  thaiphc2-test:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${THAIPHC2_BASE_URL}
+      - ORIGIN_HOST=${THAIPHC2_ORIGIN_HOST:-}
+      - USERNAME=${THAIPHC2_USERNAME}
+      - PASSWORD=${THAIPHC2_PASSWORD}
+      - CLIENT_ID=${THAIPHC2_CLIENT_ID}
+      - USER_TYPE=${THAIPHC2_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/thaiphc2:/results
+    command: ["run", "/scripts/thaiphc2/test.js"]
+
+  thaiphc2-smoke:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${THAIPHC2_BASE_URL}
+      - ORIGIN_HOST=${THAIPHC2_ORIGIN_HOST:-}
+      - USERNAME=${THAIPHC2_USERNAME}
+      - PASSWORD=${THAIPHC2_PASSWORD}
+      - CLIENT_ID=${THAIPHC2_CLIENT_ID}
+      - USER_TYPE=${THAIPHC2_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/thaiphc2:/results
+    command: ["run", "/scripts/thaiphc2/smoke.js"]
+
+  thaiphc2-stress:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${THAIPHC2_BASE_URL}
+      - ORIGIN_HOST=${THAIPHC2_ORIGIN_HOST:-}
+      - USERNAME=${THAIPHC2_USERNAME}
+      - PASSWORD=${THAIPHC2_PASSWORD}
+      - CLIENT_ID=${THAIPHC2_CLIENT_ID}
+      - USER_TYPE=${THAIPHC2_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/thaiphc2:/results
+    command: ["run", "/scripts/thaiphc2/stress.js"]
+
+  thaiphc2-admin:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${THAIPHC2_BASE_URL}
+      - ORIGIN_HOST=${THAIPHC2_ORIGIN_HOST:-}
+      - USERNAME=${THAIPHC2_USERNAME}
+      - PASSWORD=${THAIPHC2_PASSWORD}
+      - CLIENT_ID=${THAIPHC2_CLIENT_ID}
+      - USER_TYPE=${THAIPHC2_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/thaiphc2:/results
+    command: ["run", "/scripts/thaiphc2/admin.js"]
+
+  # Capacity test: 5,000 VUs
+  thaiphc2-capacity-5k:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${THAIPHC2_BASE_URL}
+      - ORIGIN_HOST=${THAIPHC2_ORIGIN_HOST:-}
+      - USERNAME=${THAIPHC2_USERNAME}
+      - PASSWORD=${THAIPHC2_PASSWORD}
+      - CLIENT_ID=${THAIPHC2_CLIENT_ID}
+      - USER_TYPE=${THAIPHC2_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+      - CAPACITY_LEVEL=5000
+    volumes:
+      - ./results/thaiphc2:/results
+    command: ["run", "/scripts/thaiphc2/capacity.js"]
+
+  # Capacity test: 10,000 VUs
+  thaiphc2-capacity-10k:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${THAIPHC2_BASE_URL}
+      - ORIGIN_HOST=${THAIPHC2_ORIGIN_HOST:-}
+      - USERNAME=${THAIPHC2_USERNAME}
+      - PASSWORD=${THAIPHC2_PASSWORD}
+      - CLIENT_ID=${THAIPHC2_CLIENT_ID}
+      - USER_TYPE=${THAIPHC2_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+      - CAPACITY_LEVEL=10000
+    volumes:
+      - ./results/thaiphc2:/results
+    command: ["run", "/scripts/thaiphc2/capacity.js"]
+
+  # Capacity test: 20,000 VUs
+  thaiphc2-capacity-20k:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${THAIPHC2_BASE_URL}
+      - ORIGIN_HOST=${THAIPHC2_ORIGIN_HOST:-}
+      - USERNAME=${THAIPHC2_USERNAME}
+      - PASSWORD=${THAIPHC2_PASSWORD}
+      - CLIENT_ID=${THAIPHC2_CLIENT_ID}
+      - USER_TYPE=${THAIPHC2_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+      - CAPACITY_LEVEL=20000
+    volumes:
+      - ./results/thaiphc2:/results
+    command: ["run", "/scripts/thaiphc2/capacity.js"]
+
+  # ===================== smartosmapi =====================
+  smartosm-test:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${SMARTOSM_BASE_URL}
+      - ORIGIN_HOST=${SMARTOSM_ORIGIN_HOST:-}
+      - LOGIN_URL=${SMARTOSM_LOGIN_URL}
+      - USERNAME=${SMARTOSM_USERNAME}
+      - PASSWORD=${SMARTOSM_PASSWORD}
+      - CLIENT_ID=${SMARTOSM_CLIENT_ID}
+      - USER_TYPE=${SMARTOSM_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/smartosmapi:/results
+    command: ["run", "/scripts/smartosmapi/test.js"]
+
+  smartosm-smoke:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${SMARTOSM_BASE_URL}
+      - ORIGIN_HOST=${SMARTOSM_ORIGIN_HOST:-}
+      - LOGIN_URL=${SMARTOSM_LOGIN_URL}
+      - USERNAME=${SMARTOSM_USERNAME}
+      - PASSWORD=${SMARTOSM_PASSWORD}
+      - CLIENT_ID=${SMARTOSM_CLIENT_ID}
+      - USER_TYPE=${SMARTOSM_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/smartosmapi:/results
+    command: ["run", "/scripts/smartosmapi/smoke.js"]
+
+  smartosm-stress:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${SMARTOSM_BASE_URL}
+      - ORIGIN_HOST=${SMARTOSM_ORIGIN_HOST:-}
+      - LOGIN_URL=${SMARTOSM_LOGIN_URL}
+      - USERNAME=${SMARTOSM_USERNAME}
+      - PASSWORD=${SMARTOSM_PASSWORD}
+      - CLIENT_ID=${SMARTOSM_CLIENT_ID}
+      - USER_TYPE=${SMARTOSM_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/smartosmapi:/results
+    command: ["run", "/scripts/smartosmapi/stress.js"]
+
+  smartosm-admin:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${SMARTOSM_BASE_URL}
+      - ORIGIN_HOST=${SMARTOSM_ORIGIN_HOST:-}
+      - LOGIN_URL=${SMARTOSM_LOGIN_URL}
+      - USERNAME=${SMARTOSM_USERNAME}
+      - PASSWORD=${SMARTOSM_PASSWORD}
+      - CLIENT_ID=${SMARTOSM_CLIENT_ID}
+      - USER_TYPE=${SMARTOSM_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/smartosmapi:/results
+    command: ["run", "/scripts/smartosmapi/admin.js"]
+
+  # ===================== elearning =====================
+  elearning-test:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${ELEARNING_BASE_URL}
+      - ORIGIN_HOST=${ELEARNING_ORIGIN_HOST:-}
+      - LOGIN_URL=${ELEARNING_LOGIN_URL}
+      - USERNAME=${ELEARNING_USERNAME}
+      - PASSWORD=${ELEARNING_PASSWORD}
+      - CLIENT_ID=${ELEARNING_CLIENT_ID}
+      - USER_TYPE=${ELEARNING_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/elearning:/results
+    command: ["run", "/scripts/elearning/test.js"]
+
+  elearning-smoke:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${ELEARNING_BASE_URL}
+      - ORIGIN_HOST=${ELEARNING_ORIGIN_HOST:-}
+      - LOGIN_URL=${ELEARNING_LOGIN_URL}
+      - USERNAME=${ELEARNING_USERNAME}
+      - PASSWORD=${ELEARNING_PASSWORD}
+      - CLIENT_ID=${ELEARNING_CLIENT_ID}
+      - USER_TYPE=${ELEARNING_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/elearning:/results
+    command: ["run", "/scripts/elearning/smoke.js"]
+
+  elearning-stress:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${ELEARNING_BASE_URL}
+      - ORIGIN_HOST=${ELEARNING_ORIGIN_HOST:-}
+      - LOGIN_URL=${ELEARNING_LOGIN_URL}
+      - USERNAME=${ELEARNING_USERNAME}
+      - PASSWORD=${ELEARNING_PASSWORD}
+      - CLIENT_ID=${ELEARNING_CLIENT_ID}
+      - USER_TYPE=${ELEARNING_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/elearning:/results
+    command: ["run", "/scripts/elearning/stress.js"]
+
+  elearning-admin:
+    build: .
+    env_file: .env
+    environment:
+      - BASE_URL=${ELEARNING_BASE_URL}
+      - ORIGIN_HOST=${ELEARNING_ORIGIN_HOST:-}
+      - LOGIN_URL=${ELEARNING_LOGIN_URL}
+      - USERNAME=${ELEARNING_USERNAME}
+      - PASSWORD=${ELEARNING_PASSWORD}
+      - CLIENT_ID=${ELEARNING_CLIENT_ID}
+      - USER_TYPE=${ELEARNING_USER_TYPE:-officer}
+      - RESULT_MODE=${RESULT_MODE:-host}
+    volumes:
+      - ./results/elearning:/results
+    command: ["run", "/scripts/elearning/admin.js"]

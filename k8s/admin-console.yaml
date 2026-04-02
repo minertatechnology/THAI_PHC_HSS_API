@@ -1,0 +1,100 @@
+# ===================================================================
+# Admin Console deployment + ingress
+# ===================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thaiphc2-admin-console-deployment
+  namespace: aorsormor-system
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: thaiphc2-admin-console
+  template:
+    metadata:
+      labels:
+        app: thaiphc2-admin-console
+    spec:
+      containers:
+      - name: admin-console
+        image: registry.digitalocean.com/minerta-k8s/thaiphc2-admin-console:dev42
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 15
+          timeoutSeconds: 2
+          periodSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 45
+          timeoutSeconds: 2
+          periodSeconds: 30
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thaiphc2-admin-console-service
+  namespace: aorsormor-system
+spec:
+  selector:
+    app: thaiphc2-admin-console
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thaiphc2-admin-console-ingress
+  namespace: aorsormor-system
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: "phc-management.hss.moph.go.th"
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: osm-thai-phc-hss-api-service
+            port:
+              number: 80
+      - path: /callback
+        pathType: Exact
+        backend:
+          service:
+            name: osm-thai-phc-hss-api-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: thaiphc2-admin-console-service
+            port:
+              number: 80
+  # Uncomment and customise if TLS is available
+  # tls:
+  # - hosts:
+  #   - phc-management.hss.moph.go.th
+  #   secretName: phc-management-tls

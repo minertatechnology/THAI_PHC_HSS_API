@@ -1,0 +1,109 @@
+# ===================================================================
+# ไฟล์นี้ใช้ครั้งเดียวตอน Setup ครั้งแรกเท่านั้น
+# ===================================================================
+# คำสั่งรัน: kubectl apply -f k8s/app-config-once.yaml
+# ===================================================================
+
+# ===================================================================
+# PART 1: Secret สำหรับเก็บรหัสผ่าน PostgreSQL
+# ===================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-db-secret
+  namespace: aorsormor-system
+type: Opaque
+stringData:
+  # !! สำคัญ: ใส่รหัสผ่าน PostgreSQL ของคุณที่นี่ !!
+  POSTGRES_USER: "aorsormor-user"
+  POSTGRES_PASSWORD: "y-aH1j0F9XoR"
+
+---
+# ===================================================================
+# PART 2: Secret สำหรับเก็บรหัสผ่าน RabbitMQ
+# ===================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-secret
+  namespace: aorsormor-system
+type: Opaque
+stringData:
+  # !! สำคัญ: ใส่รหัสผ่าน RabbitMQ ของคุณที่นี่ !!
+  RABBITMQ_PASSWORD: "9NQBb5a@4p3UR"
+
+---
+# ===================================================================
+# PART 3: Secret สำหรับเก็บค่า OAuth2/JWT Keys และ Secret Key
+# ===================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jwt-keys-secret
+  namespace: aorsormor-system
+type: Opaque
+stringData:
+  # !! สำคัญ: ใส่ค่า JWT_SECRET_KEY ของคุณที่นี่ !!
+  JWT_SECRET_KEY: "fnsdkjnvkjdsnviashi@#$@Rkfcaca1o23kkdmkd"
+  # !! สำคัญ: ใส่ค่า JWT_FIRST_LOGIN_TOKEN_SECRET_KEY ของคุณที่นี่ !!
+  JWT_FIRST_LOGIN_TOKEN_SECRET_KEY: "4200279f4b0f8ba98fc4d69acbe6f211b64fcae8"
+  # !! สำคัญ: คัดลอกเนื้อหาของไฟล์ private_key.pem มาวางที่นี่ !!
+  private_key.pem: |
+    -----BEGIN PRIVATE KEY-----
+    ... YOUR PRIVATE KEY CONTENT ...
+    -----END PRIVATE KEY-----
+  # !! สำคัญ: คัดลอกเนื้อหาของไฟล์ public_key.pem มาวางที่นี่ !!
+  public_key.pem: |
+    -----BEGIN PUBLIC KEY-----
+    ... YOUR PUBLIC KEY CONTENT ...
+    -----END PUBLIC KEY-----
+
+---
+# ===================================================================
+# PART 4: ConfigMap สำหรับเก็บค่า Configuration ทั่วไป
+# ===================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-configmap
+  namespace: aorsormor-system
+data:
+  APP_NAME: "thai_phc_v2"
+  API_V1_PREFIX: "/api/v1"
+  JWT_ALGORITHM: "RS256"
+  JWT_SESSION_TOKEN_EXPIRE_MINUTES: "10"
+  OAUTH2_AUTHORIZATION_CODE_EXPIRE_MINUTES: "5"
+  JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "10"
+  JWT_REFRESH_TOKEN_EXPIRE_MINUTES: "30"
+  JWT_REFRESH_TOKEN_EXPIRE_DAYS: "10"
+  JWT_PRIVATE_KEY_PATH: "/app/keys/private_key.pem"
+  JWT_PUBLIC_KEY_PATH: "/app/keys/public_key.pem"
+  # First Login Token Configuration
+  JWT_FIRST_LOGIN_TOKEN_ALGORITHM: "HS256"
+  JWT_FIRST_LOGIN_TOKEN_EXPIRE_MINUTES: "5"
+  CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,https://api-thaiphc.hss.moph.go.th,https://thaiphc.hss.moph.go.th,https://dashboard.hss.moph.go.th,https://phc-learning.hss.moph.go.th,https://osm-workreport.hss.moph.go.th,https://genh.hss.moph.go.th,https://phc-management.hss.moph.go.th"
+  # ThaiD DOPA Integration (Production)
+  THAID_API_KEY: "lei0WbrRVivufqc5hfCt1YiifbZjFaGM0CCaHbAG"
+  THAID_CLIENT_ID: "ZVl5NzJUQVQ1MXZLaUxITjZXTTVYdnZ5Z2ZrWHN6bjE"
+  THAID_CLIENT_SECRET: "elB5TzZLOXhkTHZOUWdsajVaWVdTcWJxbjFSTHVFWk4wbUw2S3ZZSA"
+  THAID_REQUEST_URI: "https://imauth.bora.dopa.go.th/api/v2/oauth2/token/"
+  THAID_AUTHORIZE_URI: "https://imauth.bora.dopa.go.th/api/v2/oauth2/auth/"
+  THAID_REDIRECT_URI: "https://api-thaiphc.hss.moph.go.th/callback"
+
+---
+# ===================================================================
+# PART 5: Service ของแอปพลิเคชัน
+# ===================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: osm-thai-phc-hss-api-service
+  namespace: aorsormor-system
+spec:
+  type: ClusterIP
+  selector:
+    app: osm-thai-phc-hss-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000

@@ -1,0 +1,46 @@
+# ===================================================================
+# Ingress สำหรับ High Concurrency (10,000+ concurrent users)
+# คำสั่ง: kubectl -n aorsormor-system apply -f ingress-high-concurrency.yaml
+#
+# ไฟล์นี้มีแค่ Ingress resource อย่างเดียว
+# ไม่แตะ ConfigMap, Secret, Service หรือ Deployment ใดๆ
+# ===================================================================
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: osm-thai-phc-hss-api-ingress
+  namespace: aorsormor-system
+  annotations:
+    # --- Proxy Timeouts ---
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+    # --- Upstream Keepalive (ลด connection overhead ระหว่าง nginx กับ API pods) ---
+    nginx.ingress.kubernetes.io/upstream-keepalive-connections: "320"
+    nginx.ingress.kubernetes.io/upstream-keepalive-timeout: "60"
+    nginx.ingress.kubernetes.io/upstream-keepalive-requests: "10000"
+
+    # --- Load Balancing ---
+    # ewma = Exponential Weighted Moving Average (เลือก pod ที่ response เร็วที่สุด)
+    nginx.ingress.kubernetes.io/load-balance: "ewma"
+
+    # --- Rate Limiting (ป้องกัน abuse, ปรับตามต้องการ) ---
+    # nginx.ingress.kubernetes.io/limit-rps: "100"
+    # nginx.ingress.kubernetes.io/limit-connections: "50"
+
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: "api-thaiphc.hss.moph.go.th"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: osm-thai-phc-hss-api-service
+            port:
+              number: 80
