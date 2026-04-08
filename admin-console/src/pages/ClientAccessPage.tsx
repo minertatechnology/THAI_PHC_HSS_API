@@ -50,7 +50,7 @@ const USER_TYPE_OPTIONS: {
   { value: "osm", label: "OSM" },
   { value: "yuwa_osm", label: "Yuwa OSM" },
   { value: "people", label: "People" },
-  { value: "gen_h", label: "GenH", readOnly: true },
+  { value: "gen_h", label: "GenH" },
 ];
 
 /** Editable user types — used for bulk actions (allow-all / disallow-all). */

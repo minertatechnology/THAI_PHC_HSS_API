@@ -187,6 +187,7 @@ class GenHUserRepository:
             | Q(last_name__icontains=term)
             | Q(gen_h_code__icontains=term)
             | Q(phone_number__icontains=term)
+            | Q(citizen_id__icontains=term)
         )
         if active_only:
             base_qs = base_qs.filter(is_active=True)
