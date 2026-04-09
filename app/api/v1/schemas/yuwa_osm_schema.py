@@ -160,7 +160,7 @@ class YuwaOSMResponseSchema(BaseModel):
     first_name: str
     last_name: str
     gender: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     line_id: Optional[str] = None
     school: Optional[str] = None
     organization: Optional[str] = None
