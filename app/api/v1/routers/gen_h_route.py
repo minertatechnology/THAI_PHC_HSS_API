@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status  # noqa: F401
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status  # noqa: F401
+from typing import Optional
 
 from app.api.middleware.middleware import require_scopes
 from app.api.v1.controllers.gen_h_controller import GenHController
@@ -65,15 +66,19 @@ async def gen_h_summary(
 
 
 @gen_h_router.post("", status_code=status.HTTP_201_CREATED)
-async def register_gen_h_user(payload: GenHCreateSchema):
+async def register_gen_h_user(
+    payload: GenHCreateSchema = Depends(),
+    profile_image: Optional[UploadFile] = File(None, description="Profile image file (optional)"),
+):
     """Register a new Gen H user.
 
     Public when GEN_H_SELF_REGISTER_ENABLED=True (migration period).
     Set GEN_H_SELF_REGISTER_ENABLED=False in .env to close self-registration post-migration.
+    Accepts multipart/form-data with optional profile_image file.
     """
     if not settings.GEN_H_SELF_REGISTER_ENABLED:
         raise HTTPException(status_code=403, detail="gen_h_self_register_disabled")
-    return await GenHController.register(payload, current_user=None)
+    return await GenHController.register(payload, current_user=None, profile_image=profile_image)
 
 
 @gen_h_router.get("/{user_id}")

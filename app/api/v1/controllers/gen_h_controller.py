@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
+from typing import Optional
 from uuid import UUID
 
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 
 from app.api.v1.schemas.gen_h_schema import (
     GenHCreateSchema,
@@ -19,9 +20,9 @@ logger = logging.getLogger(__name__)
 class GenHController:
 
     @staticmethod
-    async def register(payload: GenHCreateSchema, current_user: dict | None = None) -> dict:
+    async def register(payload: GenHCreateSchema, current_user: dict | None = None, profile_image: Optional[UploadFile] = None) -> dict:
         try:
-            return await GenHService.register(payload, current_user)
+            return await GenHService.register(payload, current_user, profile_image=profile_image)
         except HTTPException:
             raise
         except Exception as e:

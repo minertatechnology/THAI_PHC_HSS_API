@@ -16,6 +16,7 @@ class ProfileImageService:
         "yuwa_osm": "yuwa-osm",
         "officer": "officer",
         "people": "people",
+        "gen_h": "gen-h",
     }
 
     @classmethod

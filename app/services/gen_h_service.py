@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 import bcrypt as _bcrypt
 
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from tortoise.transactions import in_transaction
 
 from app.api.v1.schemas.gen_h_schema import (
@@ -25,6 +25,7 @@ from app.repositories.gen_h_user_repository import GenHUserRepository
 from app.repositories.people_user_repository import PeopleUserRepository
 from app.repositories.yuwa_osm_user_repository import YuwaOSMUserRepository
 from app.services.officer_service import OfficerService
+from app.services.profile_image_service import ProfileImageService
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +117,7 @@ class GenHService:
     # ── CRUD ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    async def register(payload: GenHCreateSchema, current_user: Optional[dict] = None) -> dict:
+    async def register(payload: GenHCreateSchema, current_user: Optional[dict] = None, profile_image: Optional[UploadFile] = None) -> dict:
         """Register a new Gen H user."""
         # Scope check: officer can only register in their jurisdiction
         await GenHService._check_scope_for_payload(
@@ -134,6 +135,12 @@ class GenHService:
         # (gen_h_code default password is for migration data only, set directly in DB)
         password_hash = _bcrypt.hashpw(payload.password.encode(), _bcrypt.gensalt()).decode()
         is_first_login = False
+
+        # Upload profile image if provided
+        profile_image_url = GenHService._clean_str(payload.profile_image_url)
+        if profile_image is not None and getattr(profile_image, "filename", None):
+            stored_path = await ProfileImageService.upload_profile_image(file=profile_image, context="gen_h")
+            profile_image_url = stored_path
 
         user = await GenHUserRepository.create_user(
             id=uuid4(),
@@ -156,7 +163,7 @@ class GenHService:
             district_name=GenHService._clean_str(payload.district_name),
             subdistrict_code=GenHService._clean_str(payload.subdistrict_code),
             subdistrict_name=GenHService._clean_str(payload.subdistrict_name),
-            profile_image_url=GenHService._clean_str(payload.profile_image_url),
+            profile_image_url=profile_image_url,
             photo_1inch=GenHService._clean_str(payload.photo_1inch),
             member_card_url=GenHService._clean_str(payload.member_card_url),
             attachments=payload.attachments,
