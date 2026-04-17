@@ -60,4 +60,5 @@ v1_router.include_router(gen_h_router)
 
 
 rootRouter = APIRouter()
+rootRouter.include_router(healthcheck_router)
 rootRouter.include_router(v1_router)

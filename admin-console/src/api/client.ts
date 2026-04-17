@@ -16,21 +16,6 @@ const resolveBaseURL = (): string => {
     if (!configuredBaseUrl) {
         return "/api/v1";
     }
-
-    try {
-        const parsed = new URL(configuredBaseUrl);
-        const isLocalBackend =
-            ["localhost", "127.0.0.1"].includes(parsed.hostname) &&
-            parsed.port === "8000";
-        const isLocalFrontend = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-
-        if (isLocalBackend && isLocalFrontend) {
-            return "/api/v1";
-        }
-    } catch {
-        return configuredBaseUrl;
-    }
-
     return configuredBaseUrl;
 };
 

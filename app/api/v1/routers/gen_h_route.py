@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status  # noqa: F401
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status  # noqa: F401
 
 from app.api.middleware.middleware import require_scopes
 from app.api.v1.controllers.gen_h_controller import GenHController
@@ -10,6 +10,7 @@ from app.api.v1.schemas.gen_h_schema import (
     GenHBatchIdsSchema,
     GenHCreateSchema,
     GenHQueryParams,
+    GenHSelfUpdateSchema,
     GenHTransferToPeopleRequest,
     GenHUpdateSchema,
     GenHUpgradeToYuwaOSMRequest,
@@ -99,7 +100,14 @@ async def update_gen_h_user(
     payload: GenHUpdateSchema,
     current_user: dict = Depends(require_scopes({"profile"})),
 ):
-    """Update a Gen H user (officer only, scope checked in service)."""
+    """Update a Gen H user. Gen H user can update own profile (restricted fields). Officer can update any user."""
+    user_type = current_user.get("user_type")
+    if user_type == "gen_h":
+        own_id = str(current_user.get("user_id", ""))
+        if own_id != user_id:
+            raise HTTPException(status_code=403, detail="forbidden: can only update own profile")
+        self_payload = GenHSelfUpdateSchema(**payload.model_dump(exclude_unset=True, exclude={"points", "is_active", "profile_image_url", "member_card_url"}))
+        return await GenHController.update_user(user_id, self_payload, current_user)
     await PermissionService.require_officer(current_user)
     return await GenHController.update_user(user_id, payload, current_user)
 
@@ -148,6 +156,7 @@ async def get_gen_h_batch(
 
 @gen_h_router.post("/{user_id}/profile-image", response_model=ProfileImageUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_gen_h_profile_image(
+    request: Request,
     user_id: str,
     image: UploadFile = File(..., description="Profile image file"),
     current_user: dict = Depends(require_scopes({"profile"})),
@@ -164,11 +173,13 @@ async def upload_gen_h_profile_image(
         raise HTTPException(status_code=404, detail="gen_h_user_not_found")
     stored_path = await ProfileImageService.upload_profile_image(file=image, context="gen_h")
     await GenHUserRepository.update_user(existing, profile_image_url=stored_path)
-    return ProfileImageUploadResponse(image_url=stored_path)
+    base_url = str(request.base_url).rstrip("/")
+    return ProfileImageUploadResponse(image_url=f"{base_url}/{stored_path}")
 
 
 @gen_h_router.post("/{user_id}/photo-1inch", response_model=ProfileImageUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_gen_h_photo_1inch(
+    request: Request,
     user_id: str,
     image: UploadFile = File(..., description="1-inch photo file"),
     current_user: dict = Depends(require_scopes({"profile"})),
@@ -185,7 +196,8 @@ async def upload_gen_h_photo_1inch(
         raise HTTPException(status_code=404, detail="gen_h_user_not_found")
     stored_path = await ProfileImageService.upload_profile_image(file=image, context="gen_h")
     await GenHUserRepository.update_user(existing, photo_1inch=stored_path)
-    return ProfileImageUploadResponse(image_url=stored_path)
+    base_url = str(request.base_url).rstrip("/")
+    return ProfileImageUploadResponse(image_url=f"{base_url}/{stored_path}")
 
 
 @gen_h_router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

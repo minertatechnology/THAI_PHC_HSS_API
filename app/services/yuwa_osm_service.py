@@ -165,11 +165,26 @@ class YuwaOsmService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="insufficient_scope_department_required")
 
     @staticmethod
+    def _build_public_url(relative_path: str | None) -> str | None:
+        if not relative_path:
+            return None
+        if relative_path.startswith("http://") or relative_path.startswith("https://"):
+            return relative_path
+        from app.configs.config import settings
+        base = settings.PUBLIC_BASE_URL
+        if not base:
+            return relative_path
+        base = base.rstrip("/")
+        return f"{base}/{relative_path}"
+
+    @staticmethod
     def _serialize_user(user) -> Dict[str, Any]:
         response = YuwaOSMResponseSchema.model_validate(user)
         payload = response.model_dump(mode="json")
         if payload.get("people_id") is None and payload.get("source_people_id") is not None:
             payload["people_id"] = payload.get("source_people_id")
+        if payload.get("profile_image"):
+            payload["profile_image"] = YuwaOsmService._build_public_url(payload["profile_image"])
         return payload
 
     @staticmethod

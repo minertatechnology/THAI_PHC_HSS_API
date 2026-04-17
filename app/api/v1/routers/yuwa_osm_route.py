@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, Response, status, File, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, Request, Response, status, File, UploadFile, HTTPException
 
 from app.api.middleware.middleware import require_scopes
 from app.api.v1.controllers.yuwa_osm_controller import YuwaOsmController
@@ -80,6 +80,7 @@ async def update_yuwa_osm_user(
 
 @yuwa_osm_router.post("/{user_id}/profile-image", response_model=ProfileImageUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_yuwa_osm_profile_image(
+    request: Request,
     user_id: str,
     image: UploadFile = File(..., description="Profile image file"),
     current_user: dict = Depends(require_scopes({"profile"})),
@@ -94,7 +95,8 @@ async def upload_yuwa_osm_profile_image(
     updated = await YuwaOSMUserRepository.update_user(user_id, {"profile_image": stored_path})
     if not updated:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="yuwa_osm_update_failed")
-    return ProfileImageUploadResponse(image_url=stored_path)
+    base_url = str(request.base_url).rstrip("/")
+    return ProfileImageUploadResponse(image_url=f"{base_url}/{stored_path}")
 
 
 @yuwa_osm_router.delete("/{user_id}", status_code=status.HTTP_200_OK)

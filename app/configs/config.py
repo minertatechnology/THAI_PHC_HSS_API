@@ -85,6 +85,9 @@ class Settings(BaseSettings):
     # Environment metadata
     ENVIRONMENT: str = "production"
 
+    # Public base URL for building full image URLs (e.g. https://api-thaiphc.hss.moph.go.th)
+    PUBLIC_BASE_URL: str | None = None
+
     model_config = {
         "env_file": ".env",
         "case_sensitive": True,

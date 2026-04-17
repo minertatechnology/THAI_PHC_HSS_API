@@ -43,8 +43,30 @@ class GenHService:
         return s or None
 
     @staticmethod
+    def _build_public_url(relative_path: str | None) -> str | None:
+        """Convert a relative image path to a full URL if it looks like a local path."""
+        if not relative_path:
+            return None
+        if relative_path.startswith("http://") or relative_path.startswith("https://"):
+            return relative_path
+        from app.configs.config import settings
+        base = settings.PUBLIC_BASE_URL
+        if not base:
+            return relative_path
+        base = base.rstrip("/")
+        return f"{base}/{relative_path}"
+
+    @staticmethod
     def _serialize_user(user: GenHUser) -> dict:
-        return GenHResponseSchema.model_validate(user).model_dump(mode="json")
+        data = GenHResponseSchema.model_validate(user).model_dump(mode="json")
+        _url = GenHService._build_public_url
+        if data.get("profile_image_url"):
+            data["profile_image_url"] = _url(data["profile_image_url"])
+        if data.get("photo_1inch"):
+            data["photo_1inch"] = _url(data["photo_1inch"])
+        if data.get("member_card_url"):
+            data["member_card_url"] = _url(data["member_card_url"])
+        return data
 
     @staticmethod
     async def _generate_gen_h_code() -> str:
@@ -207,7 +229,9 @@ class GenHService:
             raise HTTPException(status_code=404, detail="Gen H user not found")
 
         # Scope check: officer can only update users in their jurisdiction
-        await GenHService._check_scope_for_gen_h(user, current_user)
+        # Skip scope check if gen_h user is updating their own profile
+        if not (current_user and current_user.get("user_type") == "gen_h" and str(current_user.get("user_id", "")) == user_id):
+            await GenHService._check_scope_for_gen_h(user, current_user)
 
         updates = payload.model_dump(exclude_unset=True)
         # clean string fields
