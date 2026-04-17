@@ -1,158 +1,139 @@
-<mxfile host="app.diagrams.net" modified="2026-03-13T12:00:00.000Z" agent="Claude" version="24.0.0" type="device">
-  <diagram id="conceptual-design" name="Conceptual Design">
-    <mxGraphModel dx="1800" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1300" math="0" shadow="0">
-      <root>
-        <mxCell id="0"/>
-        <mxCell id="1" parent="0"/>
-
-        <!-- ==================== TITLE ==================== -->
-        <mxCell id="title" value="&lt;b&gt;Conceptual Design&lt;/b&gt;&lt;br&gt;โครงการพัฒนานวัตกรรมดิจิทัลระบบ Smart อสม. ระยะที่ ๒ กรมสนับสนุนบริการสุขภาพ ประจำปีงบประมาณ พ.ศ. ๒๕๖๘&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Version 1.0 | Updated: 13 March 2026&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;rounded=1;fillColor=#1a5276;fontColor=#ffffff;fontSize=16;strokeColor=none;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="200" y="10" width="1200" height="60" as="geometry"/>
-        </mxCell>
-
-        <!-- ==================== LAYER 1: USERS ==================== -->
-        <mxCell id="user_layer" value="" style="rounded=1;html=1;fillColor=#fafcfe;strokeColor=#2c3e80;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="100" y="90" width="1400" height="100" as="geometry"/>
-        </mxCell>
-        <mxCell id="user_lbl" value="ผู้ใช้งาน (Users)" style="text;html=1;fontSize=10;fontColor=#ffffff;fillColor=#2c3e80;rounded=1;strokeColor=none;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="110" y="82" width="120" height="16" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="u_osm" value="🤝&lt;br&gt;&lt;b&gt;อสม.&lt;/b&gt;&lt;br&gt;1,070,000 คน" style="rounded=1;html=1;fillColor=#eaf2f8;strokeColor=#2980b9;fontSize=10;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="150" y="105" width="150" height="70" as="geometry"/>
-        </mxCell>
-        <mxCell id="u_yuwa" value="👦&lt;br&gt;&lt;b&gt;ยุวอสม.&lt;/b&gt;&lt;br&gt;นักเรียน อสม. รุ่นใหม่" style="rounded=1;html=1;fillColor=#eaf2f8;strokeColor=#2980b9;fontSize=10;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="350" y="105" width="170" height="70" as="geometry"/>
-        </mxCell>
-        <mxCell id="u_staff" value="💼&lt;br&gt;&lt;b&gt;เจ้าหน้าที่ สบส.&lt;/b&gt;&lt;br&gt;กรมสนับสนุนบริการสุขภาพ" style="rounded=1;html=1;fillColor=#eaf2f8;strokeColor=#2980b9;fontSize=10;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="570" y="105" width="200" height="70" as="geometry"/>
-        </mxCell>
-        <mxCell id="u_admin" value="🔧&lt;br&gt;&lt;b&gt;ผู้ดูแลระบบ&lt;/b&gt;&lt;br&gt;Admin / Developer" style="rounded=1;html=1;fillColor=#eaf2f8;strokeColor=#2980b9;fontSize=10;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="820" y="105" width="160" height="70" as="geometry"/>
-        </mxCell>
-        <mxCell id="u_platform" value="📱 iOS | 📱 Android | 📱 HarmonyOS | 💻 Web Browser" style="text;html=1;align=center;fontSize=10;fontColor=#1a5276;fillColor=#eaf2f8;rounded=1;strokeColor=#2980b9;" vertex="1" parent="1">
-          <mxGeometry x="1030" y="120" width="420" height="40" as="geometry"/>
-        </mxCell>
-
-        <!-- Arrow -->
-        <mxCell id="arr1" value="HTTPS :443 — *.hss.moph.go.th → 110.164.229.82" style="text;html=1;align=center;fontSize=10;fontColor=#888;" vertex="1" parent="1">
-          <mxGeometry x="400" y="195" width="400" height="18" as="geometry"/>
-        </mxCell>
-
-        <!-- ==================== LAYER 2: 7 SYSTEMS ==================== -->
-        <mxCell id="sys_layer" value="" style="rounded=1;html=1;fillColor=#fafcfe;strokeColor=#2471a3;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="100" y="220" width="1400" height="210" as="geometry"/>
-        </mxCell>
-        <mxCell id="sys_lbl" value="7 ระบบงาน (Applications)" style="text;html=1;fontSize=10;fontColor=#ffffff;fillColor=#2471a3;rounded=1;strokeColor=none;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="110" y="212" width="170" height="16" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="s1" value="📱&lt;br&gt;&lt;b&gt;Smart อสม.&lt;/b&gt;&lt;br&gt;Mobile App&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;api-smartosm.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=9;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="120" y="240" width="170" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="s2" value="📋&lt;br&gt;&lt;b&gt;ระบบทะเบียน อสม.&lt;/b&gt;&lt;br&gt;ThaiPHC&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;thaiphc.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="310" y="240" width="170" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="s3" value="📊&lt;br&gt;&lt;b&gt;Dashboard&lt;/b&gt;&lt;br&gt;แสดงผลข้อมูลภาพรวม&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;dashboard.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="500" y="240" width="170" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="s4" value="📝&lt;br&gt;&lt;b&gt;รายงานผลงาน&lt;/b&gt;&lt;br&gt;Work Report&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;osm-workreport.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="690" y="240" width="180" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="s5" value="🎓&lt;br&gt;&lt;b&gt;E-Learning&lt;/b&gt;&lt;br&gt;อบรมออนไลน์&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;phc-learning.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="120" y="330" width="170" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="s6" value="🌟&lt;br&gt;&lt;b&gt;ยุวอสม.&lt;/b&gt;&lt;br&gt;GEN-H Health Hero&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;genh.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=9;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="310" y="330" width="170" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="s7" value="⚙&lt;br&gt;&lt;b&gt;บริหารจัดการ&lt;/b&gt;&lt;br&gt;Admin Console&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;phc-management.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="500" y="330" width="170" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="s8" value="🔗&lt;br&gt;&lt;b&gt;API มาตรฐาน&lt;/b&gt;&lt;br&gt;HSS API — เชื่อมต่อข้อมูลกลาง&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;api-thaiphc.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="690" y="330" width="180" height="75" as="geometry"/>
-        </mxCell>
-
-        <!-- ==================== LAYER 3: BACKEND ==================== -->
-        <mxCell id="be_layer" value="" style="rounded=1;html=1;fillColor=#fafcfe;strokeColor=#d35400;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="100" y="450" width="1400" height="170" as="geometry"/>
-        </mxCell>
-        <mxCell id="be_lbl" value="Backend Services" style="text;html=1;fontSize=10;fontColor=#ffffff;fillColor=#d35400;rounded=1;strokeColor=none;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="110" y="442" width="120" height="16" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="be_api" value="&lt;b style=&quot;color:#e74c3c&quot;&gt;API Services (FastAPI :8000)&lt;/b&gt;&lt;br&gt;&lt;b&gt;HSS API&lt;/b&gt; — ระบบทะเบียน, Dashboard, Admin, API มาตรฐาน&lt;br&gt;&lt;b&gt;Smart OSM API&lt;/b&gt; — Mobile App Smart อสม.&lt;br&gt;&lt;b&gt;E-Learning API&lt;/b&gt; — ระบบอบรมออนไลน์&lt;br&gt;&lt;b&gt;YUWA OSM API&lt;/b&gt; — ระบบยุวอสม. (GEN-H)" style="rounded=1;html=1;fillColor=#fdf2f2;strokeColor=#e74c3c;fontSize=10;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="120" y="465" width="420" height="100" as="geometry"/>
-        </mxCell>
-        <mxCell id="be_web" value="&lt;b style=&quot;color:#2471a3&quot;&gt;Web Services (React :3000)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Thai PHC Web&lt;/b&gt; — ระบบทะเบียน อสม.&lt;br&gt;&lt;b&gt;Dashboard Web&lt;/b&gt; — แสดงผลข้อมูลภาพรวม&lt;br&gt;&lt;b&gt;E-Learning Web&lt;/b&gt; — อบรมออนไลน์ | &lt;b&gt;Work Report Web&lt;/b&gt; — รายงานผลงาน&lt;br&gt;&lt;b&gt;YUWA Web&lt;/b&gt; — ยุวอสม. | &lt;b&gt;PHC Management&lt;/b&gt; — Admin Console" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2471a3;fontSize=10;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="560" y="465" width="440" height="100" as="geometry"/>
-        </mxCell>
-        <mxCell id="be_infra" value="⚙ K8s v1.30.14&lt;br&gt;🖨 1 Master + 3 Workers&lt;br&gt;🔒 nginx-ingress :443&lt;br&gt;⚡ Redis Cache&lt;br&gt;🗃 Longhorn Storage" style="rounded=1;html=1;fillColor=#fff3e0;strokeColor=#f39c12;fontSize=9;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="465" width="150" height="100" as="geometry"/>
-        </mxCell>
-
-        <!-- External: ThaiD -->
-        <mxCell id="ext_thaid" value="🔒 &lt;b&gt;ThaiD (DOPA)&lt;/b&gt;&lt;br&gt;OAuth2 + OIDC&lt;br&gt;imauth.bora.dopa.go.th&lt;br&gt;ยืนยันตัวตนดิจิทัล" style="rounded=1;html=1;fillColor=#1a5276;strokeColor=#1a5276;fontColor=#ffffff;fontSize=9;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1200" y="465" width="170" height="80" as="geometry"/>
-        </mxCell>
-        <mxCell id="ext_storage" value="🗃 &lt;b&gt;Longhorn&lt;/b&gt;&lt;br&gt;uploads-pvc 250Gi&lt;br&gt;/app/uploads&lt;br&gt;รูปภาพ, ข่าว, ใบประกาศ" style="rounded=1;html=1;fillColor=#e8f5e9;strokeColor=#16a085;fontSize=9;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1380" y="465" width="110" height="80" as="geometry"/>
-        </mxCell>
-
-        <!-- ==================== LAYER 4: DATABASE ==================== -->
-        <mxCell id="db_layer" value="" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#6c3483;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="100" y="640" width="1400" height="120" as="geometry"/>
-        </mxCell>
-        <mxCell id="db_lbl" value="Database Layer" style="text;html=1;fontSize=10;fontColor=#ffffff;fillColor=#6c3483;rounded=1;strokeColor=none;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="110" y="632" width="110" height="16" as="geometry"/>
-        </mxCell>
-
-        <mxCell id="db1" value="🗃&lt;br&gt;&lt;b&gt;aorsormor_db&lt;/b&gt;&lt;br&gt;HSS API&lt;br&gt;ระบบทะเบียน, Dashboard, Admin" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=10;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="130" y="660" width="250" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="db2" value="🗃&lt;br&gt;&lt;b&gt;smart_osm&lt;/b&gt;&lt;br&gt;Smart OSM API&lt;br&gt;Mobile App Smart อสม." style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=10;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="410" y="660" width="250" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="db3" value="🗃&lt;br&gt;&lt;b&gt;yuwa_osm&lt;/b&gt;&lt;br&gt;YUWA OSM API&lt;br&gt;ระบบยุวอสม." style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=10;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="690" y="660" width="250" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="db4" value="🗃&lt;br&gt;&lt;b&gt;elearning_db&lt;/b&gt;&lt;br&gt;E-Learning API&lt;br&gt;ระบบอบรมออนไลน์" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=10;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="970" y="660" width="250" height="75" as="geometry"/>
-        </mxCell>
-        <mxCell id="db_info" value="PostgreSQL 16.13 — PgBouncer 1.22 (transaction mode) — osmdatabase 192.168.88.61 — 32 vCPU / 125 GB / 2 TB" style="text;html=1;align=center;fontSize=9;fontColor=#888;" vertex="1" parent="1">
-          <mxGeometry x="250" y="740" width="800" height="15" as="geometry"/>
-        </mxCell>
-
-        <!-- Arrows between layers -->
-        <mxCell id="arr_u_s" style="strokeColor=#2980b9;strokeWidth=2;" edge="1" source="user_layer" target="sys_layer" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="arr_s_b" style="strokeColor=#d35400;strokeWidth=2;" edge="1" source="sys_layer" target="be_layer" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="arr_b_d" style="strokeColor=#6c3483;strokeWidth=2;" edge="1" source="be_layer" target="db_layer" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-
-        <!-- ==================== DESCRIPTION ==================== -->
-        <mxCell id="desc_box" value="" style="rounded=1;html=1;fillColor=#fafafa;strokeColor=#bbb;strokeWidth=2;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="100" y="780" width="1400" height="80" as="geometry"/>
-        </mxCell>
-        <mxCell id="desc_t" value="&lt;b&gt;Description&lt;/b&gt;" style="text;html=1;fontSize=11;fontColor=#333;" vertex="1" parent="1">
-          <mxGeometry x="110" y="785" width="90" height="16" as="geometry"/>
-        </mxCell>
-        <mxCell id="d1" value="👤 &lt;b&gt;End Users&lt;/b&gt;&lt;br&gt;ผู้ใช้งานระบบ" style="text;html=1;align=center;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="120" y="808" width="140" height="40" as="geometry"/>
-        </mxCell>
-        <mxCell id="d2" value="💻📱 &lt;b&gt;Web &amp; Mobile&lt;/b&gt;&lt;br&gt;อุปกรณ์เข้าถึงระบบ" style="text;html=1;align=center;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="290" y="808" width="160" height="40" as="geometry"/>
-        </mxCell>
-        <mxCell id="d3" value="→ &lt;b&gt;Call-One-Way&lt;/b&gt;&lt;br&gt;เรียกใช้งานฝั่งเดียว" style="text;html=1;align=center;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="480" y="808" width="160" height="40" as="geometry"/>
-        </mxCell>
-        <mxCell id="d4" value="↔ &lt;b&gt;Call-Two-Way&lt;/b&gt;&lt;br&gt;เรียกใช้งานสองฝั่ง" style="text;html=1;align=center;fontSize=9;" vertex="1" parent="1">
-          <mxGeometry x="670" y="808" width="160" height="40" as="geometry"/>
-        </mxCell>
-
-        <!-- ==================== FOOTER ==================== -->
-        <mxCell id="footer" value="โครงการพัฒนานวัตกรรมดิจิทัลระบบ Smart อสม. ระยะที่ ๒ — กรมสนับสนุนบริการสุขภาพ กระทรวงสาธารณสุข | 7 ระบบ | 4 API | 6 Web | 4 Databases | 10 Ingress Rules" style="text;html=1;align=center;fontSize=10;fontColor=#999;" vertex="1" parent="1">
-          <mxGeometry x="250" y="870" width="1100" height="20" as="geometry"/>
-        </mxCell>
-
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="conceptual-design" name="Conceptual Design">
+        <mxGraphModel dx="736" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1300" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="&lt;b&gt;Conceptual Design&lt;/b&gt;&lt;br&gt;โครงการพัฒนานวัตกรรมดิจิทัลระบบ Smart อสม. ระยะที่ ๒ กรมสนับสนุนบริการสุขภาพ ประจำปีงบประมาณ พ.ศ. ๒๕๖๘&lt;br&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Version 1.0 | Updated: 13 March 2026&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;rounded=1;fillColor=#1a5276;fontColor=#ffffff;fontSize=16;strokeColor=none;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="10" width="1200" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_layer" value="" style="rounded=1;html=1;fillColor=#fafcfe;strokeColor=#2c3e80;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="90" width="1400" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="user_lbl" value="ผู้ใช้งาน (Users)" style="text;html=1;fontSize=10;fontColor=#ffffff;fillColor=#2c3e80;rounded=1;strokeColor=none;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="82" width="120" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="u_osm" value="🤝&lt;br&gt;&lt;b&gt;อสม.&lt;/b&gt;" style="rounded=1;html=1;fillColor=#eaf2f8;strokeColor=#2980b9;fontSize=10;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="105" width="150" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="u_yuwa" value="👦&lt;br&gt;&lt;b&gt;ยุวอสม.&lt;/b&gt;" style="rounded=1;html=1;fillColor=#eaf2f8;strokeColor=#2980b9;fontSize=10;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="350" y="105" width="170" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="u_staff" value="💼&lt;br&gt;&lt;b&gt;เจ้าหน้าที่&lt;/b&gt;" style="rounded=1;html=1;fillColor=#eaf2f8;strokeColor=#2980b9;fontSize=10;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="570" y="105" width="200" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="u_admin" value="🔧&lt;br&gt;&lt;b&gt;ผู้ดูแลระบบ&lt;/b&gt;&lt;br&gt;Admin / Developer" style="rounded=1;html=1;fillColor=#eaf2f8;strokeColor=#2980b9;fontSize=10;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="105" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="u_platform" value="📱 iOS | 📱 Android | 📱 HarmonyOS | 💻 Web Browser" style="text;html=1;align=center;fontSize=10;fontColor=#1a5276;fillColor=#eaf2f8;rounded=1;strokeColor=#2980b9;" parent="1" vertex="1">
+                    <mxGeometry x="1030" y="120" width="420" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="arr1" value="HTTPS :443 — *.hss.moph.go.th → 110.164.229.82" style="text;html=1;align=center;fontSize=10;fontColor=#888;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="195" width="400" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="sys_layer" value="" style="rounded=1;html=1;fillColor=#fafcfe;strokeColor=#2471a3;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="220" width="1400" height="210" as="geometry"/>
+                </mxCell>
+                <mxCell id="sys_lbl" value="7 ระบบงาน (Applications)" style="text;html=1;fontSize=10;fontColor=#ffffff;fillColor=#2471a3;rounded=1;strokeColor=none;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="212" width="170" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="s1" value="📱&lt;br&gt;&lt;b&gt;Smart อสม.&lt;/b&gt;&lt;br&gt;Mobile App&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;api-smartosm.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=9;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="240" width="170" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="s2" value="📋&lt;br&gt;&lt;b&gt;ระบบทะเบียน อสม.&lt;/b&gt;&lt;br&gt;ThaiPHC&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;thaiphc.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="240" width="170" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="s3" value="📊&lt;br&gt;&lt;b&gt;Dashboard&lt;/b&gt;&lt;br&gt;แสดงผลข้อมูลภาพรวม&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;dashboard.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="240" width="170" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="s4" value="📝&lt;br&gt;&lt;b&gt;รายงานผลงาน&lt;/b&gt;&lt;br&gt;Work Report&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;osm-workreport.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="690" y="240" width="180" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="s5" value="🎓&lt;br&gt;&lt;b&gt;E-Learning&lt;/b&gt;&lt;br&gt;อบรมออนไลน์&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;phc-learning.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="330" width="170" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="s6" value="🌟&lt;br&gt;&lt;b&gt;ยุวอสม.&lt;/b&gt;&lt;br&gt;GEN-H Health Hero&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;genh.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=9;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="330" width="170" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="s7" value="⚙&lt;br&gt;&lt;b&gt;บริหารจัดการ&lt;/b&gt;&lt;br&gt;Admin Console&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;phc-management.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="330" width="170" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="s8" value="🔗&lt;br&gt;&lt;b&gt;API มาตรฐาน&lt;/b&gt;&lt;br&gt;HSS API — เชื่อมต่อข้อมูลกลาง&lt;br&gt;&lt;font style=&quot;font-size:8px;color:#0e6655&quot;&gt;api-thaiphc.hss.moph.go.th&lt;/font&gt;" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2980b9;fontSize=9;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="690" y="330" width="180" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="be_layer" value="" style="rounded=1;html=1;fillColor=#fafcfe;strokeColor=#d35400;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="450" width="1400" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="be_lbl" value="Backend Services" style="text;html=1;fontSize=10;fontColor=#ffffff;fillColor=#d35400;rounded=1;strokeColor=none;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="442" width="120" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="be_api" value="&lt;b style=&quot;color:#e74c3c&quot;&gt;API Services (FastAPI :8000)&lt;/b&gt;&lt;br&gt;&lt;b&gt;HSS API&lt;/b&gt; — ระบบทะเบียน, Dashboard, Admin, API มาตรฐาน&lt;br&gt;&lt;b&gt;Smart OSM API&lt;/b&gt; — Mobile App Smart อสม.&lt;br&gt;&lt;b&gt;E-Learning API&lt;/b&gt; — ระบบอบรมออนไลน์&lt;br&gt;&lt;b&gt;YUWA OSM API&lt;/b&gt; — ระบบยุวอสม. (GEN-H)" style="rounded=1;html=1;fillColor=#fdf2f2;strokeColor=#e74c3c;fontSize=10;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="465" width="420" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="be_web" value="&lt;b style=&quot;color:#2471a3&quot;&gt;Web Services (React :3000)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Thai PHC Web&lt;/b&gt; — ระบบทะเบียน อสม.&lt;br&gt;&lt;b&gt;Dashboard Web&lt;/b&gt; — แสดงผลข้อมูลภาพรวม&lt;br&gt;&lt;b&gt;E-Learning Web&lt;/b&gt; — อบรมออนไลน์ | &lt;b&gt;Work Report Web&lt;/b&gt; — รายงานผลงาน&lt;br&gt;&lt;b&gt;YUWA Web&lt;/b&gt; — ยุวอสม. | &lt;b&gt;PHC Management&lt;/b&gt; — Admin Console" style="rounded=1;html=1;fillColor=#f0f7fd;strokeColor=#2471a3;fontSize=10;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="465" width="440" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="be_infra" value="⚙ K8s v1.30.14&lt;br&gt;🖨 1 Master + 3 Workers&lt;br&gt;🔒 nginx-ingress :443&lt;br&gt;⚡ Redis Cache&lt;br&gt;🗃 Longhorn Storage" style="rounded=1;html=1;fillColor=#fff3e0;strokeColor=#f39c12;fontSize=9;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="1020" y="465" width="150" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="ext_thaid" value="🔒 &lt;b&gt;ThaiD (DOPA)&lt;/b&gt;&lt;br&gt;OAuth2 + OIDC&lt;br&gt;imauth.bora.dopa.go.th&lt;br&gt;ยืนยันตัวตนดิจิทัล" style="rounded=1;html=1;fillColor=#1a5276;strokeColor=#1a5276;fontColor=#ffffff;fontSize=9;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="1200" y="465" width="170" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="ext_storage" value="🗃 &lt;b&gt;Longhorn&lt;/b&gt;&lt;br&gt;uploads-pvc 250Gi&lt;br&gt;/app/uploads&lt;br&gt;รูปภาพ, ข่าว, ใบประกาศ" style="rounded=1;html=1;fillColor=#e8f5e9;strokeColor=#16a085;fontSize=9;whiteSpace=wrap;align=left;spacingLeft=8;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="1380" y="465" width="110" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="db_layer" value="" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#6c3483;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="640" width="1400" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="db_lbl" value="Database Layer" style="text;html=1;fontSize=10;fontColor=#ffffff;fillColor=#6c3483;rounded=1;strokeColor=none;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="632" width="110" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="db1" value="🗃&lt;br&gt;&lt;b&gt;aorsormor_db&lt;/b&gt;&lt;br&gt;HSS API&lt;br&gt;ระบบทะเบียน, Dashboard, Admin" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=10;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="130" y="660" width="250" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="db2" value="🗃&lt;br&gt;&lt;b&gt;smart_osm&lt;/b&gt;&lt;br&gt;Smart OSM API&lt;br&gt;Mobile App Smart อสม." style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=10;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="410" y="660" width="250" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="db3" value="🗃&lt;br&gt;&lt;b&gt;yuwa_osm&lt;/b&gt;&lt;br&gt;YUWA OSM API&lt;br&gt;ระบบยุวอสม." style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=10;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="690" y="660" width="250" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="db4" value="🗃&lt;br&gt;&lt;b&gt;elearning_db&lt;/b&gt;&lt;br&gt;E-Learning API&lt;br&gt;ระบบอบรมออนไลน์" style="rounded=1;html=1;fillColor=#faf5ff;strokeColor=#8e44ad;fontSize=10;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="970" y="660" width="250" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="db_info" value="PostgreSQL 16.13 — PgBouncer 1.22 (transaction mode) — osmdatabase 192.168.88.61 — 32 vCPU / 125 GB / 2 TB" style="text;html=1;align=center;fontSize=9;fontColor=#888;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="740" width="800" height="15" as="geometry"/>
+                </mxCell>
+                <mxCell id="arr_u_s" style="strokeColor=#2980b9;strokeWidth=2;" parent="1" source="user_layer" target="sys_layer" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arr_s_b" style="strokeColor=#d35400;strokeWidth=2;" parent="1" source="sys_layer" target="be_layer" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arr_b_d" style="strokeColor=#6c3483;strokeWidth=2;" parent="1" source="be_layer" target="db_layer" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="desc_box" value="" style="rounded=1;html=1;fillColor=#fafafa;strokeColor=#bbb;strokeWidth=2;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="780" width="1400" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="desc_t" value="&lt;b&gt;Description&lt;/b&gt;" style="text;html=1;fontSize=11;fontColor=#333;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="785" width="90" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="d1" value="👤 &lt;b&gt;End Users&lt;/b&gt;&lt;br&gt;ผู้ใช้งานระบบ" style="text;html=1;align=center;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="808" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="d2" value="💻📱 &lt;b&gt;Web &amp; Mobile&lt;/b&gt;&lt;br&gt;อุปกรณ์เข้าถึงระบบ" style="text;html=1;align=center;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="290" y="808" width="160" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="d3" value="→ &lt;b&gt;Call-One-Way&lt;/b&gt;&lt;br&gt;เรียกใช้งานฝั่งเดียว" style="text;html=1;align=center;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="808" width="160" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="d4" value="↔ &lt;b&gt;Call-Two-Way&lt;/b&gt;&lt;br&gt;เรียกใช้งานสองฝั่ง" style="text;html=1;align=center;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="670" y="808" width="160" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="footer" value="โครงการพัฒนานวัตกรรมดิจิทัลระบบ Smart อสม. ระยะที่ ๒ — กรมสนับสนุนบริการสุขภาพ กระทรวงสาธารณสุข | 7 ระบบ | 4 API | 6 Web | 4 Databases | 10 Ingress Rules" style="text;html=1;align=center;fontSize=10;fontColor=#999;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="870" width="1100" height="20" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>

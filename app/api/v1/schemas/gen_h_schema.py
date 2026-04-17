@@ -40,7 +40,7 @@ class GenHCreateSchema(BaseModel):
 
 
 class GenHUpdateSchema(BaseModel):
-    """Schema for updating a Gen H user."""
+    """Schema for updating a Gen H user (officer: all fields)."""
 
     prefix: Optional[str] = Field(None, max_length=50)
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -60,6 +60,25 @@ class GenHUpdateSchema(BaseModel):
     member_card_url: Optional[str] = Field(None, max_length=1024)
     points: Optional[int] = Field(None, ge=0)
     is_active: Optional[bool] = None
+
+
+class GenHSelfUpdateSchema(BaseModel):
+    """Schema for Gen H user updating their own profile (restricted fields)."""
+
+    prefix: Optional[str] = Field(None, max_length=50)
+    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    last_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    gender: Optional[str] = Field(None, max_length=10)
+    phone_number: Optional[str] = Field(None, max_length=20)
+    email: Optional[EmailStr] = None
+    line_id: Optional[str] = Field(None, max_length=100)
+    school: Optional[str] = Field(None, max_length=255)
+    province_code: Optional[str] = Field(None, max_length=10)
+    province_name: Optional[str] = Field(None, max_length=255)
+    district_code: Optional[str] = Field(None, max_length=10)
+    district_name: Optional[str] = Field(None, max_length=255)
+    subdistrict_code: Optional[str] = Field(None, max_length=10)
+    subdistrict_name: Optional[str] = Field(None, max_length=255)
 
 
 class GenHQueryParams(BaseModel):

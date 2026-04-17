@@ -1864,7 +1864,7 @@ class OfficerService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="yuwa_osm_user_not_found")
 
         target_scope, location_context = await OfficerService._resolve_yuwa_management_context(target_profile)
-        OfficerService._ensure_scope_permission(viewer_scope, target_scope, require_strict=True)
+        OfficerService._ensure_scope_permission(viewer_scope, target_scope)
 
         updated = await YuwaOSMUserRepository.set_active_status(user_id, is_active)
         if not updated:
@@ -1916,7 +1916,7 @@ class OfficerService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="people_user_not_found")
 
         target_scope, location_context = await OfficerService._resolve_people_management_context(target_profile)
-        OfficerService._ensure_scope_permission(viewer_scope, target_scope, require_strict=True)
+        OfficerService._ensure_scope_permission(viewer_scope, target_scope)
 
         # Prevent re-activating a transferred People account — data now lives in yuwa_osm
         if is_active and getattr(target_profile, "is_transferred", False):
@@ -1974,7 +1974,7 @@ class OfficerService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="osm_not_found")
 
         target_scope, location_context = await OfficerService._resolve_osm_management_context(target_profile)
-        OfficerService._ensure_scope_permission(viewer_scope, target_scope, require_strict=True)
+        OfficerService._ensure_scope_permission(viewer_scope, target_scope)
 
         updated = await OSMProfileRepository.set_active_status(
             osm_id,
@@ -2122,7 +2122,7 @@ class OfficerService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="gen_h_user_not_found")
 
         target_scope, location_context = await OfficerService._resolve_gen_h_management_context(target_profile)
-        OfficerService._ensure_scope_permission(viewer_scope, target_scope, require_strict=True)
+        OfficerService._ensure_scope_permission(viewer_scope, target_scope)
 
         # Prevent re-activating a Gen H account that has been transferred to people_user
         if is_active and getattr(target_profile, "people_user_id", None):
