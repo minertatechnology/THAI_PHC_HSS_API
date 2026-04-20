@@ -14,7 +14,6 @@ class ProfileImageService:
     _ALLOWED_CONTEXTS = {
         "osm": "osm",
         "yuwa_osm": "yuwa-osm",
-        "gen_h": "gen-h",
         "officer": "officer",
         "people": "people",
         "gen_h": "gen-h",
