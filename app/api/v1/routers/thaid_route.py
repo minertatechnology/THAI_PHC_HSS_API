@@ -492,6 +492,12 @@ def _mobile_success_page() -> HTMLResponse:
         h1 { font-size: 20px; color: #0f172a; margin-bottom: 12px; }
         p { font-size: 15px; color: #64748b; line-height: 1.6; }
     </style>
+    <script>
+        // Auto redirect back to mobile app via custom URL scheme
+        setTimeout(function() {
+            window.location.href = "smartosm://callback";
+        }, 500);
+    </script>
 </head>
 <body>
     <div class="card">
@@ -501,7 +507,7 @@ def _mobile_success_page() -> HTMLResponse:
             </svg>
         </div>
         <h1>ยืนยันตัวตนสำเร็จ</h1>
-        <p>กรุณากลับไปที่แอปเพื่อดำเนินการต่อ</p>
+        <p>กำลังกลับไปที่แอป...</p>
     </div>
 </body>
 </html>"""
