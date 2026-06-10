@@ -160,6 +160,7 @@ class YuwaOsmService:
             AdministrativeLevelEnum.REGION,
             AdministrativeLevelEnum.AREA,
             AdministrativeLevelEnum.PROVINCE,
+            AdministrativeLevelEnum.DISTRICT,
         }
         if viewer_scope is None or getattr(viewer_scope, "level", None) not in allowed_levels:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="insufficient_scope_department_required")

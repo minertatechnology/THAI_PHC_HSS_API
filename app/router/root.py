@@ -27,6 +27,7 @@ from app.api.v1.routers.mobile_banner_route import mobile_banner_router
 from app.api.v1.routers.osm_outstanding_route import osm_outstanding_router
 from app.api.v1.routers.notification_route import notification_router
 from app.api.v1.routers.gen_h_route import gen_h_router
+from app.api.v1.routers.auto_transfer_route import auto_transfer_router
 
 v1_router = APIRouter(prefix=f"{settings.API_V1_PREFIX}")
 
@@ -57,6 +58,7 @@ v1_router.include_router(mobile_banner_router)
 v1_router.include_router(osm_outstanding_router)
 v1_router.include_router(notification_router)
 v1_router.include_router(gen_h_router)
+v1_router.include_router(auto_transfer_router)
 
 
 rootRouter = APIRouter()

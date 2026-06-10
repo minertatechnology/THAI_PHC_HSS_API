@@ -31,9 +31,15 @@ async def lifespan(app: FastAPI):
     # Initialize Redis cache
     from app.cache.redis_client import init_redis, close_redis
     await init_redis()
+
+    # Start auto-transfer scheduler (Gen-H → YUWA-OSM)
+    from app.services.auto_transfer_service import start_scheduler, stop_scheduler
+    await start_scheduler()
+
     try:
         yield
     finally:
+        await stop_scheduler()
         await close_redis()
         logger.info("Application shutdown")
 

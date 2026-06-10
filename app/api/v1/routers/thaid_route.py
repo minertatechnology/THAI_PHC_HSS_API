@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hmac
+import re
 import secrets
 from urllib.parse import urlencode, quote, urlparse
 
@@ -295,12 +296,16 @@ async def thaid_callback(
 
     # --- Mobile flow: validate state token exists in Redis ---
     is_mobile_flow = bool(mobile_state_token)
+    mobile_redirect_scheme = "smartosm"  # default
     if is_mobile_flow:
         stored = await cache_get(_mobile_state_key(mobile_state_token))
         if not stored:
             return RedirectResponse(url="/?error=mobile_state_expired", status_code=302)
         # Clean up the state key — it's single-use
         await cache_delete(_mobile_state_key(mobile_state_token))
+        mobile_redirect_scheme = stored.get("redirect_scheme", "smartosm")
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9\-]*", mobile_redirect_scheme):
+            mobile_redirect_scheme = "smartosm"
 
     # Validate redirect_uri from state against whitelist (re-check)
     if redirect_uri and not _is_redirect_uri_allowed(redirect_uri):
@@ -316,7 +321,7 @@ async def thaid_callback(
                 {"status": "error", "error": "missing_client_id"},
                 _MOBILE_RESULT_TTL,
             )
-            return _mobile_success_page()
+            return _mobile_success_page(mobile_redirect_scheme)
         return RedirectResponse(
             url=f"{fallback_uri}?error=missing_client_id",
             status_code=302,
@@ -345,7 +350,7 @@ async def thaid_callback(
                 {"status": "error", "error": exc.detail},
                 _MOBILE_RESULT_TTL,
             )
-            return _mobile_success_page()
+            return _mobile_success_page(mobile_redirect_scheme)
         return RedirectResponse(
             url=f"{fallback_uri}?error={exc.detail}",
             status_code=302,
@@ -366,7 +371,7 @@ async def thaid_callback(
                 {"status": "error", "error": "internal_error"},
                 _MOBILE_RESULT_TTL,
             )
-            return _mobile_success_page()
+            return _mobile_success_page(mobile_redirect_scheme)
         return RedirectResponse(
             url=f"{fallback_uri}?error=internal_error",
             status_code=302,
@@ -387,7 +392,7 @@ async def thaid_callback(
                 },
                 _MOBILE_RESULT_TTL,
             )
-            return _mobile_success_page()
+            return _mobile_success_page(mobile_redirect_scheme)
 
         prefill = result.get("prefill") or {}
         register_uri = _build_register_uri_from_fallback(fallback_uri)
@@ -435,7 +440,7 @@ async def thaid_callback(
             },
             _MOBILE_RESULT_TTL,
         )
-        return _mobile_success_page()
+        return _mobile_success_page(mobile_redirect_scheme)
 
     # --- Web flow: redirect back to frontend with tokens (unchanged) ---
     sep = "&" if "?" in fallback_uri else "?"
@@ -453,17 +458,18 @@ async def thaid_callback(
     )
 
 
-def _mobile_success_page() -> HTMLResponse:
+def _mobile_success_page(scheme: str = "smartosm") -> HTMLResponse:
     """Return a simple HTML page telling the user to go back to the app."""
-    html = """<!DOCTYPE html>
+    callback_url = f"{scheme}://callback"
+    html = f"""<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ThaiD - กลับไปที่แอป</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
             min-height: 100vh;
@@ -471,8 +477,8 @@ def _mobile_success_page() -> HTMLResponse:
             align-items: center;
             justify-content: center;
             padding: 24px;
-        }
-        .card {
+        }}
+        .card {{
             background: rgba(255,255,255,0.95);
             border-radius: 20px;
             padding: 48px 32px;
@@ -480,23 +486,23 @@ def _mobile_success_page() -> HTMLResponse:
             width: 100%;
             text-align: center;
             box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-        }
-        .icon {
+        }}
+        .icon {{
             width: 64px; height: 64px;
             background: #dcfce7;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 24px;
-        }
-        .icon svg { width: 32px; height: 32px; color: #16a34a; }
-        h1 { font-size: 20px; color: #0f172a; margin-bottom: 12px; }
-        p { font-size: 15px; color: #64748b; line-height: 1.6; }
+        }}
+        .icon svg {{ width: 32px; height: 32px; color: #16a34a; }}
+        h1 {{ font-size: 20px; color: #0f172a; margin-bottom: 12px; }}
+        p {{ font-size: 15px; color: #64748b; line-height: 1.6; }}
     </style>
     <script>
         // Auto redirect back to mobile app via custom URL scheme
-        setTimeout(function() {
-            window.location.href = "smartosm://callback";
-        }, 500);
+        setTimeout(function() {{
+            window.location.href = "{callback_url}";
+        }}, 500);
     </script>
 </head>
 <body>
@@ -528,6 +534,7 @@ async def thaid_mobile_authorize(
     request: Request,
     client_id: str = Query(..., description="OAuth2 client_id of the calling application"),
     user_type: str = Query("osm", description="Requested user type: osm, officer, yuwa_osm, people"),
+    redirect_scheme: str = Query("smartosm", description="App URL scheme for post-auth redirect (e.g. smartosm, yuwa-osm)"),
 ) -> FormatResponseModel:
     """Mobile version of /thaid/authorize.
 
@@ -539,6 +546,10 @@ async def thaid_mobile_authorize(
     via POST /thaid/mobile/token to retrieve the authentication result.
     """
     request_meta = extract_request_metadata(request)
+
+    # --- Sanitize redirect_scheme: only allow alphanumeric and hyphens ---
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9\-]*", redirect_scheme):
+        redirect_scheme = "smartosm"
 
     # --- Validate user_type ---
     if user_type not in _VALID_USER_TYPES:
@@ -565,6 +576,7 @@ async def thaid_mobile_authorize(
         {
             "client_id": client_id,
             "user_type": user_type,
+            "redirect_scheme": redirect_scheme,
             "ip": request_meta["ip"],
         },
         _MOBILE_STATE_TTL,

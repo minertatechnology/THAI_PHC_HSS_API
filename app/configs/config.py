@@ -82,6 +82,13 @@ class Settings(BaseSettings):
     # Set to False after migration period to require officer token for new Gen H accounts
     GEN_H_SELF_REGISTER_ENABLED: bool = True
 
+    # Auto-transfer scheduler: Gen-H → YUWA-OSM (server-side, every N hours)
+    AUTO_TRANSFER_ENABLED: bool = False
+    AUTO_TRANSFER_INTERVAL_HOURS: int = 1
+    ELEARNING_API_URL: str = "https://api-elearning.hss.moph.go.th/api/v1"
+    ELEARNING_SERVICE_UUID: str = ""  # UUID ของ admin ที่ login e-learning ได้ (จำเป็นต้องตั้ง)
+    GENH_API_URL: str = "https://api-genh.hss.moph.go.th/api/v1"
+
     # Environment metadata
     ENVIRONMENT: str = "production"
 
