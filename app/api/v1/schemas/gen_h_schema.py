@@ -42,6 +42,8 @@ class GenHCreateSchema(BaseModel):
 class GenHUpdateSchema(BaseModel):
     """Schema for updating a Gen H user (officer: all fields)."""
 
+    citizen_id: Optional[str] = Field(None, min_length=13, max_length=13, pattern=r"^\d{13}$")
+    birthday: Optional[date] = None
     prefix: Optional[str] = Field(None, max_length=50)
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -65,6 +67,8 @@ class GenHUpdateSchema(BaseModel):
 class GenHSelfUpdateSchema(BaseModel):
     """Schema for Gen H user updating their own profile (restricted fields)."""
 
+    citizen_id: Optional[str] = Field(None, min_length=13, max_length=13, pattern=r"^\d{13}$")
+    birthday: Optional[date] = None
     prefix: Optional[str] = Field(None, max_length=50)
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
