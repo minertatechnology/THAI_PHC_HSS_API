@@ -121,10 +121,11 @@ class UserLookupService:
         last_name: Optional[str],
         gender: Optional[Any],
         birth_date: Optional[date],
+        gen_h_code: Optional[str] = None,
     ) -> Dict[str, Any]:
         normalized_gender = getattr(gender, "value", gender)
         age = cls._calculate_age(birth_date)
-        return {
+        result = {
             "user_id": user_id,
             "user_type": user_type,
             "citizen_id": citizen_id,
@@ -135,6 +136,9 @@ class UserLookupService:
             "birth_date": birth_date.isoformat() if birth_date else None,
             "age": age,
         }
+        if gen_h_code is not None:
+            result["gen_h_code"] = gen_h_code
+        return result
 
     @classmethod
     async def _resolve_user_type_by_uuid(cls, user_uuid: str) -> Optional[str]:
@@ -228,6 +232,7 @@ class UserLookupService:
                         last_name=yuwa.last_name,
                         gender=yuwa.gender,
                         birth_date=yuwa.birthday,
+                        gen_h_code=getattr(yuwa, "gen_h_code", None),
                     )
                 )
 
@@ -328,6 +333,7 @@ class UserLookupService:
                         last_name=yuwa.last_name,
                         gender=yuwa.gender,
                         birth_date=yuwa.birthday,
+                        gen_h_code=getattr(yuwa, "gen_h_code", None),
                     )
                 )
 
@@ -389,6 +395,7 @@ class UserLookupService:
                 last_name=record.last_name,
                 gender=record.gender,
                 birth_date=getattr(record, "birthday", None),
+                gen_h_code=getattr(record, "gen_h_code", None),
             )
         return cls._summary_payload(
             user_type="people",

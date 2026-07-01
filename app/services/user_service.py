@@ -283,8 +283,10 @@ class UserService:
                 if not scopes or "profile" in scopes:
                     user_info["name"] = f"{profile.first_name} {profile.last_name}".strip()
                     user_info["yuwa_osm_code"] = getattr(profile, "yuwa_osm_code", None)
+                    user_info["gen_h_code"] = getattr(profile, "gen_h_code", None)
                     user_info["prefix"] = UserService._serialize_prefix(None, fallback_name=profile.prefix)
                     user_info["school"] = profile.school
+                    user_info["school_name"] = getattr(profile, "school_name", None)
                     user_info["organization"] = profile.organization
                     user_info["profile_image"] = getattr(profile, "profile_image", None)
                     user_info["line_id"] = getattr(profile, "line_id", None)
@@ -322,6 +324,7 @@ class UserService:
                     user_info["photo_1inch"] = getattr(profile, "photo_1inch", None)
                     user_info["attachments"] = getattr(profile, "attachments", None)
                     user_info["school"] = getattr(profile, "school", None)
+                    user_info["school_name"] = getattr(profile, "school_name", None)
                     user_info["prefix"] = UserService._serialize_prefix(None, fallback_name=getattr(profile, "prefix", None))
 
                 if not scopes or "phone" in scopes:
@@ -355,6 +358,7 @@ class UserService:
                     user_info["name"] = f"{profile.first_name} {profile.last_name}".strip()
                     user_info["prefix"] = UserService._serialize_prefix(None, fallback_name=profile.prefix)
                     user_info["school"] = profile.school
+                    user_info["school_name"] = getattr(profile, "school_name", None)
                     user_info["profile_image"] = getattr(profile, "profile_image_url", None)
                     user_info["line_id"] = getattr(profile, "line_id", None)
                     user_info["member_card_url"] = getattr(profile, "member_card_url", None)

@@ -156,6 +156,7 @@ class YuwaOSMResponseSchema(BaseModel):
     id: UUID
     citizen_id: Optional[str] = None
     yuwa_osm_code: Optional[str] = None
+    gen_h_code: Optional[str] = None
     phone_number: Optional[str] = None
     first_name: str
     last_name: str
@@ -163,6 +164,7 @@ class YuwaOSMResponseSchema(BaseModel):
     email: Optional[str] = None
     line_id: Optional[str] = None
     school: Optional[str] = None
+    school_name: Optional[str] = None
     organization: Optional[str] = None
     province_code: Optional[str] = None
     province_name: Optional[str] = None

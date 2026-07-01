@@ -16,6 +16,7 @@ class PeopleUser(models.Model):
     email = fields.CharField(max_length=255, null=True, index=True)
     line_id = fields.CharField(max_length=100, null=True)
     school = fields.CharField(max_length=255, null=True)
+    school_name = fields.CharField(max_length=255, null=True)
     organization = fields.CharField(max_length=255, null=True)
     profile_image = fields.CharField(max_length=1024, null=True)
     registration_reason = fields.TextField(null=True)

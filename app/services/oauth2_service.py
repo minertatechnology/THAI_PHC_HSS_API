@@ -1288,6 +1288,7 @@ class Oauth2Service:
             transferred_by = None
             yuwa_osm_id = None
             yuwa_osm_code = None
+            gen_h_code = None
 
             if normalized_type == "officer":
                 phone = getattr(profile, "phone", None)
@@ -1333,6 +1334,7 @@ class Oauth2Service:
                 province_code = getattr(profile, "province_code", None)
                 district_code = getattr(profile, "district_code", None)
                 subdistrict_code = getattr(profile, "subdistrict_code", None)
+                gen_h_code = getattr(profile, "gen_h_code", None)
             elif normalized_type == "people":
                 phone = getattr(profile, "phone_number", None)
                 email = getattr(profile, "email", None)
@@ -1384,6 +1386,7 @@ class Oauth2Service:
                     "transferred_by": str(transferred_by) if transferred_by else None,
                     "yuwa_osm_id": str(yuwa_osm_id) if yuwa_osm_id else None,
                     "yuwa_osm_code": yuwa_osm_code,
+                    "gen_h_code": gen_h_code,
                     "province_name": province_name,
                     "district_name": district_name,
                     "subdistrict_name": subdistrict_name,

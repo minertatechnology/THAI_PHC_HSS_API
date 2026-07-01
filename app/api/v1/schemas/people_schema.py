@@ -73,6 +73,7 @@ class PeopleResponseSchema(BaseModel):
     email: Optional[str] = None
     line_id: Optional[str] = None
     school: Optional[str] = None
+    school_name: Optional[str] = None
     organization: Optional[str] = None
     profile_image: Optional[str] = None
     registration_reason: Optional[str] = None
