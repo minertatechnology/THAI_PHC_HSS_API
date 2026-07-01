@@ -64,7 +64,7 @@ class MockDataStore:
     def _seed_meta(cls) -> None:
         cls.meta_options = {
             "prefixes": cls._to_options(["Mr.", "Mrs.", "Ms."]),
-            "genders": cls._to_options(["Male", "Female", "Other"]),
+            "genders": cls._to_options(["male", "female", "lgbtqia", "other"]),
             "education-levels": cls._to_options(["Primary", "Secondary", "Bachelor", "Master"]),
             "marital-status": cls._to_options(["Single", "Married", "Divorced"]),
             "occupations": cls._to_options(["Farmer", "Teacher", "Nurse", "Engineer"]),
@@ -260,7 +260,7 @@ class MockDataStore:
                 },
                 "personal": {
                     "prefix": random.choice(cls.meta_options["prefixes"])["value"],
-                    "gender": random.choice(["Male", "Female"]),
+                    "gender": random.choice(["male", "female"]),
                     "birthDate": (datetime.utcnow() - timedelta(days=random.randint(25 * 365, 60 * 365))).date().isoformat(),
                     "citizenId": f"11037000{idx:04d}",
                     "phone": f"08{random.randint(10000000, 99999999)}",

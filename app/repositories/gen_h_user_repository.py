@@ -207,7 +207,7 @@ class GenHUserRepository:
         active = await qs.filter(is_active=True).count()
         male = await qs.filter(gender="male").count()
         female = await qs.filter(gender="female").count()
-        lgbtq_plus = await qs.filter(gender="lgbtq+").count()
+        lgbtq_plus = await qs.filter(gender="lgbtqia").count()
         transferred = await qs.exclude(yuwa_osm_user_id=None).count()
 
         by_province_raw = (

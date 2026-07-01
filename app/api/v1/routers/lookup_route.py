@@ -513,6 +513,7 @@ async def list_genders(
     labels_th = {
         Gender.MALE.value: "ชาย",
         Gender.FEMALE.value: "หญิง",
+        Gender.LGBTQIA.value: "LGBTQIA+",
         Gender.OTHER.value: "อื่นๆ",
     }
     items = _build_enum_items(Gender, labels_th)

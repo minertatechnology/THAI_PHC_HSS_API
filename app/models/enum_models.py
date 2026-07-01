@@ -4,6 +4,7 @@ from enum import Enum
 class Gender(str, Enum):
         MALE = "male" # ชาย
         FEMALE = "female" # หญิง
+        LGBTQIA = "lgbtqia" # LGBTQIA+
         OTHER = "other" # อื่นๆ
 
 class ApprovalStatus(str, Enum):

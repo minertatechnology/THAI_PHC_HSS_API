@@ -44,6 +44,20 @@ class GenHService:
         return s or None
 
     @staticmethod
+    def _normalize_gender(v: Optional[str]) -> Optional[str]:
+        """Normalize gender string to canonical lowercase English values."""
+        if v is None:
+            return None
+        s = v.strip().lower()
+        mapping = {
+            "\u0e0a\u0e32\u0e22": "male", "male": "male", "m": "male",
+            "\u0e2b\u0e0d\u0e34\u0e07": "female", "female": "female", "f": "female", "woman": "female",
+            "lgbtqia": "lgbtqia", "lgbtqia+": "lgbtqia", "lgbtq+": "lgbtqia",
+            "other": "other", "\u0e2d\u0e37\u0e48\u0e19": "other", "\u0e2d\u0e37\u0e48\u0e19\u0e46": "other",
+        }
+        return mapping.get(s, s) or None
+
+    @staticmethod
     def _build_public_url(relative_path: str | None) -> str | None:
         """Convert a relative image path to a full URL if it looks like a local path."""
         if not relative_path:
@@ -171,7 +185,7 @@ class GenHService:
             prefix=GenHService._clean_str(payload.prefix),
             first_name=GenHService._clean_str(payload.first_name) or "ไม่ระบุชื่อ",
             last_name=GenHService._clean_str(payload.last_name) or "ไม่ระบุนามสกุล",
-            gender=GenHService._clean_str(payload.gender),
+            gender=GenHService._normalize_gender(payload.gender),
             birthday=payload.birthday,
             phone_number=GenHService._clean_str(payload.phone_number),
             email=GenHService._clean_str(payload.email),

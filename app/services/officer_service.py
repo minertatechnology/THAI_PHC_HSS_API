@@ -2177,7 +2177,8 @@ class OfficerService:
         gender_labels = {
             Gender.MALE: ("ชาย", "ชาย"),
             Gender.FEMALE: ("หญิง", "หญิง"),
-            Gender.OTHER: ("อื่น ๆ", "อื่น ๆ"),
+            Gender.LGBTQIA: ("LGBTQIA+", "LGBTQIA+"),
+            Gender.OTHER: ("อื่นๆ", "อื่นๆ"),
         }
         genders = [
             {
@@ -2210,7 +2211,8 @@ class OfficerService:
         gender_labels = {
             Gender.MALE: ("ชาย", "ชาย"),
             Gender.FEMALE: ("หญิง", "หญิง"),
-            Gender.OTHER: ("อื่น ๆ", "อื่น ๆ"),
+            Gender.LGBTQIA: ("LGBTQIA+", "LGBTQIA+"),
+            Gender.OTHER: ("อื่นๆ", "อื่นๆ"),
         }
         genders = [
             {

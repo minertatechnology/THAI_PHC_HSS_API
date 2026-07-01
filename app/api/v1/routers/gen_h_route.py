@@ -68,21 +68,37 @@ async def gen_h_summary(
 
 @gen_h_router.post("", status_code=status.HTTP_201_CREATED)
 async def register_gen_h_user(
-    data: str = Form(..., description="JSON string of registration data"),
-    profile_image: Optional[UploadFile] = File(None, description="Profile image file (optional)"),
+    request: Request,
+    data: Optional[str] = Form(None, description="JSON string of registration data (form-data)"),
+    profile_image: Optional[UploadFile] = File(None, description="Profile image file (optional, form-data only)"),
 ):
     """Register a new Gen H user.
 
     Public when GEN_H_SELF_REGISTER_ENABLED=True (migration period).
     Set GEN_H_SELF_REGISTER_ENABLED=False in .env to close self-registration post-migration.
-    Accepts multipart/form-data: send `data` as JSON string + optional `profile_image` file.
+
+    Supports both:
+    - JSON body: Content-Type application/json (mobile app)
+    - Multipart form-data: send `data` as JSON string + optional `profile_image` file
     """
     if not settings.GEN_H_SELF_REGISTER_ENABLED:
         raise HTTPException(status_code=403, detail="gen_h_self_register_disabled")
-    try:
-        payload = GenHCreateSchema.model_validate_json(data)
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=f"Invalid registration data: {e}")
+
+    # Determine payload source: form-data `data` field or JSON body
+    if data:
+        # Form-data mode: `data` field contains JSON string
+        try:
+            payload = GenHCreateSchema.model_validate_json(data)
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Invalid registration data: {e}")
+    else:
+        # JSON body mode: parse request body directly
+        try:
+            body = await request.json()
+            payload = GenHCreateSchema.model_validate(body)
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Invalid registration data: {e}")
+
     return await GenHController.register(payload, current_user=None, profile_image=profile_image)
 
 
