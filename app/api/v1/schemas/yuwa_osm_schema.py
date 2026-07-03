@@ -157,6 +157,7 @@ class YuwaOSMResponseSchema(BaseModel):
     citizen_id: Optional[str] = None
     yuwa_osm_code: Optional[str] = None
     gen_h_code: Optional[str] = None
+    prefix: Optional[str] = None
     phone_number: Optional[str] = None
     first_name: str
     last_name: str

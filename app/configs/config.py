@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     THAID_AUTHORIZE_URI: str | None = None
     THAID_API_KEY: str = "thaid_integration_key_2025@mof"
     FRONTEND_API_KEY: str | None = None
+    THIRD_PARTY_API_KEY: str | None = None
 
     # JWT shared configuration for ThaiD tokens
     ALGORITHM: str | None = None

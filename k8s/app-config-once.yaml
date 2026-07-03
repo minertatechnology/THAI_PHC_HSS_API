@@ -91,6 +91,8 @@ data:
   THAID_REQUEST_URI: "https://imauth.bora.dopa.go.th/api/v2/oauth2/token/"
   THAID_AUTHORIZE_URI: "https://imauth.bora.dopa.go.th/api/v2/oauth2/auth/"
   THAID_REDIRECT_URI: "https://api-thaiphc.hss.moph.go.th/callback"
+  # Third Party API Key (Fix Key สำหรับ CGD)
+  THIRD_PARTY_API_KEY: "KS#DF@758652!DFWFHHR79"
 
 ---
 # ===================================================================

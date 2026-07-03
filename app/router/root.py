@@ -29,6 +29,7 @@ from app.api.v1.routers.notification_route import notification_router
 from app.api.v1.routers.gen_h_route import gen_h_router
 from app.api.v1.routers.auto_transfer_route import auto_transfer_router
 from app.api.v1.routers.user_sync_route import user_sync_router
+from app.api.v1.routers.thirdparty_route import thirdparty_router
 
 v1_router = APIRouter(prefix=f"{settings.API_V1_PREFIX}")
 
@@ -61,6 +62,7 @@ v1_router.include_router(notification_router)
 v1_router.include_router(gen_h_router)
 v1_router.include_router(auto_transfer_router)
 v1_router.include_router(user_sync_router)
+v1_router.include_router(thirdparty_router)
 
 
 rootRouter = APIRouter()
