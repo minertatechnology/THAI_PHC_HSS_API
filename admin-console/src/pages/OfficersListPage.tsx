@@ -301,6 +301,9 @@ export const OfficersListPage: React.FC = () => {
     promise: Promise<PaginatedOfficerList>;
   } | null>(null); // reuse in-flight load to avoid duplicate calls
 
+  const canCreateOfficer = user?.permission_scope?.level === "country";
+  const isSubdistrictLevel = user?.permission_scope?.level === "subdistrict";
+
   const isProvinceFilterLocked = useMemo(
     () => Boolean(enforcedProvinceFilter),
     [enforcedProvinceFilter],
@@ -726,12 +729,14 @@ export const OfficersListPage: React.FC = () => {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Link
-              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-600 shadow-sm transition hover:bg-slate-100"
-              to="/officers/create"
-            >
-              + เพิ่มเจ้าหน้าที่
-            </Link>
+            {canCreateOfficer && (
+              <Link
+                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-blue-600 shadow-sm transition hover:bg-slate-100"
+                to="/officers/create"
+              >
+                + เพิ่มเจ้าหน้าที่
+              </Link>
+            )}
             <button
               type="button"
               onClick={handleRefresh}
@@ -1096,7 +1101,8 @@ export const OfficersListPage: React.FC = () => {
                             <EyeIcon className="h-4 w-4" />
                           </IconActionLink>
                           {officer.approval_status === "pending" &&
-                            (officer.permissions?.can_approve ?? true) && (
+                            (officer.permissions?.can_approve ?? true) &&
+                            !isSubdistrictLevel && (
                               <>
                                 <IconButton
                                   label="อนุมัติคำขอ"

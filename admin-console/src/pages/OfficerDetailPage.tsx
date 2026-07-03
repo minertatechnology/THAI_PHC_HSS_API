@@ -229,6 +229,7 @@ const OfficerDetailPage: React.FC = () => {
     userPositionName.includes("รพ.สต") ||
     userPositionName.includes("รพสต");
   const showTransferButton = canTransfer && !hideTransferForLocalOperator;
+  const hideApprovalButtons = actorLevel === "subdistrict";
   const showPeerRestrictionNotice = Boolean(
     permissions && permissions.is_same_level && !permissions.can_toggle_active,
   );
@@ -610,7 +611,7 @@ const OfficerDetailPage: React.FC = () => {
                 {isEditing ? "ยกเลิก" : "แก้ไข"}
               </button>
             )}
-            {canApprove && officer.approval_status === "pending" && (
+            {canApprove && officer.approval_status === "pending" && !hideApprovalButtons && (
               <>
                 <button
                   type="button"
