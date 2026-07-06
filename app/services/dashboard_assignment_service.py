@@ -7,7 +7,7 @@ from fastapi import HTTPException, status
 from tortoise.expressions import Q
 from tortoise.functions import Count
 
-from app.models.enum_models import AdministrativeLevelEnum
+from app.models.enum_models import AdministrativeLevelEnum, OsmShowbbodyEnum
 from app.models.osm_model import OSMProfile
 from app.repositories.officer_profile_repository import OfficerProfileRepository
 from app.utils.logging_utils import get_logger
@@ -144,12 +144,26 @@ class DashboardAssignmentService:
             query = query.filter(approval_status=approval_status)
 
         if osm_status_filter is not None:
-            keyword = osm_status_filter.strip()
+            keyword = osm_status_filter.strip().lower()
+            # เงื่อนไข "ปกติ": osm_status ว่างหรือ null
+            normal = Q(osm_status="") | Q(osm_status__isnull=True)
             if keyword == "":
                 # ไม่ส่ง/ว่าง = ปกติ (osm_status is null or empty)
-                query = query.filter(Q(osm_status="") | Q(osm_status__isnull=True))
+                query = query.filter(normal)
+            elif keyword == "eligible":
+                # ปกติ + ได้รับสิทธิค่าป่วยการ (osm_showbbody 1/2)
+                query = query.filter(
+                    normal
+                    & Q(osm_showbbody__in=[OsmShowbbodyEnum.PAID_TYPE1, OsmShowbbodyEnum.PAID_TYPE2])
+                )
+            elif keyword == "ineligible":
+                # ปกติ + ไม่ขอรับสิทธิค่าป่วยการ (osm_showbbody = 5)
+                query = query.filter(normal & Q(osm_showbbody=OsmShowbbodyEnum.NOT_PAID))
+            elif keyword == "pending":
+                # ปกติ + รอรับสิทธิค่าป่วยการ (osm_showbbody = 6)
+                query = query.filter(normal & Q(osm_showbbody=OsmShowbbodyEnum.PENDING))
             else:
-                # ส่งค่าใดก็ได้ = พ้นสภาพทั้งหมด (osm_status not null and not empty)
+                # ส่งค่าอื่น (เช่น "inactive") = พ้นสภาพทั้งหมด (osm_status not null and not empty)
                 query = query.filter(~Q(osm_status="") & Q(osm_status__isnull=False))
 
         if search:

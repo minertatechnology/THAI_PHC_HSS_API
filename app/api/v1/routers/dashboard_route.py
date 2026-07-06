@@ -274,7 +274,11 @@ async def get_dashboard_assignments(
     ),
     osmStatus: Optional[str] = Query(
         None,
-        description="สถานะ อสม. (ไม่ส่ง/ว่าง=ปกติ, ส่งค่าใดก็ได้=พ้นสภาพทั้งหมด)",
+        description=(
+            "สถานะ อสม. (ว่าง=ปกติ, "
+            "eligible/ineligible/pending=สถานะย่อยของปกติตามสิทธิค่าป่วยการ, "
+            "ค่าอื่นๆ เช่น inactive=พ้นสภาพทั้งหมด)"
+        ),
         alias="osm_status",
     ),
     approvalStatus: Optional[str] = Query(
