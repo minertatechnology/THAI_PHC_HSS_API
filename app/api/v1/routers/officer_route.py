@@ -319,6 +319,42 @@ async def reset_gen_h_password(
     return await OfficerController.reset_gen_h_password(user_id, current_user)
 
 
+@officer_router.post("/community/osm/{osm_id}/set-password-citizen-id", status_code=status.HTTP_200_OK)
+async def set_osm_password_citizen_id(
+    osm_id: str,
+    current_user: dict = Depends(require_scopes({"profile"})),
+):
+    await _ensure_officer(current_user)
+    return await OfficerController.set_osm_password_citizen_id(osm_id, current_user)
+
+
+@officer_router.post("/community/yuwa-osm/{user_id}/set-password-citizen-id", status_code=status.HTTP_200_OK)
+async def set_yuwa_password_citizen_id(
+    user_id: str,
+    current_user: dict = Depends(require_scopes({"profile"})),
+):
+    await _ensure_officer(current_user)
+    return await OfficerController.set_yuwa_password_citizen_id(user_id, current_user)
+
+
+@officer_router.post("/community/people/{user_id}/set-password-citizen-id", status_code=status.HTTP_200_OK)
+async def set_people_password_citizen_id(
+    user_id: str,
+    current_user: dict = Depends(require_scopes({"profile"})),
+):
+    await _ensure_officer(current_user)
+    return await OfficerController.set_people_password_citizen_id(user_id, current_user)
+
+
+@officer_router.post("/community/gen-h/{user_id}/set-password-citizen-id", status_code=status.HTTP_200_OK)
+async def set_gen_h_password_citizen_id(
+    user_id: str,
+    current_user: dict = Depends(require_scopes({"profile"})),
+):
+    await _ensure_officer(current_user)
+    return await OfficerController.set_gen_h_password_citizen_id(user_id, current_user)
+
+
 @officer_router.patch("/community/gen-h/{user_id}/status", status_code=status.HTTP_200_OK)
 async def set_gen_h_active_status(
     user_id: str,

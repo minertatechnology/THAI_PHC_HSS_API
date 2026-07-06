@@ -1,6 +1,6 @@
 import React, { FormEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { searchClientBlockCandidates } from "../api/oauthClients";
-import { fetchOfficerDisplayNameById, resetOsmPassword, resetPeoplePassword, resetYuwaPassword, resetGenHPassword, setOsmActiveStatus, setPeopleActiveStatus, setYuwaActiveStatus, setGenHActiveStatus } from "../api/officers";
+import { fetchOfficerDisplayNameById, resetOsmPassword, resetPeoplePassword, resetYuwaPassword, resetGenHPassword, setOsmActiveStatus, setPeopleActiveStatus, setYuwaActiveStatus, setGenHActiveStatus, setOsmPasswordCitizenId, setPeoplePasswordCitizenId, setYuwaPasswordCitizenId, setGenHPasswordCitizenId } from "../api/officers";
 import { fetchOsmDetail, fetchYuwaOsmDetail } from "../api/osm";
 import { fetchPeopleDetail } from "../api/people";
 import { fetchGenHDetail } from "../api/genH";
@@ -73,6 +73,24 @@ const IconSpinner = ({ className = "h-5 w-5" }: IconProps) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className={`${className} animate-spin`} fill="none">
     <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth={2} strokeOpacity={0.2} />
     <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
+  </svg>
+);
+
+const IconIdCard = ({ className = "h-5 w-5" }: IconProps) => (
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <circle cx="8.5" cy="11.5" r="2.5" />
+    <path d="M14 10h4" />
+    <path d="M14 13h4" />
   </svg>
 );
 
@@ -245,8 +263,11 @@ export const QuickSearchPage: React.FC<QuickSearchPageProps> = ({
   const [statusBusyId, setStatusBusyId] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
-  const [temporaryReset, setTemporaryReset] = useState<{ password: string; name: string; userType: ClientBlockCandidate["user_type"] } | null>(null);
+  const [temporaryReset, setTemporaryReset] = useState<{ password: string; name: string; userType: ClientBlockCandidate["user_type"]; isCitizenId: boolean } | null>(null);
   const [copiedTempPassword, setCopiedTempPassword] = useState<boolean>(false);
+  const [citizenIdTarget, setCitizenIdTarget] = useState<ClientBlockCandidate | null>(null);
+  const [citizenIdBusy, setCitizenIdBusy] = useState<boolean>(false);
+  const [citizenIdError, setCitizenIdError] = useState<string | null>(null);
   const [detailTarget, setDetailTarget] = useState<ClientBlockCandidate | null>(null);
   const [detailPayload, setDetailPayload] = useState<DetailPayload | null>(null);
   const [detailBusy, setDetailBusy] = useState<boolean>(false);
@@ -285,6 +306,8 @@ export const QuickSearchPage: React.FC<QuickSearchPageProps> = ({
     setStatusBusyId(null);
     setTemporaryReset(null);
     setCopiedTempPassword(false);
+    setCitizenIdTarget(null);
+    setCitizenIdError(null);
     setDetailTarget(null);
     setDetailPayload(null);
     setDetailError(null);
@@ -684,6 +707,51 @@ export const QuickSearchPage: React.FC<QuickSearchPageProps> = ({
     setResetTarget(null);
   };
 
+  const handleOpenCitizenIdReset = (candidate: ClientBlockCandidate) => {
+    setCitizenIdTarget(candidate);
+    setCitizenIdError(null);
+  };
+
+  const handleCloseCitizenIdReset = () => {
+    if (citizenIdBusy) {
+      return;
+    }
+    setCitizenIdTarget(null);
+  };
+
+  const handleConfirmCitizenIdReset = async () => {
+    if (!citizenIdTarget) {
+      return;
+    }
+    const snapshot = citizenIdTarget;
+    setCitizenIdBusy(true);
+    setCitizenIdError(null);
+    setCopiedTempPassword(false);
+    try {
+      const apiCall = snapshot.user_type === "yuwa_osm"
+        ? setYuwaPasswordCitizenId
+        : snapshot.user_type === "people"
+          ? setPeoplePasswordCitizenId
+          : snapshot.user_type === "gen_h"
+            ? setGenHPasswordCitizenId
+            : setOsmPasswordCitizenId;
+      const result: OfficerPasswordResetResult = await apiCall(snapshot.user_id);
+      setTemporaryReset({
+        password: result.temporary_password,
+        name: snapshot.full_name || "ผู้ใช้งาน",
+        userType: snapshot.user_type,
+        isCitizenId: true,
+      });
+      setCitizenIdTarget(null);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      const message = mapResetErrorDetail(detail) ?? "ไม่สามารถตั้งรหัสผ่านเป็นเลขบัตรได้ กรุณาลองใหม่";
+      setCitizenIdError(message);
+    } finally {
+      setCitizenIdBusy(false);
+    }
+  };
+
   const handleOpenDetails = useCallback((candidate: ClientBlockCandidate) => {
     setDetailTarget(candidate);
   }, []);
@@ -762,6 +830,7 @@ export const QuickSearchPage: React.FC<QuickSearchPageProps> = ({
         password: result.temporary_password,
         name: snapshot.full_name || "ผู้ใช้งาน",
         userType: snapshot.user_type,
+        isCitizenId: false,
       });
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
@@ -1426,7 +1495,9 @@ export const QuickSearchPage: React.FC<QuickSearchPageProps> = ({
         {temporaryReset ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 shadow-inner">
             <p className="font-semibold">
-              สร้างรหัสผ่านชั่วคราวใหม่ให้ {temporaryReset.name} ({typeLabels[temporaryReset.userType as Extract<UserType, "osm" | "yuwa_osm" | "people" | "gen_h">]}) แล้ว
+              {temporaryReset.isCitizenId
+                ? `ตั้งรหัสผ่านเป็นเลขบัตรประชาชนให้ ${temporaryReset.name} (${typeLabels[temporaryReset.userType as Extract<UserType, "osm" | "yuwa_osm" | "people" | "gen_h">]}) เรียบร้อยแล้ว`
+                : `สร้างรหัสผ่านชั่วคราวใหม่ให้ ${temporaryReset.name} (${typeLabels[temporaryReset.userType as Extract<UserType, "osm" | "yuwa_osm" | "people" | "gen_h">]}) แล้ว`}
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <code className="rounded-lg bg-white px-3 py-2 text-base font-semibold tracking-wide text-amber-700 shadow">
@@ -1459,6 +1530,12 @@ export const QuickSearchPage: React.FC<QuickSearchPageProps> = ({
         {statusError ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 shadow-inner">
             {statusError}
+          </div>
+        ) : null}
+
+        {citizenIdError ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 shadow-inner">
+            {citizenIdError}
           </div>
         ) : null}
 
@@ -1608,6 +1685,15 @@ export const QuickSearchPage: React.FC<QuickSearchPageProps> = ({
                           >
                             <IconKey className="h-5 w-5" />
                           </IconButton>
+                          <IconButton
+                            label="ตั้งรหัสเป็นเลขบัตร"
+                            onClick={() => handleOpenCitizenIdReset(item)}
+                            disabled={!canManage || citizenIdBusy || !hasCommunityScope}
+                            tone="success"
+                            busy={citizenIdBusy && citizenIdTarget?.user_id === item.user_id}
+                          >
+                            <IconIdCard className="h-5 w-5" />
+                          </IconButton>
                         </div>
                       </td>
                     </tr>
@@ -1705,6 +1791,18 @@ export const QuickSearchPage: React.FC<QuickSearchPageProps> = ({
         onCancel={handleCloseReset}
         onConfirm={handleConfirmReset}
         busy={resetBusy}
+      />
+
+      <ConfirmDialog
+        open={Boolean(citizenIdTarget)}
+        title="ตั้งรหัสผ่านเป็นเลขบัตรประชาชน"
+        message={`ตั้งรหัสผ่านเป็นเลขบัตรประชาชนให้ ${citizenIdTarget?.full_name ?? "ผู้ใช้งาน"}\nรหัสผ่านเดิมจะใช้งานไม่ได้ทันที`}
+        confirmLabel="ตั้งรหัสเป็นเลขบัตร"
+        cancelLabel="ยกเลิก"
+        variant="default"
+        onCancel={handleCloseCitizenIdReset}
+        onConfirm={handleConfirmCitizenIdReset}
+        busy={citizenIdBusy}
       />
     </div>
   );

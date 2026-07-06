@@ -127,6 +127,38 @@ class OfficerController:
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
+    async def set_osm_password_citizen_id(osm_id: str, current_user: dict = Depends(get_current_user)):
+        try:
+            return await OfficerService.set_osm_password_to_citizen_id(osm_id, current_user)
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    async def set_yuwa_password_citizen_id(user_id: str, current_user: dict = Depends(get_current_user)):
+        try:
+            return await OfficerService.set_yuwa_password_to_citizen_id(user_id, current_user)
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    async def set_people_password_citizen_id(user_id: str, current_user: dict = Depends(get_current_user)):
+        try:
+            return await OfficerService.set_people_password_to_citizen_id(user_id, current_user)
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    async def set_gen_h_password_citizen_id(user_id: str, current_user: dict = Depends(get_current_user)):
+        try:
+            return await OfficerService.set_gen_h_password_to_citizen_id(user_id, current_user)
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
     async def set_osm_active_status(
         osm_id: str,
         payload: OfficerActiveStatusSchema,

@@ -2111,6 +2111,313 @@ class OfficerService:
             "message": "รีเซ็ตรหัสผ่านสำเร็จ",
         }
 
+    # ------------------------------------------------------------------
+    # ตั้งรหัสผ่านเป็นเลขบัตรประชาชน (สำหรับผู้ใช้ที่เข้าระบบไม่ได้)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    async def _sync_citizen_id_password_all_tables(
+        citizen_id: str, hashed_password: str, exclude_user_type: str = None
+    ):
+        """Sync password to citizen_id across all user tables (osm, yuwa, people, gen_h)."""
+        updated_tables = []
+
+        if exclude_user_type != "osm":
+            try:
+                osm_profile = await OSMProfileRepository.find_osm_by_citizen_id(citizen_id)
+                if osm_profile:
+                    await OSMProfileRepository.set_password_by_id(
+                        str(osm_profile.id), hashed_password, mark_first_login=False, reactivate=True
+                    )
+                    try:
+                        await RefreshTokenRepository.revoke_all_user_refresh_tokens(str(osm_profile.id), None, "osm")
+                    except Exception:
+                        pass
+                    updated_tables.append("osm")
+            except Exception:
+                pass
+
+        if exclude_user_type != "yuwa_osm":
+            try:
+                yuwa_profile = await YuwaOSMUserRepository.get_user_by_citizen_id(citizen_id)
+                if yuwa_profile:
+                    await YuwaOSMUserRepository.set_password_by_id(
+                        str(yuwa_profile.id), hashed_password, mark_first_login=False, reactivate=True
+                    )
+                    try:
+                        await RefreshTokenRepository.revoke_all_user_refresh_tokens(str(yuwa_profile.id), None, "yuwa_osm")
+                    except Exception:
+                        pass
+                    updated_tables.append("yuwa_osm")
+            except Exception:
+                pass
+
+        if exclude_user_type != "people":
+            try:
+                people_profile = await PeopleUserRepository.get_user_by_citizen_id(citizen_id)
+                if people_profile:
+                    await PeopleUserRepository.set_password_by_id(
+                        str(people_profile.id), hashed_password, mark_first_login=False, reactivate=True
+                    )
+                    try:
+                        await RefreshTokenRepository.revoke_all_user_refresh_tokens(str(people_profile.id), None, "people")
+                    except Exception:
+                        pass
+                    updated_tables.append("people")
+            except Exception:
+                pass
+
+        if exclude_user_type != "gen_h":
+            try:
+                gen_h_profile = await GenHUserRepository.get_by_citizen_id(citizen_id)
+                if gen_h_profile:
+                    await GenHUserRepository.set_password_by_id(
+                        str(gen_h_profile.id), hashed_password, mark_first_login=False, reactivate=True
+                    )
+                    try:
+                        await RefreshTokenRepository.revoke_all_user_refresh_tokens(str(gen_h_profile.id), None, "gen_h")
+                    except Exception:
+                        pass
+                    updated_tables.append("gen_h")
+            except Exception:
+                pass
+
+        return updated_tables
+
+    @staticmethod
+    async def set_osm_password_to_citizen_id(osm_id: str, current_user: dict):
+        _viewer_profile, viewer_scope = await OfficerService._resolve_officer_scope(current_user, require_active=True)
+        if viewer_scope is None:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+
+        target_profile = await OSMProfileRepository.get_profile_for_management(osm_id)
+        if not target_profile:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="osm_not_found")
+
+        citizen_id = target_profile.citizen_id
+        if not citizen_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="citizen_id_missing")
+
+        target_scope, location_context = await OfficerService._resolve_osm_management_context(target_profile)
+        OfficerService._ensure_scope_permission(viewer_scope, target_scope)
+
+        hashed_password = bcrypt_hash_password(citizen_id)
+
+        updated = await OSMProfileRepository.set_password_by_id(
+            osm_id,
+            hashed_password,
+            mark_first_login=False,
+            reactivate=True,
+            updated_by=str(current_user.get("user_id")) if current_user.get("user_id") else None,
+        )
+        if not updated:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="password_reset_failed")
+
+        try:
+            await RefreshTokenRepository.revoke_all_user_refresh_tokens(osm_id, None, "osm")
+        except Exception as exc:
+            log_error(logger, "set_password_citizen_id revoke tokens failed", exc=exc)
+
+        # Sync password to other tables with same citizen_id
+        synced = await OfficerService._sync_citizen_id_password_all_tables(citizen_id, hashed_password, exclude_user_type="osm")
+
+        await AuditService.log_action(
+            user_id=current_user.get("user_id"),
+            action_type="set_password_citizen_id",
+            target_type="osm",
+            description=f"Officer set password to citizen_id for OSM profile {osm_id}",
+            new_data={
+                "osmProfileId": osm_id,
+                "provinceId": location_context.get("province_code"),
+                "districtId": location_context.get("district_code"),
+                "subdistrictId": location_context.get("subdistrict_code"),
+                "villageCode": location_context.get("village_code"),
+                "performedBy": str(current_user.get("user_id")) if current_user.get("user_id") else None,
+            },
+        )
+
+        return {
+            "status": "success",
+            "data": {
+                "temporary_password": citizen_id,
+            },
+            "message": "ตั้งรหัสผ่านเป็นเลขบัตรประชาชนสำเร็จ",
+        }
+
+    @staticmethod
+    async def set_yuwa_password_to_citizen_id(user_id: str, current_user: dict):
+        _viewer_profile, viewer_scope = await OfficerService._resolve_officer_scope(current_user, require_active=True)
+        if viewer_scope is None:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+
+        target_profile = await YuwaOSMUserRepository.get_user_for_management(user_id)
+        if not target_profile:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="yuwa_osm_user_not_found")
+
+        citizen_id = target_profile.citizen_id
+        if not citizen_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="citizen_id_missing")
+
+        target_scope, location_context = await OfficerService._resolve_yuwa_management_context(target_profile)
+        OfficerService._ensure_scope_permission(viewer_scope, target_scope)
+
+        hashed_password = bcrypt_hash_password(citizen_id)
+
+        updated = await YuwaOSMUserRepository.set_password_by_id(
+            user_id,
+            hashed_password,
+            mark_first_login=False,
+            reactivate=True,
+        )
+        if not updated:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="password_reset_failed")
+
+        try:
+            await RefreshTokenRepository.revoke_all_user_refresh_tokens(user_id, None, "yuwa_osm")
+        except Exception as exc:
+            log_error(logger, "set_password_citizen_id revoke tokens failed", exc=exc)
+
+        # Sync password to other tables with same citizen_id
+        synced = await OfficerService._sync_citizen_id_password_all_tables(citizen_id, hashed_password, exclude_user_type="yuwa_osm")
+
+        await AuditService.log_action(
+            user_id=current_user.get("user_id"),
+            action_type="set_password_citizen_id",
+            target_type="yuwa_osm",
+            description=f"Officer set password to citizen_id for Yuwa OSM user {user_id}",
+            new_data={
+                "yuwaUserId": user_id,
+                "provinceCode": location_context.get("province_code"),
+                "districtCode": location_context.get("district_code"),
+                "subdistrictCode": location_context.get("subdistrict_code"),
+                "performedBy": str(current_user.get("user_id")) if current_user.get("user_id") else None,
+            },
+        )
+
+        return {
+            "status": "success",
+            "data": {
+                "temporary_password": citizen_id,
+            },
+            "message": "ตั้งรหัสผ่านเป็นเลขบัตรประชาชนสำเร็จ",
+        }
+
+    @staticmethod
+    async def set_people_password_to_citizen_id(user_id: str, current_user: dict):
+        _viewer_profile, viewer_scope = await OfficerService._resolve_officer_scope(current_user, require_active=True)
+        if viewer_scope is None:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+
+        target_profile = await PeopleUserRepository.get_user_for_management(user_id)
+        if not target_profile:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="people_user_not_found")
+
+        citizen_id = target_profile.citizen_id
+        if not citizen_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="citizen_id_missing")
+
+        target_scope, location_context = await OfficerService._resolve_people_management_context(target_profile)
+        OfficerService._ensure_scope_permission(viewer_scope, target_scope)
+
+        hashed_password = bcrypt_hash_password(citizen_id)
+
+        updated = await PeopleUserRepository.set_password_by_id(
+            user_id,
+            hashed_password,
+            mark_first_login=False,
+            reactivate=True,
+        )
+        if not updated:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="password_reset_failed")
+
+        try:
+            await RefreshTokenRepository.revoke_all_user_refresh_tokens(user_id, None, "people")
+        except Exception as exc:
+            log_error(logger, "set_password_citizen_id revoke tokens failed", exc=exc)
+
+        # Sync password to other tables with same citizen_id
+        synced = await OfficerService._sync_citizen_id_password_all_tables(citizen_id, hashed_password, exclude_user_type="people")
+
+        await AuditService.log_action(
+            user_id=current_user.get("user_id"),
+            action_type="set_password_citizen_id",
+            target_type="people",
+            description=f"Officer set password to citizen_id for People user {user_id}",
+            new_data={
+                "peopleUserId": user_id,
+                "provinceCode": location_context.get("province_code"),
+                "districtCode": location_context.get("district_code"),
+                "subdistrictCode": location_context.get("subdistrict_code"),
+                "performedBy": str(current_user.get("user_id")) if current_user.get("user_id") else None,
+            },
+        )
+
+        return {
+            "status": "success",
+            "data": {
+                "temporary_password": citizen_id,
+            },
+            "message": "ตั้งรหัสผ่านเป็นเลขบัตรประชาชนสำเร็จ",
+        }
+
+    @staticmethod
+    async def set_gen_h_password_to_citizen_id(user_id: str, current_user: dict):
+        _viewer_profile, viewer_scope = await OfficerService._resolve_officer_scope(current_user, require_active=True)
+        if viewer_scope is None:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+
+        target_profile = await GenHUserRepository.get_by_id(user_id)
+        if not target_profile:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="gen_h_user_not_found")
+
+        citizen_id = target_profile.citizen_id
+        if not citizen_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="citizen_id_missing")
+
+        target_scope, location_context = await OfficerService._resolve_gen_h_management_context(target_profile)
+        OfficerService._ensure_scope_permission(viewer_scope, target_scope)
+
+        hashed_password = bcrypt_hash_password(citizen_id)
+
+        updated = await GenHUserRepository.set_password_by_id(
+            user_id,
+            hashed_password,
+            mark_first_login=False,
+            reactivate=True,
+        )
+        if not updated:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="password_reset_failed")
+
+        try:
+            await RefreshTokenRepository.revoke_all_user_refresh_tokens(user_id, None, "gen_h")
+        except Exception as exc:
+            log_error(logger, "set_password_citizen_id revoke tokens failed", exc=exc)
+
+        # Sync password to other tables with same citizen_id
+        synced = await OfficerService._sync_citizen_id_password_all_tables(citizen_id, hashed_password, exclude_user_type="gen_h")
+
+        await AuditService.log_action(
+            user_id=current_user.get("user_id"),
+            action_type="set_password_citizen_id",
+            target_type="gen_h",
+            description=f"Officer set password to citizen_id for Gen H user {user_id}",
+            new_data={
+                "genHUserId": user_id,
+                "provinceCode": location_context.get("province_code"),
+                "districtCode": location_context.get("district_code"),
+                "subdistrictCode": location_context.get("subdistrict_code"),
+                "performedBy": str(current_user.get("user_id")) if current_user.get("user_id") else None,
+            },
+        )
+
+        return {
+            "status": "success",
+            "data": {
+                "temporary_password": citizen_id,
+            },
+            "message": "ตั้งรหัสผ่านเป็นเลขบัตรประชาชนสำเร็จ",
+        }
+
     @staticmethod
     async def set_gen_h_active_status(user_id: str, is_active: bool, current_user: dict):
         _viewer_profile, viewer_scope = await OfficerService._resolve_officer_scope(current_user, require_active=True)

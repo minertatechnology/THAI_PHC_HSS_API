@@ -304,6 +304,46 @@ export async function setGenHActiveStatus(
   return data.data;
 }
 
+export async function setOsmPasswordCitizenId(
+  osmId: string,
+): Promise<OfficerPasswordResetResult> {
+  const { data } = await apiClient.post<{
+    status: string;
+    data: OfficerPasswordResetResult;
+  }>(`${OFFICER_BASE}/community/osm/${osmId}/set-password-citizen-id`);
+  return data.data;
+}
+
+export async function setYuwaPasswordCitizenId(
+  userId: string,
+): Promise<OfficerPasswordResetResult> {
+  const { data } = await apiClient.post<{
+    status: string;
+    data: OfficerPasswordResetResult;
+  }>(`${OFFICER_BASE}/community/yuwa-osm/${userId}/set-password-citizen-id`);
+  return data.data;
+}
+
+export async function setPeoplePasswordCitizenId(
+  userId: string,
+): Promise<OfficerPasswordResetResult> {
+  const { data } = await apiClient.post<{
+    status: string;
+    data: OfficerPasswordResetResult;
+  }>(`${OFFICER_BASE}/community/people/${userId}/set-password-citizen-id`);
+  return data.data;
+}
+
+export async function setGenHPasswordCitizenId(
+  userId: string,
+): Promise<OfficerPasswordResetResult> {
+  const { data } = await apiClient.post<{
+    status: string;
+    data: OfficerPasswordResetResult;
+  }>(`${OFFICER_BASE}/community/gen-h/${userId}/set-password-citizen-id`);
+  return data.data;
+}
+
 export async function registerOfficer(
   payload: OfficerRegistrationPayload,
 ): Promise<OfficerRegistrationResult> {
