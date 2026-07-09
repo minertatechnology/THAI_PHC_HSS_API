@@ -10,7 +10,7 @@ from app.api.v1.schemas.response_schema import (
     osm_to_public_summary_response,
     osm_to_response,
 )
-from app.repositories.osm_profile_repository import OSMProfileRepository
+from app.repositories.osm_profile_repository import OSMProfileRepository, derive_osm_year_from_registered_date
 from app.repositories.osm_status_history_repository import OsmStatusHistoryRepository
 from app.services.oauth2_service import bcrypt_hash_password
 from app.services.officer_snapshot_helper import build_officer_snapshot
@@ -621,6 +621,13 @@ class OsmService:
                 else:
                     update_data["osm_showbbody"] = normalized_showbbody
 
+            # derive osm_year (พ.ศ.) จาก osm_registered_date (source of truth) เพื่อ backward compat
+            # (ระบบรายงาน/thirdparty ยังใช้ osm_year เป็น int อยู่)
+            if update_data.get("osm_registered_date") is not None:
+                derived_year = derive_osm_year_from_registered_date(update_data.get("osm_registered_date"))
+                if derived_year is not None:
+                    update_data["osm_year"] = derived_year
+
             await OSMProfileRepository.update_osm(osm_id, update_data, user_id)
 
             # ถ้าส่ง trainings มา ให้ sync ตามรายการที่ส่งมา (replace semantics)
@@ -790,6 +797,24 @@ class OsmService:
                 update_payload["retirement_reason"] = retirement_reason
         elif retirement_reason is not None:
             update_payload["retirement_reason"] = retirement_reason
+
+        # --- คืนสถานะปกติจากพ้นสภาพ: เคลียร์ข้อมูลพ้นสภาพ + reset osm_showbbody ---
+        # ตอนพ้นสภาพระบบบังคับ osm_showbbody="5" (ไม่ได้รับ) และเซ็ต retirement_date/reason
+        # เมื่อเปลี่ยนกลับเป็นปกติ ต้องเคลียร์ข้อมูลเหล่านี้ด้วย ไม่เช่นนั้นจะค้างอยู่ทำให้
+        # คนที่คืนสถานะแล้วยังดูเหมือน "ไม่ได้รับสิทธิค่าป่วยการ" ทั้งที่ osm_status เป็นปกติแล้ว
+        prev_was_retired = prev_osm_status in _retire_like_statuses
+        reverting_to_normal = (
+            prev_was_retired
+            and osm_status is not None
+            and osm_status not in _retire_like_statuses
+        )
+        if reverting_to_normal:
+            update_payload["retirement_date"] = None
+            update_payload["retirement_reason"] = None
+            # osm_showbbody "5" ที่ถูกบังคับตอนพ้นสภาพ → reset เป็น "6" (รอ) ตามรูปแบบ
+            # flow "ลงทะเบียนใหม่หลังพ้นสภาพ" (ค่าเดิมก่อนพ้นสภาพไม่ได้เก็บไว้)
+            if "osm_showbbody" not in update_payload:
+                update_payload["osm_showbbody"] = "6"
 
         # ถ้ากำลังอนุมัติ (is_active=True) และ profile ยังไม่มี osm_code ให้ generate ให้
         if is_active and not getattr(profile_for_management, "osm_code", None):

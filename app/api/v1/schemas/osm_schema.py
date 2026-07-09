@@ -133,6 +133,10 @@ class OsmDetailSchema(BaseModel):
     profile_image: Optional[str] = Field(None, max_length=1024, description="URL รูปโปรไฟล์")
     gender: str = Field(..., description="เพศ")
     osm_year: int = Field(..., ge=2500, le=2600, description="ปีที่เริ่มเป็น อสม.")
+    osm_registered_date: Optional[datetime.date] = Field(
+        None,
+        description="วันที่ขึ้นทะเบียน อสม. (วันที่เต็ม)",
+    )
     birth_date: datetime.date = Field(..., description="วันเกิด")
     marital_status: str = Field(..., description="สถานะการสมรส")
     number_of_children: int = Field(..., ge=0, description="จำนวนบุตร")

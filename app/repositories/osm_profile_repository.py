@@ -27,6 +27,29 @@ from app.utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
+
+def derive_osm_year_from_registered_date(registered_date):
+    """แปลง osm_registered_date (วันที่เต็ม) เป็นปี พ.ศ. (int) เพื่อ derive osm_year
+    สำหรับ backward compat (ระบบรายงาน/thirdparty ยังใช้ osm_year เป็น int อยู่).
+
+    รับได้ทั้ง datetime.date หรือสตริง ISO "YYYY-MM-DD" คืน None ถ้าแปลงไม่ได้/ว่าง
+    """
+    if registered_date is None or registered_date == "":
+        return None
+    try:
+        if isinstance(registered_date, datetime.datetime):
+            d = registered_date.date()
+        elif isinstance(registered_date, datetime.date):
+            d = registered_date
+        elif isinstance(registered_date, str):
+            d = datetime.date.fromisoformat(registered_date.strip()[:10])
+        else:
+            return None
+        return d.year + 543
+    except (ValueError, TypeError):
+        return None
+
+
 class OSMProfileRepository:
 
     @staticmethod
@@ -224,6 +247,13 @@ class OSMProfileRepository:
             print("OSM Data:", osm_dict)
 
             payload = dict(osm_dict)
+
+            # derive osm_year (พ.ศ.) จาก osm_registered_date (source of truth) เพื่อ backward compat
+            # (ระบบรายงาน/thirdparty ยังใช้ osm_year เป็น int อยู่)
+            if payload.get("osm_registered_date") is not None:
+                derived_year = derive_osm_year_from_registered_date(payload.get("osm_registered_date"))
+                if derived_year is not None:
+                    payload["osm_year"] = derived_year
 
             # รองรับ client ที่ส่ง alias "showbody" และ map ให้ลง field จริง "osm_showbbody"
             showbody = payload.pop("showbody", None)
@@ -794,7 +824,7 @@ class OSMProfileRepository:
             _nullable_fields = {
                 "osm_showbbody", "retirement_date", "retirement_reason",
                 "deleted_at", "approval_by", "approval_date",
-                "osm_code", "password_hash",
+                "osm_code", "password_hash", "osm_registered_date",
             }
 
             # อัปเดตข้อมูลหลัก

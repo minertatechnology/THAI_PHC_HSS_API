@@ -90,6 +90,11 @@ class OSMProfile(models.Model):
         index=True,
     )
     osm_year = fields.IntField(null=True)
+    osm_registered_date = fields.DateField(
+        null=True,
+        description="วันที่ขึ้นทะเบียน อสม. (วันที่เต็ม พ.ศ.→ค.ศ. เก็บเป็นคริสต์ศักราช); osm_year จะถูก derive จาก field นี้",
+        index=True,
+    )
     approval_date = fields.DateField(null=True)
     approval_by = fields.CharField(max_length=255, null=True)
     user_key = fields.CharField(max_length=20, null=True)

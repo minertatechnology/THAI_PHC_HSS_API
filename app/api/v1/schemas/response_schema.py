@@ -68,7 +68,7 @@ class SpouseResponse(BaseModel):
 
 class ChildResponse(BaseModel):
     id: uuid.UUID
-    order_of_children: int
+    order_of_children: Optional[int]
     citizen_id: Optional[str]
     prefix_id: uuid.UUID
     prefix_name_th: Optional[str]
@@ -108,6 +108,7 @@ class OsmProfileResponse(BaseModel):
     profile_image: Optional[str]
     gender: str
     osm_year: Optional[int] = None
+    osm_registered_date: Optional[str] = None
     birth_date: Optional[str] = None
     marital_status: str
     number_of_children: int
@@ -188,6 +189,7 @@ class OsmProfileDetailResponse(BaseModel):
     profile_image: Optional[str]
     gender: str
     osm_year: Optional[int] = None
+    osm_registered_date: Optional[str] = None
     birth_date: Optional[str] = None
     marital_status: str
     number_of_children: int
@@ -700,6 +702,7 @@ def osm_to_response(
         profile_image=getattr(osm, "profile_image", None),
         gender=osm.gender,
         osm_year=osm.osm_year,
+        osm_registered_date=str(osm.osm_registered_date) if getattr(osm, "osm_registered_date", None) else None,
         birth_date=str(osm.birth_date) if osm.birth_date else None,
         marital_status=osm.marital_status,
         number_of_children=osm.number_of_children,
@@ -821,6 +824,7 @@ def osm_to_detail_response(osm):
         profile_image=getattr(osm, "profile_image", None),
         gender=osm.gender,
         osm_year=osm.osm_year,
+        osm_registered_date=str(osm.osm_registered_date) if getattr(osm, "osm_registered_date", None) else None,
         birth_date=str(osm.birth_date) if osm.birth_date else None,
         marital_status=osm.marital_status,
         number_of_children=osm.number_of_children,

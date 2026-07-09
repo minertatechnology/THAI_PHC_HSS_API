@@ -71,6 +71,7 @@ class DashboardVolunteerRow(BaseModel):
     isActive: bool
     status: str
     osmStatus: Optional[str]
+    osmShowbbody: Optional[str]
     approvalStatus: Optional[str]
     volunteerStatus: Optional[str]
     createdAt: Optional[datetime]

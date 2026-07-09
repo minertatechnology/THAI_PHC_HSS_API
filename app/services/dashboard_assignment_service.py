@@ -376,6 +376,12 @@ class DashboardAssignmentService:
         volunteer_status = getattr(profile, "volunteer_status", None)
         status_value = volunteer_status.value if hasattr(volunteer_status, "value") else volunteer_status
 
+        # osm_showbbody: สถานะย่อยของ "ปกติ" ตามสิทธิค่าป่วยการ (1/2=ได้รับ, 5=ไม่ขอรับ, 6=รอ)
+        osm_showbbody_field = getattr(profile, "osm_showbbody", None)
+        showbbody_value = (
+            osm_showbbody_field.value if hasattr(osm_showbbody_field, "value") else osm_showbbody_field
+        )
+
         return {
             "id": str(profile.id),
             "osmCode": getattr(profile, "osm_code", None),
@@ -396,6 +402,7 @@ class DashboardAssignmentService:
             "isActive": bool(getattr(profile, "is_active", False)),
             "status": "ใช้งาน" if getattr(profile, "is_active", False) else "ไม่ใช้งาน",
             "osmStatus": getattr(profile, "osm_status", None) if profile.osm_status is not None else "",
+            "osmShowbbody": showbbody_value,
             "approvalStatus": getattr(profile, "approval_status", None),
             "volunteerStatus": status_value,
             "createdAt": profile.created_at.isoformat() if getattr(profile, "created_at", None) else None,
