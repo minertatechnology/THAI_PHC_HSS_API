@@ -35,7 +35,7 @@ class SpouseSchema(BaseModel):
         None,
         description="หมู่เลือด (ไม่ระบุก็ได้)"
     )
-    address_number: str = Field(..., max_length=100, description="เลขที่")
+    address_number: Optional[str] = Field(None, max_length=100, description="เลขที่")
     alley: Optional[str] = Field(None, max_length=255, description="ซอย")
     street: Optional[str] = Field(None, max_length=255, description="ถนน")
     village_no: Optional[str] = Field(None, max_length=10, description="หมู่ที่")
@@ -67,7 +67,7 @@ class ChildSchema(BaseModel):
         None,
         description="หมู่เลือด (ไม่ระบุก็ได้)"
     )
-    address_number: str = Field(..., max_length=100, description="เลขที่")
+    address_number: Optional[str] = Field(None, max_length=100, description="เลขที่")
     alley: Optional[str] = Field(None, max_length=255, description="ซอย")
     street: Optional[str] = Field(None, max_length=255, description="ถนน")
     village_no: Optional[str] = Field(None, max_length=10, description="หมู่ที่")
@@ -166,7 +166,7 @@ class OsmDetailSchema(BaseModel):
     blood_type: str = Field(..., description="หมู่เลือด")
 
     # Address
-    address_number: str = Field(..., max_length=100, description="เลขที่")
+    address_number: Optional[str] = Field(None, max_length=100, description="เลขที่")
     alley: Optional[str] = Field(None, max_length=255, description="ซอย")
     street: Optional[str] = Field(None, max_length=255, description="ถนน")
     village_no: Optional[str] = Field(None, max_length=10, description="หมู่ที่")

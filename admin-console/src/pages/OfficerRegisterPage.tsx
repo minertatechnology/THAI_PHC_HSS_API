@@ -2,8 +2,10 @@ import React, {
   ChangeEvent,
   FormEvent,
   forwardRef,
+  useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import DatePicker, {
@@ -11,6 +13,7 @@ import DatePicker, {
   ReactDatePickerCustomHeaderProps,
 } from "react-datepicker";
 import Select, { StylesConfig } from "react-select";
+import AsyncSelect from "react-select/async";
 import { th } from "date-fns/locale";
 registerLocale("th", th);
 import { Link, useNavigate } from "react-router-dom";
@@ -475,12 +478,11 @@ export const OfficerRegisterPage: React.FC = () => {
   const [districts, setDistricts] = useState<LookupItem[]>([]);
   const [subdistricts, setSubdistricts] = useState<LookupItem[]>([]);
   const [municipalities, setMunicipalities] = useState<LookupItem[]>([]);
-  const [healthServices, setHealthServices] = useState<LookupItem[]>([]);
+  const [selectedHealthServiceOption, setSelectedHealthServiceOption] =
+    useState<SelectOption | null>(null);
   const [loadingMeta, setLoadingMeta] = useState<boolean>(true);
   const [loadingDistricts, setLoadingDistricts] = useState<boolean>(false);
   const [loadingSubdistricts, setLoadingSubdistricts] =
-    useState<boolean>(false);
-  const [loadingHealthServices, setLoadingHealthServices] =
     useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -607,49 +609,48 @@ export const OfficerRegisterPage: React.FC = () => {
     return resolveScope(meta.positions, form.position_id);
   }, [meta, form.position_id]);
 
+  // Clear health_service_id when scope changes away from subdistrict
   useEffect(() => {
     if (positionScope !== "subdistrict") {
       setForm((prev) => ({
         ...prev,
         health_service_id: "",
       }));
-      setHealthServices([]);
-      return;
+      setSelectedHealthServiceOption(null);
     }
+  }, [positionScope]);
 
-    if (!form.subdistrict_id) {
-      setHealthServices([]);
-      return;
-    }
+  // Clear health_service_id when subdistrict changes
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      health_service_id: "",
+    }));
+    setSelectedHealthServiceOption(null);
+  }, [form.subdistrict_id]);
 
-    let cancelled = false;
-    const loadHealthServices = async () => {
-      setLoadingHealthServices(true);
+  // Server-side search for health services via AsyncSelect
+  const loadHealthServiceOptions = useCallback(
+    async (inputValue: string): Promise<SelectOption[]> => {
+      if (!form.subdistrict_id) return [];
       try {
         const items = await fetchRegistrationHealthServices({
+          keyword: inputValue || undefined,
           provinceCode: form.province_id || undefined,
           districtCode: form.district_id || undefined,
           subdistrictCode: form.subdistrict_id,
+          limit: 500,
         });
-        if (!cancelled) {
-          setHealthServices(items);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setHealthServices([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingHealthServices(false);
-        }
+        return items.map((item) => ({
+          value: item.code ?? item.id ?? "",
+          label: resolveLookupLabel(item),
+        })).filter((opt) => opt.value);
+      } catch {
+        return [];
       }
-    };
-
-    loadHealthServices();
-    return () => {
-      cancelled = true;
-    };
-  }, [positionScope, form.subdistrict_id, form.province_id, form.district_id]);
+    },
+    [form.subdistrict_id, form.province_id, form.district_id],
+  );
 
   const maxSelectableBirthYear = useMemo(
     () => new Date().getFullYear() - 17,
@@ -712,10 +713,6 @@ export const OfficerRegisterPage: React.FC = () => {
     () => createLookupOptions(meta?.health_areas ?? []),
     [meta],
   );
-  const healthServiceOptions = useMemo(
-    () => createLookupOptions(healthServices),
-    [healthServices],
-  );
 
   const selectedBirthDate = useMemo(
     () => isoToDate(form.birth_date),
@@ -759,7 +756,7 @@ export const OfficerRegisterPage: React.FC = () => {
       setDistricts([]);
       setSubdistricts([]);
       setMunicipalities([]);
-      setHealthServices([]);
+      setSelectedHealthServiceOption(null);
       return;
     }
 
@@ -777,7 +774,7 @@ export const OfficerRegisterPage: React.FC = () => {
       setDistricts([]);
       setSubdistricts([]);
       setMunicipalities([]);
-      setHealthServices([]);
+      setSelectedHealthServiceOption(null);
     }
   }, [positionScope, requiresProvince]);
 
@@ -826,14 +823,14 @@ export const OfficerRegisterPage: React.FC = () => {
       setDistricts([]);
       setSubdistricts([]);
       setMunicipalities([]);
-      setHealthServices([]);
+      setSelectedHealthServiceOption(null);
     } else if (district) {
       setSubdistricts([]);
       setMunicipalities([]);
-      setHealthServices([]);
+      setSelectedHealthServiceOption(null);
     } else if (subdistrict) {
       setMunicipalities([]);
-      setHealthServices([]);
+      setSelectedHealthServiceOption(null);
     }
   };
 
@@ -1012,7 +1009,7 @@ export const OfficerRegisterPage: React.FC = () => {
       setDistricts([]);
       setSubdistricts([]);
       setMunicipalities([]);
-      setHealthServices([]);
+      setSelectedHealthServiceOption(null);
       window.setTimeout(() => {
         // Use return URL if available, otherwise default to /login
         const returnUrl =
@@ -1024,9 +1021,17 @@ export const OfficerRegisterPage: React.FC = () => {
           cleanUpAndRedirect("/login");
         }
       }, 2500);
-    } catch (err) {
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      const ERROR_MAP: Record<string, string> = {
+        citizen_id_already_exists:
+          "เลขบัตรประชาชนนี้มีอยู่ในระบบแล้ว สถานะของคุณคือรออนุมัติ กรุณารอเจ้าหน้าที่ตรวจสอบและอนุมัติ",
+        citizen_id_already_in_yuwa_osm:
+          "เลขบัตรประชาชนนี้มีอยู่ในระบบแล้ว สถานะของคุณคือรออนุมัติ กรุณารอเจ้าหน้าที่ตรวจสอบและอนุมัติ",
+      };
       setError(
-        "ไม่สามารถส่งคำขอลงทะเบียนได้ กรุณาตรวจสอบข้อมูลแล้วลองใหม่อีกครั้ง",
+        ERROR_MAP[detail] ??
+          "ไม่สามารถลงทะเบียนได้ สถานะของคุณคือรออนุมัติ กรุณารอเจ้าหน้าที่ตรวจสอบและอนุมัติ",
       );
     } finally {
       setSubmitting(false);
@@ -1504,48 +1509,37 @@ export const OfficerRegisterPage: React.FC = () => {
                       หน่วยบริการสุขภาพ
                       <span className="text-red-500">*</span>
                     </label>
-                    <Select
+                    <AsyncSelect
                       inputId="health_service_id"
-                      options={healthServiceOptions}
-                      value={findOption(
-                        healthServiceOptions,
-                        form.health_service_id,
-                      )}
-                      onChange={(option) =>
+                      loadOptions={loadHealthServiceOptions}
+                      defaultOptions
+                      cacheOptions
+                      value={selectedHealthServiceOption}
+                      onChange={(option) => {
+                        setSelectedHealthServiceOption(option);
                         setForm((prev) => ({
                           ...prev,
                           health_service_id: option?.value ?? "",
-                        }))
-                      }
-                      placeholder={
-                        loadingHealthServices
-                          ? "กำลังโหลด..."
-                          : "เลือกหน่วยบริการสุขภาพ"
-                      }
+                        }));
+                      }}
+                      placeholder="พิมพ์เพื่อค้นหาหน่วยบริการสุขภาพ..."
                       isClearable
-                      isSearchable
-                      isDisabled={
-                        !form.subdistrict_id ||
-                        loadingHealthServices ||
-                        healthServices.length === 0
-                      }
+                      isDisabled={!form.subdistrict_id}
                       styles={selectStyles}
                       className="mt-1"
                       classNamePrefix="rs"
-                      noOptionsMessage={() => "ไม่พบข้อมูล"}
+                      noOptionsMessage={({ inputValue }) =>
+                        inputValue
+                          ? `ไม่พบ "${inputValue}"`
+                          : "พิมพ์เพื่อค้นหา"
+                      }
+                      loadingMessage={() => "กำลังค้นหา..."}
                     />
                     {!form.subdistrict_id && (
                       <p className="mt-1 text-xs text-slate-500">
                         กรุณาเลือกตำบลก่อนเพื่อแสดงหน่วยบริการสุขภาพ
                       </p>
                     )}
-                    {form.subdistrict_id &&
-                      !loadingHealthServices &&
-                      healthServices.length === 0 && (
-                        <p className="mt-1 text-xs text-slate-500">
-                          ไม่พบหน่วยบริการสุขภาพในพื้นที่ที่เลือก
-                        </p>
-                      )}
                   </div>
                 )}
 

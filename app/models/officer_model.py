@@ -23,7 +23,7 @@ class OfficerProfile(models.Model):
     password_attempts = fields.IntField(default=0)
 
     position = fields.ForeignKeyField("models.Position", related_name="officer_profiles")
-    address_number = fields.CharField(max_length=100)
+    address_number = fields.CharField(max_length=100, null=True)
     province = fields.ForeignKeyField("models.Province", related_name="officer_profiles", null=True)
     district = fields.ForeignKeyField("models.District", related_name="officer_profiles", null=True)
     subdistrict = fields.ForeignKeyField("models.Subdistrict", related_name="officer_profiles", null=True)

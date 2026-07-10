@@ -53,7 +53,7 @@ class SpouseResponse(BaseModel):
     education_id: uuid.UUID
     education_name_th: Optional[str]
     blood_type: str
-    address_number: str
+    address_number: Optional[str]
     alley: Optional[str]
     street: Optional[str]
     village_no: Optional[str]
@@ -83,7 +83,7 @@ class ChildResponse(BaseModel):
     education_id: Optional[uuid.UUID]
     education_name_th: Optional[str]
     blood_type: Optional[str]
-    address_number: str
+    address_number: Optional[str]
     alley: Optional[str]
     street: Optional[str]
     village_no: Optional[str]
@@ -124,7 +124,7 @@ class OsmProfileResponse(BaseModel):
     bank_account_number: Optional[str]
     volunteer_status: str
     is_smartphone_owner: bool
-    address_number: str
+    address_number: Optional[str]
     alley: Optional[str]
     street: Optional[str]
     village_no: Optional[str]
@@ -205,7 +205,7 @@ class OsmProfileDetailResponse(BaseModel):
     bank_account_number: Optional[str]
     volunteer_status: str
     is_smartphone_owner: bool
-    address_number: str
+    address_number: Optional[str]
     alley: Optional[str]
     street: Optional[str]
     village_no: Optional[str]
@@ -342,7 +342,7 @@ class OfficerProfileResponse(BaseModel):
     profile_image: Optional[str]
     position_id: uuid.UUID
     position_name_th: Optional[str]
-    address_number: str
+    address_number: Optional[str]
     alley: Optional[str]
     street: Optional[str]
     village_no: Optional[str]

@@ -174,7 +174,7 @@ async def set_osm_status(
 ):
     await PermissionService.require_officer_scope_at_least(
         current_user,
-        minimum_level=AdministrativeLevelEnum.PROVINCE,
+        minimum_level=AdministrativeLevelEnum.VILLAGE,
     )
     return await OsmController.set_active_status(osm_id, payload, current_user)
 

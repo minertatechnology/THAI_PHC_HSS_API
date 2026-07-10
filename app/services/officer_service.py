@@ -1306,7 +1306,7 @@ class OfficerService:
 
         return {
             "status": "success",
-            "message": "ลงทะเบียนสำเร็จ กรุณารอผู้มีสิทธิ์อนุมัติ",
+            "message": "ลงทะเบียนสำเร็จ สถานะของคุณคือรออนุมัติ กรุณารอเจ้าหน้าที่ตรวจสอบและอนุมัติ",
             "data": {"id": str(created.id)},
         }
 
@@ -1435,6 +1435,16 @@ class OfficerService:
         # Ensure approval_by is set if approval_status changes without explicit approver
         if "approval_status" in payload and "approval_by" not in payload:
             payload["approval_by"] = str(current_user.get("user_id"))
+
+        # Sync is_active when approval_status changes (unless is_active is explicitly provided)
+        if "approval_status" in payload and "is_active" not in payload:
+            try:
+                new_status = ApprovalStatus(payload["approval_status"])
+                payload["is_active"] = new_status == ApprovalStatus.APPROVED
+                payload["active_status_by"] = str(current_user.get("user_id"))
+                payload["active_status_at"] = datetime.utcnow()
+            except ValueError:
+                pass
 
         updated = await OfficerProfileRepository.update_officer(officer_id, payload)
         if not updated:

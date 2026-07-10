@@ -15,7 +15,7 @@ class OfficerCreateSchema(BaseModel):
     phone: Optional[str] = None
     profile_image: Optional[str] = None
     position_id: str
-    address_number: str
+    address_number: Optional[str] = None
     password: str = Field(min_length=8)
     province_id: Optional[str] = None
     district_id: Optional[str] = None

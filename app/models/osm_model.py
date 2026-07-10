@@ -65,7 +65,7 @@ class OSMProfile(models.Model):
     bank_account_number = fields.CharField(max_length=50, null=True)
 
     is_smartphone_owner = fields.BooleanField(default=False)
-    address_number = fields.CharField(max_length=100)
+    address_number = fields.CharField(max_length=100, null=True)
     province = fields.ForeignKeyField("models.Province", related_name="osm_profiles", to_field="province_code", null=True)
     district = fields.ForeignKeyField("models.District", related_name="osm_profiles", to_field="district_code", null=True)
     subdistrict = fields.ForeignKeyField("models.Subdistrict", related_name="osm_profiles", to_field="subdistrict_code", null=True)
@@ -128,12 +128,12 @@ class OsmSpouse(models.Model):
     occupation = fields.ForeignKeyField("models.Occupation", related_name="osm_spouses_occupation")
     education = fields.ForeignKeyField("models.Education", related_name="osm_spouses_education")
     blood_type = fields.CharEnumField(BloodTypeEnum, default=BloodTypeEnum.OTHER)
-    address_number = fields.CharField(max_length=100)
+    address_number = fields.CharField(max_length=100, null=True)
     alley = fields.CharField(max_length=255, null=True)
     street = fields.CharField(max_length=255, null=True)
     village_no = fields.CharField(max_length=10, null=True)
     village_name = fields.CharField(max_length=255, null=True)
-    village_code = fields.CharField(max_length=10, null=True)   
+    village_code = fields.CharField(max_length=10, null=True)
     province = fields.ForeignKeyField("models.Province", related_name="osm_spouses_province")
     district = fields.ForeignKeyField("models.District", related_name="osm_spouses_district")
     subdistrict = fields.ForeignKeyField("models.Subdistrict", related_name="osm_spouses_subdistrict")
@@ -176,7 +176,7 @@ class OsmChild(models.Model):
         default=None,
         null=True,
     )
-    address_number = fields.CharField(max_length=100)
+    address_number = fields.CharField(max_length=100, null=True)
     alley = fields.CharField(max_length=255, null=True)
     street = fields.CharField(max_length=255, null=True)
     village_no = fields.CharField(max_length=10, null=True)

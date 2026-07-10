@@ -726,7 +726,7 @@ class OsmService:
 
         await PermissionService.require_officer_scope_at_least(
             current_user,
-            minimum_level=AdministrativeLevelEnum.PROVINCE,
+            minimum_level=AdministrativeLevelEnum.VILLAGE,
         )
 
         _, officer_scope = await PermissionService.resolve_officer_context(current_user)
