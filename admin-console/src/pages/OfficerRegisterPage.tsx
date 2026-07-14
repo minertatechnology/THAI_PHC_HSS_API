@@ -13,7 +13,6 @@ import DatePicker, {
   ReactDatePickerCustomHeaderProps,
 } from "react-datepicker";
 import Select, { StylesConfig } from "react-select";
-import AsyncSelect from "react-select/async";
 import { th } from "date-fns/locale";
 registerLocale("th", th);
 import { Link, useNavigate } from "react-router-dom";
@@ -478,11 +477,14 @@ export const OfficerRegisterPage: React.FC = () => {
   const [districts, setDistricts] = useState<LookupItem[]>([]);
   const [subdistricts, setSubdistricts] = useState<LookupItem[]>([]);
   const [municipalities, setMunicipalities] = useState<LookupItem[]>([]);
+  const [healthServices, setHealthServices] = useState<LookupItem[]>([]);
   const [selectedHealthServiceOption, setSelectedHealthServiceOption] =
     useState<SelectOption | null>(null);
   const [loadingMeta, setLoadingMeta] = useState<boolean>(true);
   const [loadingDistricts, setLoadingDistricts] = useState<boolean>(false);
   const [loadingSubdistricts, setLoadingSubdistricts] =
+    useState<boolean>(false);
+  const [loadingHealthServices, setLoadingHealthServices] =
     useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -629,27 +631,16 @@ export const OfficerRegisterPage: React.FC = () => {
     setSelectedHealthServiceOption(null);
   }, [form.subdistrict_id]);
 
-  // Server-side search for health services via AsyncSelect
-  const loadHealthServiceOptions = useCallback(
-    async (inputValue: string): Promise<SelectOption[]> => {
-      if (!form.subdistrict_id) return [];
-      try {
-        const items = await fetchRegistrationHealthServices({
-          keyword: inputValue || undefined,
-          provinceCode: form.province_id || undefined,
-          districtCode: form.district_id || undefined,
-          subdistrictCode: form.subdistrict_id,
-          limit: 500,
-        });
-        return items.map((item) => ({
+  // Health service options derived from state (fetched on subdistrict change)
+  const healthServiceOptions = useMemo(
+    () =>
+      healthServices
+        .map((item) => ({
           value: item.code ?? item.id ?? "",
           label: resolveLookupLabel(item),
-        })).filter((opt) => opt.value);
-      } catch {
-        return [];
-      }
-    },
-    [form.subdistrict_id, form.province_id, form.district_id],
+        }))
+        .filter((opt) => opt.value),
+    [healthServices],
   );
 
   const maxSelectableBirthYear = useMemo(
@@ -823,13 +814,16 @@ export const OfficerRegisterPage: React.FC = () => {
       setDistricts([]);
       setSubdistricts([]);
       setMunicipalities([]);
+      setHealthServices([]);
       setSelectedHealthServiceOption(null);
     } else if (district) {
       setSubdistricts([]);
       setMunicipalities([]);
+      setHealthServices([]);
       setSelectedHealthServiceOption(null);
     } else if (subdistrict) {
       setMunicipalities([]);
+      setHealthServices([]);
       setSelectedHealthServiceOption(null);
     }
   };
@@ -894,6 +888,20 @@ export const OfficerRegisterPage: React.FC = () => {
       setMunicipalities(items);
     } catch (err) {
       setMunicipalities([]);
+    }
+    setLoadingHealthServices(true);
+    try {
+      const items = await fetchRegistrationHealthServices({
+        provinceCode: form.province_id || undefined,
+        districtCode: form.district_id || undefined,
+        subdistrictCode: value,
+        limit: 500,
+      });
+      setHealthServices(items);
+    } catch (err) {
+      setHealthServices([]);
+    } finally {
+      setLoadingHealthServices(false);
     }
   };
 
@@ -1509,11 +1517,9 @@ export const OfficerRegisterPage: React.FC = () => {
                       หน่วยบริการสุขภาพ
                       <span className="text-red-500">*</span>
                     </label>
-                    <AsyncSelect
+                    <Select
                       inputId="health_service_id"
-                      loadOptions={loadHealthServiceOptions}
-                      defaultOptions
-                      cacheOptions
+                      options={healthServiceOptions}
                       value={selectedHealthServiceOption}
                       onChange={(option) => {
                         setSelectedHealthServiceOption(option);
@@ -1522,18 +1528,24 @@ export const OfficerRegisterPage: React.FC = () => {
                           health_service_id: option?.value ?? "",
                         }));
                       }}
-                      placeholder="พิมพ์เพื่อค้นหาหน่วยบริการสุขภาพ..."
+                      placeholder={
+                        loadingHealthServices
+                          ? "กำลังโหลด..."
+                          : "เลือกหน่วยบริการสุขภาพ"
+                      }
                       isClearable
-                      isDisabled={!form.subdistrict_id}
+                      isSearchable
+                      isDisabled={
+                        !form.subdistrict_id || loadingHealthServices
+                      }
                       styles={selectStyles}
                       className="mt-1"
                       classNamePrefix="rs"
-                      noOptionsMessage={({ inputValue }) =>
-                        inputValue
-                          ? `ไม่พบ "${inputValue}"`
-                          : "พิมพ์เพื่อค้นหา"
+                      noOptionsMessage={() =>
+                        !form.subdistrict_id
+                          ? "กรุณาเลือกตำบลก่อน"
+                          : "ไม่มีหน่วยบริการสุขภาพ"
                       }
-                      loadingMessage={() => "กำลังค้นหา..."}
                     />
                     {!form.subdistrict_id && (
                       <p className="mt-1 text-xs text-slate-500">
