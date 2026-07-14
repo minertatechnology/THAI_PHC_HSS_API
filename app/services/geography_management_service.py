@@ -17,7 +17,7 @@ from app.models.geography_model import (
     Subdistrict,
     Village,
 )
-from app.models.health_model import HealthArea, HealthService, HealthServiceType
+from app.models.health_model import HealthArea, HealthService, HealthServiceArea, HealthServiceType
 from app.cache.redis_client import cache_delete_pattern
 
 
@@ -324,10 +324,77 @@ class GeographyManagementService:
             }
             if subdistrict
             else None,
+            "service_areas": GeographyManagementService._serialize_service_areas(service),
             "created_at": service.created_at,
             "updated_at": service.updated_at,
             "deleted_at": service.deleted_at,
         }
+
+    @staticmethod
+    def _serialize_service_areas(service: HealthService) -> List[Dict[str, object]]:
+        """Serialize service_areas (พื้นที่รับผิดชอบ) — แต่ละ area = ตำบล + หมู่ที่ครอบคลุม"""
+        areas = getattr(service, "service_areas", None)
+        if not areas:
+            return []
+        result = []
+        for area in areas:
+            sd = getattr(area, "subdistrict", None)
+            result.append({
+                "id": str(area.id),
+                "subdistrict_code": getattr(sd, "subdistrict_code", None) or getattr(area, "subdistrict_id", None),
+                "subdistrict_name_th": getattr(sd, "subdistrict_name_th", None),
+                "village_nos": area.village_nos,
+                "is_primary": area.is_primary,
+            })
+        return result
+
+    @staticmethod
+    async def _sync_service_areas(
+        health_service: HealthService,
+        service_areas: Optional[List[Dict[str, object]]],
+        *,
+        actor_id: Optional[str],
+    ) -> None:
+        """Sync service_areas: replace all existing with the new list (ถ้าส่ง service_areas มา)"""
+        if service_areas is None:
+            return  # ไม่ส่งมา = ไม่แตะ
+        actor = GeographyManagementService._parse_actor(actor_id)
+        # ลบของเดิมทั้งหมด (physical delete เพราะเป็น junction data)
+        await HealthServiceArea.filter(health_service_id=health_service.health_service_code).delete()
+        # สร้างใหม่
+        for area in service_areas:
+            subdistrict_code = GeographyManagementService._normalize_code(area.get("subdistrict_code"))
+            if not subdistrict_code:
+                continue
+            await GeographyManagementService._ensure_subdistrict(subdistrict_code)
+            await HealthServiceArea.create(
+                health_service_id=health_service.health_service_code,
+                subdistrict_id=subdistrict_code,
+                village_nos=area.get("village_nos"),
+                is_primary=bool(area.get("is_primary", False)),
+                created_by=actor,
+                updated_by=actor,
+            )
+
+    @staticmethod
+    async def get_subdistrict_codes_for_health_service(health_service_id: Optional[str]) -> List[str]:
+        """Resolve health_service_id → รหัสตำบลทั้งหมดที่หน่วยบริการครอบคลุม (ใช้ใน filter รพ.สต.)
+        รวม "ที่ตั้งหลัก" (subdistrict_id ของ HealthService) + service_areas ทั้งหมด"""
+        if not health_service_id:
+            return []
+        codes: List[str] = []
+        # ที่ตั้งหลัก
+        hs = await HealthService.filter(health_service_code=health_service_id).only("subdistrict_id").first()
+        if hs and hs.subdistrict_id:
+            codes.append(hs.subdistrict_id)
+        # service_areas
+        areas = await HealthServiceArea.filter(
+            health_service_id=health_service_id, deleted_at__isnull=True
+        ).only("subdistrict_id")
+        for area in areas:
+            if area.subdistrict_id and area.subdistrict_id not in codes:
+                codes.append(area.subdistrict_id)
+        return codes
 
     @staticmethod
     def _serialize_municipality(municipality: Municipality) -> Dict[str, object]:
@@ -865,6 +932,7 @@ class GeographyManagementService:
         province_code: Optional[str],
         district_code: Optional[str],
         subdistrict_code: Optional[str],
+        subdistrict_codes: Optional[List[str]] = None,
         health_service_code: Optional[str],
         legacy_5digit_code: Optional[str],
         legacy_9digit_code: Optional[str],
@@ -892,8 +960,20 @@ class GeographyManagementService:
             query = query.filter(province_id=province_code)
         if district_code:
             query = query.filter(district_id=district_code)
-        if subdistrict_code:
-            query = query.filter(subdistrict_id=subdistrict_code)
+        # multi-subdistrict filter: ครอบคลุม "ที่ตั้งหลัก" (subdistrict_id) หรือ "พื้นที่รับผิดชอบ" (service_areas)
+        if subdistrict_codes:
+            norm_codes = [GeographyManagementService._normalize_code(c) for c in subdistrict_codes if c]
+            norm_codes = [c for c in norm_codes if c]
+            if norm_codes:
+                query = query.filter(
+                    Q(subdistrict_id__in=norm_codes) | Q(service_areas__subdistrict_id__in=norm_codes)
+                ).distinct()
+        elif subdistrict_code:
+            norm = GeographyManagementService._normalize_code(subdistrict_code)
+            if norm:
+                query = query.filter(
+                    Q(subdistrict_id=norm) | Q(service_areas__subdistrict_id=norm)
+                ).distinct()
         if health_service_type_id:
             query = query.filter(health_service_type_id=health_service_type_id)
         if health_service_type_ids_exclude:
@@ -911,7 +991,7 @@ class GeographyManagementService:
             await query.order_by("health_service_name_th")
             .offset(offset)
             .limit(limit)
-            .prefetch_related("health_service_type", "province", "district", "subdistrict")
+            .prefetch_related("health_service_type", "province", "district", "subdistrict", "service_areas", "service_areas__subdistrict")
         )
         items = [GeographyManagementService._serialize_health_service(row) for row in rows]
         return {"items": items, "total": total, "limit": limit, "offset": offset}
@@ -923,7 +1003,7 @@ class GeographyManagementService:
                 health_service_code=health_service_code,
                 deleted_at__isnull=True,
             )
-            .prefetch_related("health_service_type", "province", "district", "subdistrict")
+            .prefetch_related("health_service_type", "province", "district", "subdistrict", "service_areas", "service_areas__subdistrict")
             .first()
         )
         if not health_service:
@@ -962,6 +1042,10 @@ class GeographyManagementService:
             updated_by=actor,
         )
         await health_service.fetch_related("health_service_type", "province", "district", "subdistrict")
+        await GeographyManagementService._sync_service_areas(
+            health_service, payload.get("service_areas"), actor_id=actor_id
+        )
+        await health_service.fetch_related("service_areas", "service_areas__subdistrict")
         await GeographyManagementService._invalidate_geo_cache("lookup:hs:*")
         return {"item": GeographyManagementService._serialize_health_service(health_service)}
 
@@ -1015,8 +1099,12 @@ class GeographyManagementService:
 
         health_service.updated_by = GeographyManagementService._parse_actor(actor_id)
         await health_service.save()
+        if "service_areas" in data:
+            await GeographyManagementService._sync_service_areas(
+                health_service, data.get("service_areas"), actor_id=actor_id
+            )
         await GeographyManagementService._invalidate_geo_cache("lookup:hs:*")
-        await health_service.fetch_related("health_service_type", "province", "district", "subdistrict")
+        await health_service.fetch_related("health_service_type", "province", "district", "subdistrict", "service_areas", "service_areas__subdistrict")
         return {"item": GeographyManagementService._serialize_health_service(health_service)}
 
     @staticmethod

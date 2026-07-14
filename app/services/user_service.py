@@ -48,6 +48,22 @@ class UserService:
             }
         else:
             payload["type"] = None
+        # service_areas (พื้นที่รับผิดชอบ — หลายตำบล/หลายหมู่)
+        service_areas = getattr(health_service, "service_areas", None)
+        if service_areas:
+            payload["service_areas"] = [
+                {
+                    "id": str(getattr(area, "id", "") or ""),
+                    "subdistrict_code": getattr(getattr(area, "subdistrict", None), "subdistrict_code", None)
+                    or getattr(area, "subdistrict_id", None),
+                    "subdistrict_name_th": getattr(getattr(area, "subdistrict", None), "subdistrict_name_th", None),
+                    "village_nos": getattr(area, "village_nos", None),
+                    "is_primary": getattr(area, "is_primary", False),
+                }
+                for area in service_areas
+            ]
+        else:
+            payload["service_areas"] = []
         return payload
 
     @staticmethod

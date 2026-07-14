@@ -24,6 +24,8 @@ class OfficerProfileRepository:
         "municipality",
         "health_area",
         "health_service",
+        "health_service__service_areas",
+        "health_service__service_areas__subdistrict",
     )
 
     @classmethod
@@ -286,6 +288,7 @@ class OfficerProfileRepository:
                     "province", "province__region", "province__health_area",
                     "district", "subdistrict", "position", "prefix",
                     "health_area", "health_service",
+                    "health_service__service_areas", "health_service__service_areas__subdistrict",
                 )
                 .first()
             )

@@ -235,11 +235,11 @@ class OfficerHierarchy:
                 | Q(subdistrict__district_id=scope.district_id)
             )
         if level == AdministrativeLevelEnum.SUBDISTRICT:
-            if not scope.subdistrict_id:
-                raise OfficerScopeError("subdistrict_id required for subdistrict visibility")
+            # รพ.สต. (ระดับตำบล): กรองด้วย health_service_id อย่างเดียว
+            # เพราะ 1 หน่วยบริการครอบคลุมหลายตำบล → เจ้าหน้าที่ต้องเห็นครบทุกตำบลในหน่วยบริการ
             if not scope.health_service_id:
                 return Q(id=None)
-            return Q(subdistrict_id=scope.subdistrict_id) & Q(health_service_id=scope.health_service_id)
+            return Q(health_service_id=scope.health_service_id)
         if level == AdministrativeLevelEnum.VILLAGE:
             if not scope.village_code:
                 raise OfficerScopeError("area_code required for village visibility")
@@ -270,8 +270,7 @@ class OfficerHierarchy:
                 and viewer.district_id == target.district_id
             )
         if viewer.level == AdministrativeLevelEnum.SUBDISTRICT:
-            if not (viewer.subdistrict_id is not None and viewer.subdistrict_id == target.subdistrict_id):
-                return False
+            # รพ.สต.: เช็คแค่ health_service_id (ข้ามตำบล เพราะหน่วยบริการครอบคลุมหลายตำบล)
             if not viewer.health_service_id or not target.health_service_id:
                 return False
             return viewer.health_service_id == target.health_service_id
@@ -295,11 +294,8 @@ class OfficerHierarchy:
         if viewer.level == AdministrativeLevelEnum.DISTRICT:
             return viewer.district_id is not None and viewer.district_id == target.district_id
         if viewer.level == AdministrativeLevelEnum.SUBDISTRICT:
-            if not (viewer.subdistrict_id is not None and viewer.subdistrict_id == target.subdistrict_id):
-                return False
-            if not viewer.health_service_id:
-                return False
-            if not target.health_service_id:
+            # รพ.สต.: เช็คแค่ health_service_id (ข้ามตำบล)
+            if not viewer.health_service_id or not target.health_service_id:
                 return False
             return viewer.health_service_id == target.health_service_id
         if viewer.level == AdministrativeLevelEnum.VILLAGE:

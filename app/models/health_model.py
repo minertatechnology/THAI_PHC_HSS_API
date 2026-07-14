@@ -42,6 +42,23 @@ class HealthService(models.Model):
     class Meta:
         table = "health_services"
 
+# ตารางพื้นที่รับผิดชอบของหน่วยบริการ (รองรับ 1 หน่วยบริการหลายตำบล/หลายหมู่)
+class HealthServiceArea(models.Model):
+    id = fields.UUIDField(pk=True, default=uuid4)
+    health_service = fields.ForeignKeyField("models.HealthService", related_name="service_areas", on_delete=fields.CASCADE)
+    subdistrict = fields.ForeignKeyField("models.Subdistrict", related_name="health_service_areas", to_field="subdistrict_code")
+    village_nos = fields.JSONField(null=True)  # ["1","3","5"] หรือ null = ทุกหมู่ในตำบลนั้น
+    is_primary = fields.BooleanField(default=False)  # true = ที่ตั้งหลัก (ตรงกับ FK subdistrict เดิมของ HealthService)
+    created_by = fields.UUIDField(null=False, index=True)
+    updated_by = fields.UUIDField(null=True, index=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+    deleted_at = fields.DatetimeField(null=True)
+
+    class Meta:
+        table = "health_service_areas"
+        unique_together = (("health_service", "subdistrict"),)
+
 # ตารางประเภทสถานบริการสุขภาพ
 class HealthServiceType(models.Model):
     id = fields.UUIDField(pk=True, default=uuid4)

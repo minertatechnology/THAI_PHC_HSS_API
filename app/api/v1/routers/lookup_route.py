@@ -385,6 +385,10 @@ async def list_health_services(
     subdistrict_code: Optional[str] = Query(None, description="รหัสตำบล"),
     subdistrictCode: Optional[str] = Query(None, include_in_schema=False),
     subdistrict: Optional[str] = Query(None, include_in_schema=False),
+    subdistrict_codes: Optional[List[str]] = Query(
+        None,
+        description="รหัสตำบล (หลายตำบล) — ใส่ key ซ้ำได้หลายค่า จะได้หน่วยบริการที่ครอบคลุมตำบลเหล่านั้นทั้งหมด",
+    ),
     health_service_type_ids: Optional[List[str]] = Query(
         None,
         description="กรองเฉพาะประเภทหน่วยบริการ (ใส่ key ซ้ำได้หลายค่า)",
@@ -403,15 +407,16 @@ async def list_health_services(
     npc = _normalize_lookup_param(resolved_province_code)
     ndc = _normalize_lookup_param(resolved_district_code)
     nsc = _normalize_lookup_param(resolved_subdistrict_code)
+    nscl = _normalize_lookup_list(subdistrict_codes)
     ntids = _normalize_lookup_list(health_service_type_ids)
     ntex = _normalize_lookup_list(health_service_type_ids_exclude)
-    cache_key = f"lookup:hs:{npc}:{ndc}:{nsc}:{ntids}:{ntex}:{nk}:{limit}"
+    cache_key = f"lookup:hs:{npc}:{ndc}:{nsc}:{'|'.join(sorted(nscl)) if nscl else ''}:{ntids}:{ntex}:{nk}:{limit}"
     cached = await cache_get(cache_key)
     if cached is not None:
         return cached
     items = await LookupService.list_health_services(
         keyword=nk, province_code=npc, district_code=ndc,
-        subdistrict_code=nsc, health_service_type_ids=ntids,
+        subdistrict_code=nsc, subdistrict_codes=nscl, health_service_type_ids=ntids,
         health_service_type_ids_exclude=ntex, limit=limit,
     )
     result = {"items": items}

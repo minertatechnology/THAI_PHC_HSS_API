@@ -516,7 +516,11 @@ class DashboardSummaryAggregator:
         if district_code:
             query = query.filter(district_id=district_code)
         if subdistrict_code:
-            query = query.filter(subdistrict_id=subdistrict_code)
+            # นับหน่วยบริการที่ครอบคลุมตำบลนี้ ทั้ง "ที่ตั้งหลัก" และ "service_areas"
+            query = query.filter(
+                Q(subdistrict_id=subdistrict_code)
+                | Q(service_areas__subdistrict_id=subdistrict_code)
+            ).distinct()
         return query
 
     @staticmethod

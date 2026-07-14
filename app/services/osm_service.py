@@ -719,19 +719,10 @@ class OsmService:
         retirement_date: Optional[date] = None,
         retirement_reason: Optional[str] = None,
     ):
-        """ปรับสถานะการใช้งานของ OSM profile โดยจำกัดให้เจ้าหน้าที่ระดับจังหวัดขึ้นไปทำรายการได้"""
+        """ปรับสถานะการใช้งานของ OSM profile (เจ้าหน้าที่ที่ล็อกอินทุกคนทำได้ — ไม่จำกัดระดับสิทธิ์)"""
 
         if current_user is None:
             raise HTTPException(status_code=403, detail="forbidden: officer access required")
-
-        await PermissionService.require_officer_scope_at_least(
-            current_user,
-            minimum_level=AdministrativeLevelEnum.VILLAGE,
-        )
-
-        _, officer_scope = await PermissionService.resolve_officer_context(current_user)
-        if not officer_scope:
-            raise HTTPException(status_code=403, detail="forbidden: officer scope unavailable")
 
         try:
             profile_for_management = await OSMProfileRepository.get_profile_for_management(osm_id)
@@ -743,10 +734,6 @@ class OsmService:
 
         if not profile_for_management:
             raise HTTPException(status_code=404, detail="ไม่พบ OSM Profile ที่ต้องการ")
-
-        target_scope = OsmService._build_scope_from_existing_profile(profile_for_management)
-        if target_scope and not OfficerHierarchy.can_manage(officer_scope, target_scope):
-            raise HTTPException(status_code=403, detail="forbidden: insufficient_scope")
 
         officer_id = current_user.get("user_id")
         if not officer_id:

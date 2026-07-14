@@ -172,10 +172,6 @@ async def set_osm_status(
     payload: OsmActiveStatusSchema = Body(...),
     current_user: dict = Depends(require_scopes({"profile"})),
 ):
-    await PermissionService.require_officer_scope_at_least(
-        current_user,
-        minimum_level=AdministrativeLevelEnum.VILLAGE,
-    )
     return await OsmController.set_active_status(osm_id, payload, current_user)
 
 

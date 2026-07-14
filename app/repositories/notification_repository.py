@@ -7,16 +7,34 @@ from uuid import UUID
 from tortoise.expressions import Q
 
 from app.models.notification_model import OsmNotification, OsmNotificationRead
+from app.models.health_model import HealthServiceArea, HealthService
 from app.utils.officer_hierarchy import OfficerScope
 from app.models.enum_models import AdministrativeLevelEnum
 
 logger = logging.getLogger(__name__)
 
 
+async def _resolve_subdistrict_codes_for_health_service(health_service_id: Optional[str]) -> List[str]:
+    """Resolve health_service_id → รหัสตำบลทั้งหมดที่หน่วยบริการครอบคลุม (ที่ตั้งหลัก + service_areas)"""
+    if not health_service_id:
+        return []
+    codes: List[str] = []
+    hs = await HealthService.filter(health_service_code=health_service_id).only("subdistrict_id").first()
+    if hs and hs.subdistrict_id:
+        codes.append(hs.subdistrict_id)
+    areas = await HealthServiceArea.filter(
+        health_service_id=health_service_id, deleted_at__isnull=True
+    ).only("subdistrict_id")
+    for area in areas:
+        if area.subdistrict_id and area.subdistrict_id not in codes:
+            codes.append(area.subdistrict_id)
+    return codes
+
+
 class NotificationRepository:
 
     @staticmethod
-    def _build_scope_filter(scope: OfficerScope) -> Q:
+    async def _build_scope_filter(scope: OfficerScope) -> Q:
         """Build a Q filter so an officer only sees notifications within their scope."""
         level = scope.level
         if level == AdministrativeLevelEnum.COUNTRY:
@@ -38,12 +56,19 @@ class NotificationRepository:
                 return Q(district_code=scope.district_id)
             return Q(id=None)
         if level == AdministrativeLevelEnum.SUBDISTRICT:
-            if scope.subdistrict_id:
-                return Q(subdistrict_code=scope.subdistrict_id)
+            # รพ.สต.: เห็น notification ครบทุกตำบลที่หน่วยบริการครอบคลุม
+            codes = await _resolve_subdistrict_codes_for_health_service(scope.health_service_id)
+            if not codes and scope.subdistrict_id:
+                codes = [scope.subdistrict_id]
+            if codes:
+                return Q(subdistrict_code__in=codes)
             return Q(id=None)
         if level == AdministrativeLevelEnum.VILLAGE:
-            if scope.subdistrict_id:
-                return Q(subdistrict_code=scope.subdistrict_id)
+            codes = await _resolve_subdistrict_codes_for_health_service(scope.health_service_id)
+            if not codes and scope.subdistrict_id:
+                codes = [scope.subdistrict_id]
+            if codes:
+                return Q(subdistrict_code__in=codes)
             return Q(id=None)
         return Q(id=None)
 
@@ -75,7 +100,7 @@ class NotificationRepository:
         is_read: Optional[bool] = None,
         target_type: str = "osm",
     ) -> Dict[str, Any]:
-        scope_filter = NotificationRepository._build_scope_filter(scope)
+        scope_filter = await NotificationRepository._build_scope_filter(scope)
         officer_uuid = UUID(str(officer_id))
         qs = OsmNotification.filter(scope_filter).filter(target_type=target_type)
 
@@ -141,7 +166,7 @@ class NotificationRepository:
         officer_id: str,
         target_type: str = "osm",
     ) -> int:
-        scope_filter = NotificationRepository._build_scope_filter(scope)
+        scope_filter = await NotificationRepository._build_scope_filter(scope)
         officer_uuid = UUID(str(officer_id))
 
         # Materialize read IDs first, then exclude
@@ -171,7 +196,7 @@ class NotificationRepository:
         officer_id: str,
         target_type: str = "osm",
     ) -> int:
-        scope_filter = NotificationRepository._build_scope_filter(scope)
+        scope_filter = await NotificationRepository._build_scope_filter(scope)
         officer_uuid = UUID(str(officer_id))
 
         # Materialize read IDs first

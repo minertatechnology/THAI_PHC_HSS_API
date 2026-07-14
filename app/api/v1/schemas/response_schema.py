@@ -156,12 +156,20 @@ class OsmCreateResponse(BaseModel):
 class OsmProfileListResponse(BaseModel):
     """Schema สำหรับ find_all_osm ที่มีเฉพาะ fields ที่จำเป็น"""
     id: uuid.UUID
-    prefix_name_th: Optional[str]
+    citizen_id: str
+    osm_code: Optional[str] = None
+    prefix_name_th: Optional[str] = None
     first_name: str
     last_name: str
-    province_name_th: Optional[str]
-    district_name_th: Optional[str]
-    subdistrict_name_th: Optional[str]
+    province_name_th: Optional[str] = None
+    district_name_th: Optional[str] = None
+    subdistrict_name_th: Optional[str] = None
+    village_no: Optional[str] = None
+    village_name: Optional[str] = None
+    osm_status: Optional[str] = None
+    osm_showbbody: Optional[str] = None
+    is_active: bool = False
+    approval_status: Optional[str] = None
 
 class OsmPublicSummaryResponse(BaseModel):
     prefix_name_th: Optional[str]
@@ -744,14 +752,27 @@ def osm_to_response(
 
 def osm_to_list_response(osm):
     """แปลงข้อมูล OSM เป็น response format สำหรับ list (เฉพาะ fields ที่จำเป็น)"""
+    def _enum_to_str(value):
+        if hasattr(value, "value"):
+            return value.value
+        return value
+
     return OsmProfileListResponse(
         id=osm.id,
+        citizen_id=osm.citizen_id,
+        osm_code=osm.osm_code,
         prefix_name_th=get_related_name(osm, 'prefix', 'prefix_name_th'),
         first_name=osm.first_name,
         last_name=osm.last_name,
         province_name_th=get_related_name(osm, 'province', 'province_name_th'),
         district_name_th=get_related_name(osm, 'district', 'district_name_th'),
-        subdistrict_name_th=get_related_name(osm, 'subdistrict', 'subdistrict_name_th')
+        subdistrict_name_th=get_related_name(osm, 'subdistrict', 'subdistrict_name_th'),
+        village_no=osm.village_no,
+        village_name=osm.village_name,
+        osm_status=_enum_to_str(osm.osm_status),
+        osm_showbbody=_enum_to_str(osm.osm_showbbody),
+        is_active=osm.is_active,
+        approval_status=_enum_to_str(osm.approval_status),
     )
 
 def osm_to_public_summary_response(osm):

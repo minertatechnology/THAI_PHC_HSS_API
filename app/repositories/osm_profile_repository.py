@@ -173,10 +173,12 @@ class OSMProfileRepository:
             "bank",
             "province",
             "district",
-            "subdistrict", 
-            "health_service"
+            "subdistrict",
+            "health_service",
+            "health_service__service_areas",
+            "health_service__service_areas__subdistrict",
         ]
-    
+
     @staticmethod
     def _get_list_related_fields():
         """รายการ related fields สำหรับ find_all_osm (เฉพาะที่จำเป็น)"""
@@ -185,7 +187,9 @@ class OSMProfileRepository:
             "province",
             "district",
             "subdistrict",
-            "health_service"
+            "health_service",
+            "health_service__service_areas",
+            "health_service__service_areas__subdistrict",
         ]
 
     @staticmethod
@@ -474,7 +478,10 @@ class OSMProfileRepository:
                     "subdistrict_id",
                     "health_service_id",
                 )
-                .prefetch_related("province", "district", "subdistrict", "health_service")
+                .prefetch_related(
+                    "province", "district", "subdistrict", "health_service",
+                    "health_service__service_areas", "health_service__service_areas__subdistrict",
+                )
                 .order_by("first_name")
                 .offset(offset)
                 .limit(limit)
@@ -754,6 +761,8 @@ class OSMProfileRepository:
                     "district",
                     "subdistrict",
                     "health_service__health_service_type",
+                    "health_service__service_areas",
+                    "health_service__service_areas__subdistrict",
                 )
                 .first()
             )
@@ -796,6 +805,8 @@ class OSMProfileRepository:
             .limit(filter.limit)
             .only(
                 "id",
+                "citizen_id",
+                "osm_code",
                 "prefix_id",
                 "first_name",
                 "last_name",
@@ -803,6 +814,12 @@ class OSMProfileRepository:
                 "province_id",
                 "district_id",
                 "subdistrict_id",
+                "village_no",
+                "village_name",
+                "osm_status",
+                "osm_showbbody",
+                "is_active",
+                "approval_status",
             )
             .prefetch_related(*OSMProfileRepository._get_list_related_fields())
         )

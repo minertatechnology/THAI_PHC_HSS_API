@@ -298,6 +298,10 @@ async def list_health_services(
     subdistrict_code: Optional[str] = Query(None, description="รหัสตำบล"),
     subdistrictCode: Optional[str] = Query(None, include_in_schema=False),
     subdistrict: Optional[str] = Query(None, include_in_schema=False),
+    subdistrict_codes: Optional[List[str]] = Query(
+        None,
+        description="รหัสตำบล (หลายตำบล) — ใส่ key ซ้ำได้หลายค่า จะได้หน่วยบริการที่ครอบคลุมตำบลเหล่านั้นทั้งหมด",
+    ),
     health_service_type_id: Optional[str] = Query(None, description="รหัสประเภทหน่วยบริการ"),
     health_service_type_ids_exclude: Optional[List[str]] = Query(
         None,
@@ -315,6 +319,7 @@ async def list_health_services(
         province_code=resolved_province_code,
         district_code=resolved_district_code,
         subdistrict_code=resolved_subdistrict_code,
+        subdistrict_codes=subdistrict_codes,
         health_service_code=health_service_code,
         legacy_5digit_code=legacy_5digit_code,
         legacy_9digit_code=legacy_9digit_code,

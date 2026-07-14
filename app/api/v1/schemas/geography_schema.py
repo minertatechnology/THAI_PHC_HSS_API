@@ -1,8 +1,23 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class HealthServiceAreaCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    subdistrict_code: str = Field(..., max_length=255)
+    village_nos: Optional[List[str]] = None  # ["1","3","5"] หรือ null = ทุกหมู่
+    is_primary: Optional[bool] = False
+
+
+class HealthServiceAreaUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    village_nos: Optional[List[str]] = None
+    is_primary: Optional[bool] = None
 
 
 class ProvinceCreateRequest(BaseModel):
@@ -130,6 +145,7 @@ class HealthServiceCreateRequest(BaseModel):
     village_no: Optional[str] = Field(None, max_length=255)
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    service_areas: Optional[List[HealthServiceAreaCreateRequest]] = None
 
 
 class HealthServiceUpdateRequest(BaseModel):
@@ -146,6 +162,7 @@ class HealthServiceUpdateRequest(BaseModel):
     village_no: Optional[str] = Field(None, max_length=255)
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    service_areas: Optional[List[HealthServiceAreaCreateRequest]] = None
 
 
 class MunicipalityCreateRequest(BaseModel):

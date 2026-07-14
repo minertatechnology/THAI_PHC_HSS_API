@@ -280,9 +280,10 @@ class DashboardAssignmentService:
                 raise OfficerScopeError("district_id required for district level visibility")
             return Q(district_id=scope.district_id) | Q(subdistrict__district_id=scope.district_id)
         if level == AdministrativeLevelEnum.SUBDISTRICT:
-            if not scope.subdistrict_id:
-                raise OfficerScopeError("subdistrict_id required for subdistrict level visibility")
-            return Q(subdistrict_id=scope.subdistrict_id)
+            # รพ.สต.: กรองด้วย health_service_id (ข้ามตำบล เพราะหน่วยบริการครอบคลุมหลายตำบล)
+            if not scope.health_service_id:
+                raise OfficerScopeError("health_service_id required for subdistrict level visibility")
+            return Q(health_service_id=scope.health_service_id)
         if level == AdministrativeLevelEnum.VILLAGE:
             if not scope.village_code:
                 raise OfficerScopeError("village_code required for village level visibility")

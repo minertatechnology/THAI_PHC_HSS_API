@@ -118,6 +118,9 @@ class AuthMeService:
             "manageable_levels_meta": cls._decorate_levels(manageable_levels),
             "codes": {
                 "osm_code": user_info.get("osm_code"),
+                "health_service_id": user_info.get("health_service_id")
+                or user_info.get("health_service_code"),
+                "health_service_name_th": user_info.get("health_service_name_th"),
                 "province_id": user_info.get("province_code"),
                 "province_name_th": user_info.get("province_name_th")
                 or user_info.get("province_name"),
@@ -170,6 +173,12 @@ class AuthMeService:
                 "health_area_id": scope.health_area_id,
                 "osm_code": getattr(officer_profile, "osm_code", None)
                 or getattr(getattr(officer_profile, "province", None), "osm_code", None),
+                "health_service_id": scope.health_service_id,
+                "health_service_name_th": getattr(
+                    getattr(officer_profile, "health_service", None),
+                    "health_service_name_th",
+                    None,
+                ),
                 "province_id": scope.province_id,
                 "province_name_th": getattr(
                     province, "province_name_th", None

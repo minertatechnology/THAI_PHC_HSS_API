@@ -627,6 +627,7 @@ class LookupService:
         province_code: Optional[str] = None,
         district_code: Optional[str] = None,
         subdistrict_code: Optional[str] = None,
+        subdistrict_codes: Optional[List[str]] = None,
         health_service_type_ids: Optional[List[str]] = None,
         health_service_type_ids_exclude: Optional[List[str]] = None,
         limit: int = 100,
@@ -643,6 +644,8 @@ class LookupService:
             "province",
             "district",
             "subdistrict",
+            "service_areas",
+            "service_areas__subdistrict",
         )
         if keyword:
             query = query.filter(
@@ -656,8 +659,17 @@ class LookupService:
             query = query.filter(province_id=province_code)
         if district_code:
             query = query.filter(district_id=district_code)
-        if subdistrict_code:
-            query = query.filter(subdistrict_id=subdistrict_code)
+        # multi-subdistrict: ครอบคลุม "ที่ตั้งหลัก" หรือ "service_areas"
+        if subdistrict_codes:
+            norm_codes = [c for c in subdistrict_codes if c]
+            if norm_codes:
+                query = query.filter(
+                    Q(subdistrict_id__in=norm_codes) | Q(service_areas__subdistrict_id__in=norm_codes)
+                ).distinct()
+        elif subdistrict_code:
+            query = query.filter(
+                Q(subdistrict_id=subdistrict_code) | Q(service_areas__subdistrict_id=subdistrict_code)
+            ).distinct()
         if health_service_type_ids:
             query = query.filter(health_service_type_id__in=health_service_type_ids)
         if health_service_type_ids_exclude:
@@ -670,6 +682,16 @@ class LookupService:
             province = getattr(row, "province", None)
             district = getattr(row, "district", None)
             subdistrict = getattr(row, "subdistrict", None)
+            service_areas = []
+            for area in getattr(row, "service_areas", None) or []:
+                sd = getattr(area, "subdistrict", None)
+                service_areas.append({
+                    "id": str(area.id),
+                    "subdistrict_code": getattr(sd, "subdistrict_code", None) or getattr(area, "subdistrict_id", None),
+                    "subdistrict_name_th": getattr(sd, "subdistrict_name_th", None),
+                    "village_nos": area.village_nos,
+                    "is_primary": area.is_primary,
+                })
             items.append(
                 {
                     "code": row.health_service_code,
@@ -715,6 +737,7 @@ class LookupService:
                     }
                     if subdistrict
                     else None,
+                    "service_areas": service_areas,
                 }
             )
         return items
