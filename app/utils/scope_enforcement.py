@@ -39,6 +39,7 @@ class ScopeOverride:
     district_code: Optional[str] = None
     subdistrict_code: Optional[str] = None
     village_code: Optional[str] = None
+    health_service_id: Optional[str] = None
     scope: Optional[OfficerScope] = None
     enforced: bool = False  # True when at least one value was overridden
 
@@ -66,6 +67,8 @@ async def enforce_scope_on_filters(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="forbidden: officer access required for reports",
         )
+
+    health_service_id: Optional[str] = None
 
     # Broad scopes → no geo restriction
     if scope.level in (
@@ -106,15 +109,13 @@ async def enforce_scope_on_filters(
         enforced = True
 
     elif scope.level == AdministrativeLevelEnum.SUBDISTRICT:
+        # รพ.สต.: กรองด้วยหน่วยบริการ (health_service_id) แทนตำบลเดียว
+        # เพราะ 1 หน่วยบริการครอบคลุมหลายตำบล → report ต้องเห็นครบทุกตำบล
         province_code = scope.province_id
         district_code = scope.district_id
-        if subdistrict_code and subdistrict_code != scope.subdistrict_id:
-            logger.warning(
-                "Scope override: officer subdistrict=%s, requested=%s",
-                scope.subdistrict_id,
-                subdistrict_code,
-            )
-        subdistrict_code = scope.subdistrict_id
+        health_service_id = scope.health_service_id
+        # ไม่ clamp subdistrict_code ให้เป็นตำบลเดียว (ใช้ health_service_id แทน)
+        subdistrict_code = None
         enforced = True
 
     elif scope.level == AdministrativeLevelEnum.VILLAGE:
@@ -129,6 +130,7 @@ async def enforce_scope_on_filters(
         district_code=district_code,
         subdistrict_code=subdistrict_code,
         village_code=village_code,
+        health_service_id=health_service_id,
         scope=scope,
         enforced=enforced,
     )
@@ -148,3 +150,5 @@ def apply_scope_to_query(filters: Any, override: ScopeOverride) -> None:
         filters.subdistrict_code = override.subdistrict_code
     if hasattr(filters, "village_code"):
         filters.village_code = override.village_code
+    if hasattr(filters, "health_service_id"):
+        filters.health_service_id = override.health_service_id

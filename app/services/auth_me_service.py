@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from app.repositories.officer_profile_repository import (
-    OfficerProfileRepository,
+from app.repositories.officer_profile_repository import (    OfficerProfileRepository,
 )
 from app.services.officer_service import OfficerService
 from app.utils.officer_hierarchy import OfficerHierarchy, OfficerScopeError
+from app.models.health_model import HealthServiceArea
 
 
 class AuthMeService:
@@ -248,5 +248,19 @@ class AuthMeService:
         officer_scope = cls._build_permission_scope_for_officer(officer_profile)
         if not officer_scope:
             return base_scope
+
+        # รพ.สต.: แนบรหัสตำบลที่หน่วยบริการครอบคลุม (service_areas) เข้าไปใน codes
+        # เพื่อให้ frontend กรอง dropdown ตำบลได้โดยตรง ไม่ต้องเรียก API แยก
+        hs_id = officer_scope.get("codes", {}).get("health_service_id") if isinstance(officer_scope, dict) else None
+        if hs_id and isinstance(officer_scope.get("codes"), dict):
+            try:
+                areas = await HealthServiceArea.filter(
+                    health_service_id=hs_id, deleted_at__isnull=True
+                ).only("subdistrict_id")
+                officer_scope["codes"]["service_area_codes"] = [
+                    a.subdistrict_id for a in areas if a.subdistrict_id
+                ]
+            except Exception:
+                officer_scope["codes"]["service_area_codes"] = []
 
         return officer_scope

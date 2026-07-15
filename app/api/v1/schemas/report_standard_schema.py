@@ -19,6 +19,10 @@ class StandardGenderReportQuery(BaseModel):
         validation_alias=AliasChoices("district", "districtCode", "district_code"),
         serialization_alias="district",
     )
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(
         default=None,
         alias="subdistrict",
@@ -151,6 +155,10 @@ class FamilyAddressReportQuery(BaseModel):
         validation_alias=AliasChoices("district", "districtCode", "district_code"),
         serialization_alias="district",
     )
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(
         default=None,
         alias="subdistrict",
@@ -230,6 +238,10 @@ class AverageAgeReportQuery(BaseModel):
         validation_alias=AliasChoices("district", "districtCode", "district_code"),
         serialization_alias="district",
     )
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(
         default=None,
         alias="subdistrict",
@@ -292,6 +304,10 @@ class NewVolunteerByYearQuery(BaseModel):
         alias="district",
         validation_alias=AliasChoices("district", "districtCode", "district_code"),
         serialization_alias="district",
+    )
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
     )
     subdistrict_code: Optional[str] = Field(
         default=None,
@@ -374,6 +390,10 @@ class NewVolunteerByYearResponse(BaseModel):
 class VolunteerTenureQuery(BaseModel):
     province_code: Optional[str] = Field(default=None, alias="province", serialization_alias="province")
     district_code: Optional[str] = Field(default=None, alias="district", serialization_alias="district")
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(default=None, alias="subdistrict", serialization_alias="subdistrict")
     # NOTE: FastAPI's BaseModel-as-Depends only binds known field aliases.
     # To support multiple query parameter names, we define explicit fields and
@@ -459,6 +479,10 @@ class QualifiedBenefitQuery(BaseModel):
         validation_alias=AliasChoices("district", "districtCode", "district_code"),
         serialization_alias="district",
     )
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(
         default=None,
         alias="subdistrict",
@@ -543,6 +567,8 @@ class BenefitClaimQuery(BaseModel):
     subdistrict_code: Optional[str] = Field(default=None, alias="subdistrict", serialization_alias="subdistrict")
     subdistrict_code_legacy: Optional[str] = Field(default=None, alias="subdistrictCode", serialization_alias="subdistrictCode")
     subdistrict_code_snake: Optional[str] = Field(default=None, alias="subdistrict_code", serialization_alias="subdistrict_code")
+
+    health_service_id: Optional[str] = Field(default=None, alias="health_service_id", serialization_alias="health_service_id")
 
     village_code: Optional[str] = Field(default=None, alias="villageCode", serialization_alias="villageCode")
     village_code_legacy: Optional[str] = Field(default=None, alias="village", serialization_alias="village")
@@ -667,6 +693,10 @@ class ResignedVolunteerQuery(BaseModel):
         validation_alias=AliasChoices("district", "districtCode", "district_code"),
         serialization_alias="district",
     )
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(
         default=None,
         alias="subdistrict",
@@ -747,6 +777,10 @@ class PositionsByVillageQuery(BaseModel):
         validation_alias=AliasChoices("district", "districtCode", "district_code"),
         serialization_alias="district",
     )
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(
         default=None,
         alias="subdistrict",
@@ -802,6 +836,10 @@ class PresidentListQuery(BaseModel):
     area_name: Optional[str] = Field(default=None, alias="area", serialization_alias="area")
     province_code: Optional[str] = Field(default=None, alias="province", serialization_alias="province")
     district_code: Optional[str] = Field(default=None, alias="district", serialization_alias="district")
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(default=None, alias="subdistrict", serialization_alias="subdistrict")
     page: int = Field(default=1, ge=1)
     page_size: int = Field(
@@ -848,6 +886,10 @@ class PresidentByLevelQuery(BaseModel):
     area_name: Optional[str] = Field(default=None, alias="area", serialization_alias="area")
     province_code: Optional[str] = Field(default=None, alias="province", serialization_alias="province")
     district_code: Optional[str] = Field(default=None, alias="district", serialization_alias="district")
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(default=None, alias="subdistrict", serialization_alias="subdistrict")
     page: int = Field(default=1, ge=1)
     page_size: int = Field(
@@ -900,6 +942,10 @@ class AwardByAreaQuery(BaseModel):
     date_to: Optional[date] = Field(default=None, alias="dateTo", serialization_alias="dateTo")
     province_code: Optional[str] = Field(default=None, alias="province", serialization_alias="province")
     district_code: Optional[str] = Field(default=None, alias="district", serialization_alias="district")
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(default=None, alias="subdistrict", serialization_alias="subdistrict")
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=50, alias="pageSize", serialization_alias="pageSize", ge=1, le=200)
@@ -945,6 +991,10 @@ class AwardByAreaResponse(BaseModel):
 class TrainingByAreaQuery(BaseModel):
     province_code: Optional[str] = Field(default=None, alias="province", serialization_alias="province")
     district_code: Optional[str] = Field(default=None, alias="district", serialization_alias="district")
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(default=None, alias="subdistrict", serialization_alias="subdistrict")
     year_from: Optional[int] = Field(default=None, alias="yearFrom", serialization_alias="yearFrom")
     year_to: Optional[int] = Field(default=None, alias="yearTo", serialization_alias="yearTo")
@@ -987,6 +1037,10 @@ class TrainingByAreaResponse(BaseModel):
 class SpecialtyByAreaQuery(BaseModel):
     province_code: Optional[str] = Field(default=None, alias="province", serialization_alias="province")
     district_code: Optional[str] = Field(default=None, alias="district", serialization_alias="district")
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
+    )
     subdistrict_code: Optional[str] = Field(default=None, alias="subdistrict", serialization_alias="subdistrict")
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=50, alias="pageSize", serialization_alias="pageSize", ge=1, le=200)
@@ -1035,6 +1089,10 @@ class ResignedReportQuery(BaseModel):
         alias="district",
         validation_alias=AliasChoices("district", "districtCode", "district_code"),
         serialization_alias="district",
+    )
+    health_service_id: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("health_service_id", "healthServiceId"),
     )
     subdistrict_code: Optional[str] = Field(
         default=None,

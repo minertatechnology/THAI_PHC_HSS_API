@@ -30,6 +30,7 @@ class ReportOsmGenderQueryParams(BaseModel):
     province_code: Optional[str] = None
     district_code: Optional[str] = None
     subdistrict_code: Optional[str] = None
+    health_service_id: Optional[str] = None
 
     # PaginationParams fields
     page: Optional[int] = 1
@@ -41,6 +42,7 @@ class ReportOsmFamilyQueryParams(BaseModel):
     province_code: Optional[str] = None
     district_code: Optional[str] = None
     subdistrict_code: Optional[str] = None
+    health_service_id: Optional[str] = None
 
     # PaginationParams fields
     page: Optional[int] = 1
@@ -53,5 +55,6 @@ class ReportOsmPresidentQueryParams(BaseModel):
     province_code: Optional[str] = None
     district_code: Optional[str] = None
     subdistrict_code: Optional[str] = None
+    health_service_id: Optional[str] = None
     page: int = 1
     limit: int = 10

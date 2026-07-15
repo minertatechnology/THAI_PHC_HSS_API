@@ -60,10 +60,36 @@ from app.api.v1.schemas.report_standard_schema import (
     SnapshotMutationResponse,
 )
 from app.models.report_model import OsmGenderSummary
+from app.models.health_model import HealthService, HealthServiceArea
 
 
 class StandardReportService:
     """Service layer for production-grade reporting endpoints."""
+
+    @staticmethod
+    async def _resolve_sd_codes(filters) -> Optional[List[str]]:
+        """รพ.สต.: resolve health_service_id → รหัสตำบลทั้งหมดที่หน่วยบริการครอบคลุม
+        (ที่ตั้งหลัก + service_areas) สำหรับกรอง report แบบ IN clause
+        fallback: ใช้ subdistrict_code เดียว ถ้าไม่มี health_service_id"""
+        hs_id = getattr(filters, "health_service_id", None)
+        if hs_id:
+            codes: List[str] = []
+            hs = await HealthService.filter(health_service_code=hs_id).only("subdistrict_id").first()
+            if hs and hs.subdistrict_id:
+                codes.append(hs.subdistrict_id)
+            areas = await HealthServiceArea.filter(
+                health_service_id=hs_id, deleted_at__isnull=True
+            ).only("subdistrict_id")
+            for area in areas:
+                if area.subdistrict_id and area.subdistrict_id not in codes:
+                    codes.append(area.subdistrict_id)
+            if codes:
+                return codes
+        sd = getattr(filters, "subdistrict_code", None)
+        if sd:
+            return [sd]
+        return None
+
     # ------------------------------------------------------------------
     # Qualified benefit (ค่าป่วยการ) report
     # ------------------------------------------------------------------
@@ -82,8 +108,13 @@ class StandardReportService:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
             add_filter("op.district_id =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("op.subdistrict_id =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
         if filters.status:
             add_filter("opc.allowance_confirmation_status =", filters.status)
         if filters.showbbody_status:
@@ -197,8 +228,13 @@ class StandardReportService:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
             add_filter("op.district_id =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("op.subdistrict_id =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
         if getattr(filters, "village_code", None):
             add_filter("op.village_code::text =", str(filters.village_code))
         if filters.osm_status is not None:
@@ -331,8 +367,13 @@ class StandardReportService:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
             add_filter("op.district_id =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("op.subdistrict_id =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
         if getattr(filters, "village_code", None):
             add_filter("op.village_code::text =", str(filters.village_code))
         if getattr(filters, "osm_showbbody", None):
@@ -488,8 +529,13 @@ class StandardReportService:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
             add_filter("op.district_id =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("op.subdistrict_id =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
         if filters.osm_status is not None:
             add_filter("op.osm_status =", filters.osm_status)
         else:
@@ -600,8 +646,13 @@ class StandardReportService:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
             add_filter("op.district_id =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("op.subdistrict_id =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
         if filters.reason:
             add_filter("op.retirement_reason =", filters.reason)
         if filters.year_from:
@@ -710,8 +761,13 @@ class StandardReportService:
             add_filter("p.province_code =", filters.province_code)
         if filters.district_code:
             add_filter("d.district_code =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("s.subdistrict_code =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            geo_clauses.append(f"s.subdistrict_code IN ({', '.join(_ph)})")
 
         where_sql = f"WHERE {' AND '.join(geo_clauses)}" if geo_clauses else ""
         osm_join_sql = " AND ".join(osm_join_conditions)
@@ -834,8 +890,13 @@ class StandardReportService:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
             add_filter("op.district_id =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("op.subdistrict_id =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
 
         where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
@@ -877,6 +938,9 @@ class StandardReportService:
         FROM osm_profile_official_positions opp
         INNER JOIN osm_profiles op ON op.id = opp.osm_profile_id
         INNER JOIN osm_official_positions o ON o.id = opp.official_position_id
+        LEFT JOIN provinces p ON p.province_code = op.province_id
+        LEFT JOIN districts d ON d.district_code = op.district_id
+        LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
         {where_sql}
         """
         count_result = await connection.execute_query_dict(count_sql, base_params)
@@ -933,8 +997,13 @@ class StandardReportService:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
             add_filter("op.district_id =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("op.subdistrict_id =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
 
         where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
@@ -976,6 +1045,9 @@ class StandardReportService:
         FROM osm_profile_official_positions opp
         INNER JOIN osm_profiles op ON op.id = opp.osm_profile_id
         INNER JOIN osm_official_positions o ON o.id = opp.official_position_id
+        LEFT JOIN provinces p ON p.province_code = op.province_id
+        LEFT JOIN districts d ON d.district_code = op.district_id
+        LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
         {where_sql}
         """
         count_result = await connection.execute_query_dict(count_sql, base_params)
@@ -1029,8 +1101,13 @@ class StandardReportService:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
             add_filter("op.district_id =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("op.subdistrict_id =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
 
         where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
@@ -1595,8 +1672,13 @@ class StandardReportService:
             add_filter("family.province_code =", filters.province_code)
         if filters.district_code:
             add_filter("family.district_code =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("family.subdistrict_code =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"family.subdistrict_code IN ({', '.join(_ph)})")
         if filters.village_code:
             add_filter("family.village_code =", filters.village_code)
 
@@ -1705,8 +1787,13 @@ class StandardReportService:
             add_filter("p.province_code =", filters.province_code)
         if filters.district_code:
             add_filter("d.district_code =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("s.subdistrict_code =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                params.append(_c)
+                _ph.append(f"${len(params)}")
+            geo_clauses.append(f"s.subdistrict_code IN ({', '.join(_ph)})")
 
         geo_where = f"WHERE {' AND '.join(geo_clauses)}" if geo_clauses else ""
 
@@ -1815,8 +1902,13 @@ class StandardReportService:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
             add_filter("op.district_id =", filters.district_code)
-        if filters.subdistrict_code:
-            add_filter("op.subdistrict_id =", filters.subdistrict_code)
+        _sd_codes = await StandardReportService._resolve_sd_codes(filters)
+        if _sd_codes:
+            _ph = []
+            for _c in _sd_codes:
+                base_params.append(_c)
+                _ph.append(f"${len(base_params)}")
+            clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
         if getattr(filters, "village_code", None):
             add_filter("op.village_code::text =", str(filters.village_code))
 
