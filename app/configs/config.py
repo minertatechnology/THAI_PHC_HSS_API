@@ -90,6 +90,17 @@ class Settings(BaseSettings):
     ELEARNING_SERVICE_UUID: str = ""  # UUID ของ admin ที่ login e-learning ได้ (จำเป็นต้องตั้ง)
     GENH_API_URL: str = "https://api-genh.hss.moph.go.th/api/v1"
 
+    # Export (Excel) background-job settings
+    # ไดเรกทอรีเก็บไฟล์ export — ควรเป็น PVC RWX ที่ mount แยกจาก UPLOADS_ROOT
+    # (ต้องไม่อยู่ใต้ UPLOADS_ROOT มิฉะนั้น static mount /uploads จะ serve โดยไม่มี auth)
+    EXPORT_FILES_DIR: str = "/app/export_files"
+    EXPORT_SCHEDULER_ENABLED: bool = True
+    EXPORT_PAGE_SIZE: int = 2000          # จำนวนแถวต่อหน้า query ระหว่างสร้างไฟล์
+    EXPORT_FILE_TTL_HOURS: int = 6         # ไฟล์เก็บกี่ชั่วโมงก่อน sweeper ลบ
+    EXPORT_HEARTBEAT_STALE_SECONDS: int = 120  # job ที่ไม่ heartbeat เกินนี้ → ถือว่าค้าง → resume
+    EXPORT_MAX_ROWS: int = 1_000_000       # จำกัดแถวสูงสุดต่อไฟล์ (กัน runaway)
+    EXPORT_JOB_TTL_HOURS: int = 12         # TTL ของ Redis job record
+
     # Environment metadata
     ENVIRONMENT: str = "production"
 

@@ -161,3 +161,8 @@ spec:
             - name: uploads
               mountPath: /app/uploads
               subPath: hss-api
+            # ไฟล์ Excel export — PVC RWX เดียวกับ uploads (subPath แยก)
+            # ต้องอยู่นอก /app/uploads เพราะ static mount /uploads serve โดยไม่มี auth
+            - name: uploads
+              mountPath: /app/export_files
+              subPath: hss-api-exports

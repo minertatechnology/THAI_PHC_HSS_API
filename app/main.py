@@ -36,9 +36,17 @@ async def lifespan(app: FastAPI):
     from app.services.auto_transfer_service import start_scheduler, stop_scheduler
     await start_scheduler()
 
+    # Start export background-job scheduler (sweeper + cleanup)
+    from app.services.export_job_service import (
+        start_export_scheduler,
+        stop_export_scheduler,
+    )
+    await start_export_scheduler()
+
     try:
         yield
     finally:
+        await stop_export_scheduler()
         await stop_scheduler()
         await close_redis()
         logger.info("Application shutdown")
