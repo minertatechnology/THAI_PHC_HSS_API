@@ -72,22 +72,25 @@ class OsmService:
         สร้าง OSM Profile ใหม่พร้อมตรวจสอบข้อมูลซ้ำ
         """
         try:
-            # ตรวจสอบว่าเลขบัตรประชาชนซ้ำหรือไม่
-            existing_osm = await OSMProfileRepository.find_osm_by_citizen_id(osm_data.citizen_id)
-            if existing_osm:
-                # ถ้าพ้นสภาพ (เสียชีวิต/ลาออก/พ้นสภาพ) → อนุญาตให้ลงทะเบียนใหม่ (re-register)
-                _retired_statuses = {"0", "1", "2"}
-                current_status = str(getattr(existing_osm, "osm_status", "") or "")
-                if current_status in _retired_statuses:
-                    return await OsmService._re_register_retired_osm(
-                        existing_osm=existing_osm,
-                        osm_data=osm_data,
-                        current_user=current_user,
-                    )
+            # === ตรวจสอบเลขบัตรประชาชนซ้ำ (flow ใหม่) ===
+            # 1) มี record 'active' (ยังไม่พ้นสภาพ + ไม่ถูกลบ) ของบัตรนี้อยู่แล้ว → ไม่อนุญาตให้ยื่นคำขอ
+            active_existing = await OSMProfileRepository.find_active_osm_by_citizen_id(osm_data.citizen_id)
+            if active_existing:
                 raise HTTPException(
                     status_code=400,
                     detail="เลขบัตรประชาชนนี้มีอยู่ในระบบแล้ว"
                 )
+
+            # 2) มี record 'พ้นสภาพ' ของบัตรนี้ → เช็คพื้นที่
+            #    - พ้นสภาพที่เดียวกับพื้นที่ที่ขอยื่น → แจ้ง "พบข้อมูล อสม. คนนี้แล้ว"
+            #    - คนละพื้นที่ → ยื่นได้ (สร้าง row ใหม่; record เก่าพ้นสภาพยังคงอยู่ใช้งานที่พื้นที่เดิม)
+            retired_list = await OSMProfileRepository.find_retired_osm_by_citizen_id(osm_data.citizen_id)
+            if retired_list and OsmService._retired_in_same_area(retired_list, osm_data):
+                raise HTTPException(
+                    status_code=400,
+                    detail="พบข้อมูล อสม. คนนี้แล้ว"
+                )
+
             creator_id: Optional[str] = None
             auto_approve = False
             approval_by: Optional[str] = None
@@ -198,13 +201,39 @@ class OsmService:
         )
 
     @staticmethod
+    def _retired_in_same_area(retired_profiles: List[Any], osm_data: OsmCreateSchema) -> bool:
+        """
+        เทียบพื้นที่ของ record พ้นสภาพกับข้อมูลที่ขอยื่นใหม่
+        ถือว่า 'พื้นที่เดียวกัน' เมื่อ province_id + district_id + subdistrict_id + village_no
+        + health_service_id ตรงกันทุกตัว
+        (village_no อาจเป็น None → normalize เป็น '' ก่อนเทียบ)
+        """
+        area_keys = ("province_id", "district_id", "subdistrict_id", "village_no", "health_service_id")
+
+        def _norm(value: Any) -> str:
+            if value is None:
+                return ""
+            return str(value).strip()
+
+        request_area = {k: _norm(getattr(osm_data, k, None)) for k in area_keys}
+
+        for profile in retired_profiles or []:
+            profile_area = {k: _norm(getattr(profile, k, None)) for k in area_keys}
+            if profile_area == request_area:
+                return True
+        return False
+
+    @staticmethod
     async def _re_register_retired_osm(
         existing_osm: OSMProfile,
         osm_data: OsmCreateSchema,
         current_user: Optional[Mapping[str, Any]] = None,
     ) -> dict:
-        """ลงทะเบียนใหม่สำหรับ อสม. ที่พ้นสภาพแล้ว
-        อัปเดต record เดิม (ไม่สร้าง row ใหม่) → reset สถานะ + เปลี่ยนที่อยู่ + เก็บ history"""
+        """[DEPRECATED — ไม่ถูกเรียกใช้แล้ว]
+        เดิม: ลงทะเบียนใหม่สำหรับ อสม. ที่พ้นสภาพ โดยอัปเดต record เดิม (reset สถานะ + เปลี่ยนที่อยู่)
+        ปัจจุบัน: create_osm เปลี่ยน flow แล้ว — เคสพ้นสภาพ+คนละพื้นที่จะ "สร้าง row ใหม่" แทน (record เก่าคงอยู่)
+        เก็บ method นี้ไว้ชั่วคราวเพื่อลดความเสี่ยงกระทบ history/notification logic
+        """
 
         osm_id = str(existing_osm.id)
 

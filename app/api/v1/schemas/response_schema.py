@@ -58,6 +58,7 @@ class SpouseResponse(BaseModel):
     street: Optional[str]
     village_no: Optional[str]
     village_name: Optional[str]
+    village_code: Optional[str] = None
     province_id: str
     province_name_th: Optional[str]
     district_id: str
@@ -88,6 +89,7 @@ class ChildResponse(BaseModel):
     street: Optional[str]
     village_no: Optional[str]
     village_name: Optional[str]
+    village_code: Optional[str] = None
     province_id: str
     province_name_th: Optional[str]
     district_id: str
@@ -427,6 +429,7 @@ def spouse_to_response(spouse):
         street=spouse.street,
         village_no=spouse.village_no,
         village_name=spouse.village_name,
+        village_code=spouse.village_code,
         province_id=spouse.province_id,
         province_name_th=get_related_name(spouse, 'province', 'province_name_th'),
         district_id=spouse.district_id,
@@ -463,6 +466,7 @@ def child_to_response(child):
         street=child.street,
         village_no=child.village_no,
         village_name=child.village_name,
+        village_code=child.village_code,
         province_id=child.province_id,
         province_name_th=get_related_name(child, 'province', 'province_name_th'),
         district_id=child.district_id,

@@ -103,6 +103,21 @@ class OSMProfileRepository:
         return f"{province_part}{district_part}{subdistrict_part}{village_part}"
 
     @staticmethod
+    def _compute_village_code_safely(payload: Dict[str, Any]) -> Optional[str]:
+        """Compute the 9-digit village_code from location without raising.
+
+        Returns the derived code, or ``None`` when the location is incomplete/invalid
+        (e.g. missing province/district/subdistrict or non-numeric village_no). Used
+        on update/spouse/child flows where we must not fail the whole request just
+        because village_code cannot be derived — callers should then keep the
+        existing value.
+        """
+        try:
+            return OSMProfileRepository._build_osm_code_prefix(payload)
+        except HTTPException:
+            return None
+
+    @staticmethod
     async def _allocate_next_osm_code_run(prefix: str) -> int:
         """Allocate the next 6-digit running number for a given prefix.
 
@@ -345,13 +360,22 @@ class OSMProfileRepository:
                     spouse_dict = osm_data.spouse.model_dump()
                     spouse_dict['osm_profile_id'] = osm_profile.id
                     spouse_dict['created_by'] = audit_user_id
+                    # Recompute village_code จากที่อยู่คู่สมรส (สอดคล้องกับ main record)
+                    spouse_vc = OSMProfileRepository._compute_village_code_safely({
+                        "province_id": spouse_dict.get("province_id"),
+                        "district_id": spouse_dict.get("district_id"),
+                        "subdistrict_id": spouse_dict.get("subdistrict_id"),
+                        "village_no": spouse_dict.get("village_no"),
+                    })
+                    if spouse_vc:
+                        spouse_dict["village_code"] = spouse_vc
                     print("Creating spouse with data:", spouse_dict)
                     await OsmSpouse.create(**spouse_dict)
                     print("Spouse created successfully")
                 except Exception as e:
                     print(f"Error creating spouse: {e}")
                     raise Exception(f"ไม่สามารถสร้างข้อมูลคู่สมรสได้: {str(e)}")
-            
+
             # สร้างข้อมูลบุตร (ถ้ามี)
             if osm_data.children:
                 for i, child_data in enumerate(osm_data.children):
@@ -359,6 +383,15 @@ class OSMProfileRepository:
                         child_dict = child_data.model_dump()
                         child_dict['osm_profile_id'] = osm_profile.id
                         child_dict['created_by'] = audit_user_id
+                        # Recompute village_code จากที่อยู่ของบุตร (สอดคล้องกับ main record)
+                        child_vc = OSMProfileRepository._compute_village_code_safely({
+                            "province_id": child_dict.get("province_id"),
+                            "district_id": child_dict.get("district_id"),
+                            "subdistrict_id": child_dict.get("subdistrict_id"),
+                            "village_no": child_dict.get("village_no"),
+                        })
+                        if child_vc:
+                            child_dict["village_code"] = child_vc
                         print(f"Creating child {i+1} with data:", child_dict)
                         await OsmChild.create(**child_dict)
                         print(f"Child {i+1} created successfully")
@@ -704,6 +737,74 @@ class OSMProfileRepository:
                 detail=f"เกิดข้อผิดพลาดในการค้นหา OSM: {str(e)}"
             )
 
+    async def find_active_osm_by_citizen_id(citizen_id: str):
+        """
+        ดึง OSM Profile record 'active' (ยังไม่พ้นสภาพ + ยังไม่ถูกลบ) ด้วยเลขบัตรประชาชน
+        ใช้สำหรับตรวจสอบการยื่นคำขอใหม่: active record ของบัตรนี้มีได้แค่ 1 (partial unique index)
+        """
+        try:
+            osm_profile = (
+                await OSMProfile
+                .filter(
+                    Q(citizen_id=citizen_id)
+                    & Q(deleted_at__isnull=True)
+                    & (Q(osm_status__isnull=True) | Q(osm_status=""))
+                )
+                .only(
+                    "id",
+                    "citizen_id",
+                    "osm_status",
+                    "is_active",
+                    "approval_status",
+                    "first_name",
+                    "last_name",
+                    "province_id",
+                    "district_id",
+                    "subdistrict_id",
+                    "village_no",
+                    "health_service_id",
+                )
+                .first()
+            )
+            return osm_profile
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"เกิดข้อผิดพลาดในการค้นหา OSM (active): {str(e)}"
+            )
+
+    async def find_retired_osm_by_citizen_id(citizen_id: str):
+        """
+        ดึง list ของ OSM Profile record ที่ 'พ้นสภาพ' (osm_status 0/1/2 = เสียชีวิต/ลาออก/พ้นสภาพ)
+        ที่ยังไม่ถูกลบ (deleted_at IS NULL) ด้วยเลขบัตรประชาชน
+        ใช้สำหรับตรวจสอบว่าเคยเป็น อสม. ที่พ้นสภาพในพื้นที่ใดบ้าง (เพื่อเทียบกับพื้นที่ที่ขอยื่นใหม่)
+        """
+        try:
+            retired_profiles = (
+                await OSMProfile
+                .filter(
+                    Q(citizen_id=citizen_id)
+                    & Q(deleted_at__isnull=True)
+                    & Q(osm_status__in=["0", "1", "2"])
+                )
+                .only(
+                    "id",
+                    "citizen_id",
+                    "osm_status",
+                    "province_id",
+                    "district_id",
+                    "subdistrict_id",
+                    "village_no",
+                    "health_service_id",
+                )
+            )
+            return retired_profiles
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"เกิดข้อผิดพลาดในการค้นหา OSM (retired): {str(e)}"
+            )
+
     async def find_osm_basic_profile_by_citizen_id(citizen_id: str):
         """
         ดึง OSM Profile เฉพาะ basic fields สำหรับ login validation
@@ -852,7 +953,20 @@ class OSMProfileRepository:
                     setattr(osm_profile, field, value)
                 elif field in _nullable_fields:
                     setattr(osm_profile, field, value)
-            
+
+            # Recompute village_code เมื่อมี field ที่อยู่เปลี่ยน
+            # (โดยใช้ค่าล่าสุดจาก osm_profile หลัง set แล้ว เพื่อให้สอดคล้องกับการ create)
+            _location_fields = {"province_id", "district_id", "subdistrict_id", "village_no"}
+            if _location_fields & set(osm_data.keys()):
+                new_village_code = OSMProfileRepository._compute_village_code_safely({
+                    "province_id": osm_profile.province_id,
+                    "district_id": osm_profile.district_id,
+                    "subdistrict_id": osm_profile.subdistrict_id,
+                    "village_no": osm_profile.village_no,
+                })
+                if new_village_code:
+                    osm_profile.village_code = new_village_code
+
             osm_profile.updated_by = user_id
             await osm_profile.save()
             
@@ -1012,6 +1126,16 @@ class OSMProfileRepository:
                 else dict(spouse_data)
             )
 
+            # Recompute village_code จากที่อยู่คู่สมรส (เทียบเท่าการ create ของ main record)
+            spouse_village_code = OSMProfileRepository._compute_village_code_safely({
+                "province_id": spouse_dict.get("province_id"),
+                "district_id": spouse_dict.get("district_id"),
+                "subdistrict_id": spouse_dict.get("subdistrict_id"),
+                "village_no": spouse_dict.get("village_no"),
+            })
+            if spouse_village_code:
+                spouse_dict["village_code"] = spouse_village_code
+
             if existing:
                 for field, value in spouse_dict.items():
                     if hasattr(existing, field):
@@ -1041,6 +1165,15 @@ class OSMProfileRepository:
                     if hasattr(child_data, "model_dump")
                     else dict(child_data)
                 )
+                # Recompute village_code จากที่อยู่ของบุตร
+                child_village_code = OSMProfileRepository._compute_village_code_safely({
+                    "province_id": child_dict.get("province_id"),
+                    "district_id": child_dict.get("district_id"),
+                    "subdistrict_id": child_dict.get("subdistrict_id"),
+                    "village_no": child_dict.get("village_no"),
+                })
+                if child_village_code:
+                    child_dict["village_code"] = child_village_code
                 child_dict["osm_profile_id"] = osm_id
                 child_dict["created_by"] = user_id
                 await OsmChild.create(**child_dict)
