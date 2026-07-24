@@ -204,22 +204,38 @@ class OsmService:
     def _retired_in_same_area(retired_profiles: List[Any], osm_data: OsmCreateSchema) -> bool:
         """
         เทียบพื้นที่ของ record พ้นสภาพกับข้อมูลที่ขอยื่นใหม่
-        ถือว่า 'พื้นที่เดียวกัน' เมื่อ province_id + district_id + subdistrict_id + village_no
-        + health_service_id ตรงกันทุกตัว
-        (village_no อาจเป็น None → normalize เป็น '' ก่อนเทียบ)
+        ถือว่า 'พื้นที่เดียวกัน' เมื่อ:
+        - field หลัก (required): province_id + district_id + subdistrict_id + village_no ตรงกัน
+        - field รอง (optional): health_service_id — เทียบเฉพาะเมื่อทั้งสองฝั่งมีค่า
+          (ถ้า record เก่าว่าง = ข้อมูลเก่าไม่สมบูรณ์ → ไม่นำมาตัดสิน เพื่อกัน block พลาด)
         """
-        area_keys = ("province_id", "district_id", "subdistrict_id", "village_no", "health_service_id")
+        required_keys = ("province_id", "district_id", "subdistrict_id", "village_no")
+        optional_keys = ("health_service_id",)
 
         def _norm(value: Any) -> str:
             if value is None:
                 return ""
             return str(value).strip()
 
-        request_area = {k: _norm(getattr(osm_data, k, None)) for k in area_keys}
-
         for profile in retired_profiles or []:
-            profile_area = {k: _norm(getattr(profile, k, None)) for k in area_keys}
-            if profile_area == request_area:
+            # 1) field หลักต้องตรงทุกตัว
+            required_match = all(
+                _norm(getattr(profile, k, None)) == _norm(getattr(osm_data, k, None))
+                for k in required_keys
+            )
+            if not required_match:
+                continue
+
+            # 2) field รอง: ถ้าทั้งคู่มีค่าต้องตรงกัน; ถ้าข้างใดข้างหนึ่งว่าง → ไม่นำมาตัดสิน
+            optional_ok = True
+            for k in optional_keys:
+                profile_val = _norm(getattr(profile, k, None))
+                request_val = _norm(getattr(osm_data, k, None))
+                if profile_val and request_val and profile_val != request_val:
+                    optional_ok = False
+                    break
+
+            if optional_ok:
                 return True
         return False
 

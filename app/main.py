@@ -43,9 +43,17 @@ async def lifespan(app: FastAPI):
     )
     await start_export_scheduler()
 
+    # Start report-export background-job scheduler (sweeper + cleanup)
+    from app.services.report_export_job_service import (
+        start_report_export_scheduler,
+        stop_report_export_scheduler,
+    )
+    await start_report_export_scheduler()
+
     try:
         yield
     finally:
+        await stop_report_export_scheduler()
         await stop_export_scheduler()
         await stop_scheduler()
         await close_redis()

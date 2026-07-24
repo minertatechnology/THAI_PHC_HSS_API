@@ -423,7 +423,8 @@ async def run_export_job(job_id: str, current_user: dict, filters: Dict[str, Any
     file_path = _job_file_path(officer_id, job_id)
     Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 
-    unmask = bool(scope and scope.level in UNMASK_LEVELS)
+    # เปิดเลขบัตรประชาชนเต็มทุกสิทธิ์ (ยกเลิกการ masking ตาม level)
+    unmask = True
     page_size = max(1, settings.EXPORT_PAGE_SIZE)
 
     # Lazy import — ถ้า XlsxWriter ยังไม่ถูกติดตั้งจะได้ไม่ทำให้ app start ไม่ได้

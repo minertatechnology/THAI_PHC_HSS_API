@@ -31,6 +31,7 @@ from app.api.v1.routers.auto_transfer_route import auto_transfer_router
 from app.api.v1.routers.user_sync_route import user_sync_router
 from app.api.v1.routers.thirdparty_route import thirdparty_router
 from app.api.v1.routers.export_route import export_router
+from app.api.v1.routers.report_export_route import report_export_router
 
 v1_router = APIRouter(prefix=f"{settings.API_V1_PREFIX}")
 
@@ -65,6 +66,7 @@ v1_router.include_router(auto_transfer_router)
 v1_router.include_router(user_sync_router)
 v1_router.include_router(thirdparty_router)
 v1_router.include_router(export_router)
+v1_router.include_router(report_export_router)
 
 
 rootRouter = APIRouter()
