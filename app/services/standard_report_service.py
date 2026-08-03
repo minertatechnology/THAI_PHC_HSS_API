@@ -134,7 +134,7 @@ class StandardReportService:
         offset_placeholder = f"${len(params)}"
 
         list_sql = f"""
-        SELECT
+        SELECT DISTINCT ON (op.id)
             op.id,
             op.citizen_id,
             op.first_name,
@@ -162,14 +162,14 @@ class StandardReportService:
         LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
         LEFT JOIN villages v ON v.village_code::text = op.village_code::text AND v.deleted_at IS NULL
         {where_sql}
-        ORDER BY op.allowance_year DESC NULLS LAST, op.updated_at DESC
+        ORDER BY op.id, op.allowance_year DESC NULLS LAST, op.updated_at DESC
         LIMIT {limit_placeholder} OFFSET {offset_placeholder}
         """
 
         rows = await connection.execute_query_dict(list_sql, params)
 
         count_sql = f"""
-        SELECT COUNT(*) AS total
+        SELECT COUNT(DISTINCT op.id) AS total
         FROM osm_profiles op
         LEFT JOIN osm_position_confirmations opc ON opc.osm_profile_id = op.id AND opc.deleted_at IS NULL
         {where_sql}
@@ -266,7 +266,7 @@ class StandardReportService:
         """
 
         list_sql = f"""
-        SELECT
+        SELECT DISTINCT ON (op.id)
             op.id,
             op.citizen_id,
             op.osm_code,
@@ -294,14 +294,14 @@ class StandardReportService:
         LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
         LEFT JOIN villages v ON v.village_code::text = op.village_code::text
         {where_sql}
-        ORDER BY tenure_years DESC NULLS LAST, op.created_at DESC
+        ORDER BY op.id, tenure_years DESC NULLS LAST, op.created_at DESC
         LIMIT {limit_placeholder} OFFSET {offset_placeholder}
         """
 
         rows = await connection.execute_query_dict(list_sql, params)
 
         count_sql = f"""
-        SELECT COUNT(*) AS total
+        SELECT COUNT(DISTINCT op.id) AS total
         FROM osm_profiles op
         {where_sql}
         """
@@ -406,7 +406,7 @@ class StandardReportService:
         offset_placeholder = f"${len(params)}"
 
         list_sql = f"""
-        SELECT
+        SELECT DISTINCT ON (op.id)
             bc.id AS claim_id,
             op.id AS osm_profile_id,
             bc.claim_type,
@@ -451,14 +451,14 @@ class StandardReportService:
         LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
         LEFT JOIN villages v ON v.village_code::text = op.village_code::text
         {where_sql}
-        ORDER BY bc.claim_date DESC NULLS LAST, bc.created_at DESC NULLS LAST, op.created_at DESC
+        ORDER BY op.id, bc.claim_date DESC NULLS LAST, bc.created_at DESC NULLS LAST, op.created_at DESC
         LIMIT {limit_placeholder} OFFSET {offset_placeholder}
         """
 
         rows = await connection.execute_query_dict(list_sql, params)
 
         count_sql = f"""
-        SELECT COUNT(*) AS total
+        SELECT COUNT(DISTINCT op.id) AS total
         FROM osm_profiles op
         LEFT JOIN LATERAL (
             SELECT bc.*
@@ -558,7 +558,7 @@ class StandardReportService:
         offset_placeholder = f"${len(params)}"
 
         list_sql = f"""
-        SELECT
+        SELECT DISTINCT ON (op.id)
             op.id,
             op.citizen_id,
             op.first_name,
@@ -583,14 +583,14 @@ class StandardReportService:
         LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
         LEFT JOIN villages v ON v.village_code::text = op.village_code::text AND v.deleted_at IS NULL
         {where_sql}
-        ORDER BY op.retirement_date DESC NULLS LAST, op.updated_at DESC
+        ORDER BY op.id, op.retirement_date DESC NULLS LAST, op.updated_at DESC
         LIMIT {limit_placeholder} OFFSET {offset_placeholder}
         """
 
         rows = await connection.execute_query_dict(list_sql, params)
 
         count_sql = f"""
-        SELECT COUNT(*) AS total
+        SELECT COUNT(DISTINCT op.id) AS total
         FROM osm_profiles op
         {where_sql}
         """
@@ -1952,7 +1952,7 @@ class StandardReportService:
         offset_placeholder = f"${len(params)}"
 
         list_sql = f"""
-        SELECT
+        SELECT DISTINCT ON (op.id)
             op.id,
             op.citizen_id,
             op.osm_code,
@@ -1982,14 +1982,14 @@ class StandardReportService:
         LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
         LEFT JOIN villages v ON v.village_code::text = op.village_code::text
         {where_sql}
-        ORDER BY start_year DESC, op.created_at DESC
+        ORDER BY op.id, start_year DESC, op.created_at DESC
         LIMIT {limit_placeholder} OFFSET {offset_placeholder}
         """
 
         rows = await connection.execute_query_dict(list_sql, params)
 
         count_sql = f"""
-        SELECT COUNT(*) AS total
+        SELECT COUNT(DISTINCT op.id) AS total
         FROM osm_profiles op
         {where_sql}
         """
