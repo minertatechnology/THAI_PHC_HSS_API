@@ -15,7 +15,11 @@ class ExportJobCreateRequest(BaseModel):
     status: Optional[str] = None
     isActive: Optional[str] = Field(None, alias="is_active")
     osmStatus: Optional[str] = Field(None, alias="osm_status")
-    approvalStatus: Optional[str] = Field(None, alias="approval_status")
+    approvalStatus: Optional[str] = Field(
+        None,
+        alias="approval_status",
+        description="ค่าเริ่มต้น = approved เท่านั้น; ใช้ 'all' เพื่อ export ทุกสถานะ",
+    )
     search: Optional[str] = None
     orderBy: Optional[str] = Field(None, alias="order_by")
     sortDir: Optional[str] = Field(None, alias="sort_dir")

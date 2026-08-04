@@ -7,13 +7,24 @@ from fastapi import HTTPException, status
 from tortoise.expressions import Q
 from tortoise.functions import Count
 
-from app.models.enum_models import AdministrativeLevelEnum, OsmShowbbodyEnum
+from app.models.enum_models import (
+    AdministrativeLevelEnum,
+    ApprovalStatus,
+    OsmShowbbodyEnum,
+)
 from app.models.osm_model import OSMProfile
 from app.repositories.officer_profile_repository import OfficerProfileRepository
 from app.utils.logging_utils import get_logger
 from app.utils.officer_hierarchy import OfficerHierarchy, OfficerScope, OfficerScopeError
 
 logger = get_logger(__name__)
+
+# Sentinel: caller ขอดูทุกสถานะอย่างชัดเจน
+# (ต่างจาก None = ไม่ระบุ → ใช้ค่า default ปลอดภัย = approved เท่านั้น)
+APPROVAL_STATUS_ALL = "__all__"
+
+# Secure-by-default: เมื่อ caller ไม่ระบุ approval_status จะกรองเหลือเฉพาะ approved
+DEFAULT_APPROVAL_STATUS = ApprovalStatus.APPROVED.value  # "approved"
 
 
 class DashboardAssignmentService:
@@ -140,7 +151,14 @@ class DashboardAssignmentService:
         if status_bool is not None:
             query = query.filter(is_active=status_bool)
 
-        if approval_status is not None:
+        # Secure by default: approval_status ที่ไม่ระบุ/ว่าง/ไม่รู้จัก → กรองเหลือเฉพาะ approved
+        # caller ที่ต้องการเห็นทุกสถานะ (เช่น admin view) ต้องส่ง escape hatch "all"
+        # ซึ่ง _parse_approval_status แปลงเป็น APPROVAL_STATUS_ALL sentinel ให้
+        if approval_status == APPROVAL_STATUS_ALL:
+            pass  # explicit override: ดูทุกสถานะ
+        elif approval_status is None:
+            query = query.filter(approval_status=DEFAULT_APPROVAL_STATUS)
+        else:
             query = query.filter(approval_status=approval_status)
 
         if osm_status_filter is not None:
@@ -305,17 +323,29 @@ class DashboardAssignmentService:
 
     @staticmethod
     def _parse_approval_status(raw: Optional[str]) -> Optional[str]:
+        """แปลง approval_status filter เป็นค่าที่ normalize แล้ว
+
+        คืนค่าหนึ่งใน:
+          - "approved"/"pending"/"rejected"/"retired" → กรองตามสถานะนั้น
+          - APPROVAL_STATUS_ALL ("__all__")            → override ขอดูทุกสถานะ
+          - None                                       → ไม่ระบุ → caller ใช้ default ปลอดภัย (approved)
+        """
         if raw is None:
             return None
         keyword = raw.strip().lower()
         if not keyword:
             return None
+        if keyword in {"all", "__all__", "ทั้งหมด", "*"}:
+            return APPROVAL_STATUS_ALL
         if keyword in {"approved", "อนุมัติ"}:
             return "approved"
         if keyword in {"pending", "รออนุมัติ", "รอ"}:
             return "pending"
         if keyword in {"rejected", "ปฏิเสธ", "ไม่อนุมัติ"}:
             return "rejected"
+        if keyword in {"retired", "พ้นสภาพ"}:
+            return "retired"
+        # ค่าที่ไม่รู้จัก → None (ห้ามขยายเป็น "ดูทั้งหมด" เพื่อความปลอดภัย)
         return None
 
     @staticmethod

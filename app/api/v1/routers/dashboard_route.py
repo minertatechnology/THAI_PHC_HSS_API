@@ -284,7 +284,11 @@ async def get_dashboard_assignments(
     approvalStatus: Optional[str] = Query(
         None,
         alias="approval_status",
-        description="สถานะการอนุมัติของ อสม. (approved / pending / rejected)",
+        description=(
+            "สถานะการอนุมัติของ อสม. (approved / pending / rejected / retired). "
+            "ค่าเริ่มต้นเมื่อไม่ระบุ = approved เท่านั้น. "
+            "ใช้ 'all' เพื่อดูทุกสถานะ (สำหรับ admin)"
+        ),
     ),
     search: Optional[str] = Query(
         None,
