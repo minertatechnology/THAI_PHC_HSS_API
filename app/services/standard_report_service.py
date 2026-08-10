@@ -539,8 +539,9 @@ class StandardReportService:
         if filters.osm_status is not None:
             add_filter("op.osm_status =", filters.osm_status)
         else:
-            # resigned report defaults to non-active statuses
-            clauses.append("op.osm_status IS NOT NULL")
+            # resigned report: exclude empty/default status, only show resigned members
+            clauses.append("(op.osm_status IS NOT NULL AND op.osm_status != '')")
+            clauses.append("op.approval_status = 'approved'")
         if filters.reason:
             add_filter("op.retirement_reason =", filters.reason)
         if filters.year_from:
@@ -636,7 +637,7 @@ class StandardReportService:
     async def resigned_report(filters: "ResignedReportQuery") -> "ResignedReportResponse":
         connection = connections.get("default")
         base_params: List[object] = []
-        clauses: List[str] = ["op.deleted_at IS NULL", "op.retirement_date IS NOT NULL", "op.osm_status IS NOT NULL"]
+        clauses: List[str] = ["op.deleted_at IS NULL", "op.retirement_date IS NOT NULL", "(op.osm_status IS NOT NULL AND op.osm_status != '')", "op.approval_status = 'approved'"]
 
         def add_filter(condition: str, value: object) -> None:
             base_params.append(value)

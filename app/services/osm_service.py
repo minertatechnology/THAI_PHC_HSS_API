@@ -504,6 +504,8 @@ class OsmService:
 
             # สถานะ อสม. (osm_status): '' = ปกติ, '0' = เสียชีวิต, '1' = ลาออก, '2' = พ้นสภาพ
             response_model["osm_status"] = _enum_to_str(getattr(osm_profile, "osm_status", None))
+            if isinstance(response_model["osm_status"], str):
+                response_model["osm_status"] = response_model["osm_status"].strip()
 
             # สถานะสิทธิ์ค่าป่วยการตอนสมัครใหม่ (new_registration_allowance_status)
             response_model["new_registration_allowance_status"] = _enum_to_str(
@@ -814,7 +816,7 @@ class OsmService:
 
         # อัปเดตสถานะ อสม./เงินเยียวยา หากส่งมา
         if osm_status is not None:
-            update_payload["osm_status"] = osm_status
+            update_payload["osm_status"] = str(osm_status).strip()
         if osm_showbbody is not None:
             update_payload["osm_showbbody"] = osm_showbbody
 
