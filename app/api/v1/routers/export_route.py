@@ -36,6 +36,10 @@ def _payload_to_filters(payload: ExportJobCreateRequest) -> dict:
         "osmStatus": payload.osmStatus,
         "approval_status": payload.approvalStatus,
         "search": payload.search,
+        "citizenId": payload.citizenId,
+        "osmCode": payload.osmCode,
+        "firstName": payload.firstName,
+        "lastName": payload.lastName,
         "orderBy": payload.orderBy,
         "sortDir": payload.sortDir,
     }

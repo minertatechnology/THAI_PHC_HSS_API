@@ -21,6 +21,10 @@ class ExportJobCreateRequest(BaseModel):
         description="ค่าเริ่มต้น = approved เท่านั้น; ใช้ 'all' เพื่อ export ทุกสถานะ",
     )
     search: Optional[str] = None
+    citizenId: Optional[str] = Field(None, alias="citizen_id", max_length=13)
+    osmCode: Optional[str] = Field(None, alias="osm_code", max_length=50)
+    firstName: Optional[str] = Field(None, alias="first_name", max_length=100)
+    lastName: Optional[str] = Field(None, alias="last_name", max_length=100)
     orderBy: Optional[str] = Field(None, alias="order_by")
     sortDir: Optional[str] = Field(None, alias="sort_dir")
     format: str = Field("xlsx", description="รูปแบบไฟล์ (v1 รองรับ xlsx เท่านั้น)")

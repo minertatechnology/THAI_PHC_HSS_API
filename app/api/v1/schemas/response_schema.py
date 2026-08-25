@@ -131,11 +131,13 @@ class OsmProfileResponse(BaseModel):
     street: Optional[str]
     village_no: Optional[str]
     village_name: Optional[str]
-    province_id: str
+    # province/district/subdistrict เป็น nullable ในตาราง osm_profiles (ดู migration init)
+    # ถ้าประกาศเป็น str จะเกิด ValidationError แล้วถูกแปลงเป็น HTTP 500 ตอนเปิดดูรายละเอียด
+    province_id: Optional[str] = None
     province_name_th: Optional[str]
-    district_id: str
+    district_id: Optional[str] = None
     district_name_th: Optional[str]
-    subdistrict_id: str
+    subdistrict_id: Optional[str] = None
     subdistrict_name_th: Optional[str]
     postal_code: Optional[str]
     is_active: bool

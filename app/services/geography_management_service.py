@@ -1013,8 +1013,17 @@ class GeographyManagementService:
     @staticmethod
     async def create_health_service(payload: Dict[str, object], *, actor_id: Optional[str]) -> Dict[str, object]:
         health_service_code = str(payload["health_service_code"]).strip()
-        if await HealthService.filter(health_service_code=health_service_code).exists():
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="health_service_code_in_use")
+        existing = await HealthService.filter(health_service_code=health_service_code).first()
+        if existing:
+            # แยกกรณี: รหัสถูกใช้อยู่จริง vs รหัสค้างจากหน่วยบริการที่ถูกลบ (soft delete)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "health_service_code_in_use_deleted"
+                    if existing.deleted_at is not None
+                    else "health_service_code_in_use"
+                ),
+            )
         await GeographyManagementService._ensure_health_service_type(payload.get("health_service_type_id"))
         province_code = GeographyManagementService._normalize_code(payload.get("province_code"))
         district_code = GeographyManagementService._normalize_code(payload.get("district_code"))

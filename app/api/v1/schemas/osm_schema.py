@@ -224,6 +224,12 @@ class OsmCreateSchema(OsmDetailSchema):
 class OsmUpdateSchema(BaseModel):
     # Optional fields for update (same structure as creation but all nullable)
     citizen_id: Optional[str] = Field(None, min_length=13, max_length=13)
+    # ไม่ใส่ max_length ที่ Field เพราะ constraint ของ pydantic จะทำงานก่อน validator
+    # แล้วเด้ง error ภาษาอังกฤษ — ปล่อยให้ validator ด้านล่างคุมความยาวเพื่อให้ข้อความเป็นไทยทั้งหมด
+    osm_code: Optional[str] = Field(
+        None,
+        description="เลขบัตร อสม. (15 หลัก) แก้ไขได้เฉพาะตอนอัปเดต ส่งค่าว่างมา = ไม่แก้ไข",
+    )
     prefix_id: Optional[uuid.UUID] = None
     first_name: Optional[str] = Field(None, max_length=100)
     last_name: Optional[str] = Field(None, max_length=100)
@@ -290,6 +296,20 @@ class OsmUpdateSchema(BaseModel):
     def validate_optional_citizen_id(cls, v):
         if v and not v.isdigit():
             raise ValueError('เลขบัตรประชาชนต้องเป็นตัวเลขเท่านั้น')
+        return v
+
+    @validator('osm_code')
+    def validate_optional_osm_code(cls, v):
+        # ช่องว่างถือว่า "ไม่แก้ไข" (service จะตัดออกก่อนบันทึก) ไม่ใช่ "ล้างเลขบัตร"
+        if v is None:
+            return None
+        v = v.strip()
+        if not v:
+            return None
+        if not v.isdigit():
+            raise ValueError('เลขบัตร อสม. ต้องเป็นตัวเลขเท่านั้น')
+        if len(v) != 15:
+            raise ValueError('เลขบัตร อสม. ต้องมี 15 หลัก')
         return v
 
     @validator('phone')

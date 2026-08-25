@@ -117,6 +117,10 @@ async def get_osm_by_id(
     if not await PermissionService.is_officer(current_user):
         if current_user.get("user_type") != "osm" or current_user.get("user_id") != osm_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+    else:
+        # เจ้าหน้าที่: จำกัดให้เห็นได้เฉพาะ อสม. ในพื้นที่รับผิดชอบ (กติกาเดียวกับหน้ารายชื่อ)
+        await PermissionService.ensure_officer_can_view_osm(current_user, osm_id)
+
     result = await OsmController.get_osm_by_id(osm_id, current_user)
     return result
 

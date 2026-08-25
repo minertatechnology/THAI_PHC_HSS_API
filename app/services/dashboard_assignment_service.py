@@ -43,6 +43,10 @@ class DashboardAssignmentService:
         osm_status_filter: Optional[str] = None,
         approval_status_filter: Optional[str] = None,
         search: Optional[str] = None,
+        citizen_id: Optional[str] = None,
+        osm_code: Optional[str] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
         page: int = 1,
         page_size: int = 10,
         order_by: Optional[str] = None,
@@ -71,6 +75,10 @@ class DashboardAssignmentService:
             osm_status_filter=osm_status_filter,
             approval_status=approval_status,
             search=search,
+            citizen_id=citizen_id,
+            osm_code=osm_code,
+            first_name=first_name,
+            last_name=last_name,
         )
 
         aggregates = await cls._aggregate_by_province(
@@ -83,6 +91,10 @@ class DashboardAssignmentService:
             osm_status_filter=osm_status_filter,
             approval_status=approval_status,
             search=search,
+            citizen_id=citizen_id,
+            osm_code=osm_code,
+            first_name=first_name,
+            last_name=last_name,
         )
 
         total = await filtered_query.count()
@@ -123,6 +135,10 @@ class DashboardAssignmentService:
         osm_status_filter: Optional[str],
         approval_status: Optional[str],
         search: Optional[str],
+        citizen_id: Optional[str] = None,
+        osm_code: Optional[str] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
     ):
         query = OSMProfile.filter(deleted_at__isnull=True)
         
@@ -184,6 +200,34 @@ class DashboardAssignmentService:
                 # ส่งค่าอื่น (เช่น "inactive") = พ้นสภาพทั้งหมด (osm_status not null and not empty)
                 query = query.filter(~Q(osm_status="") & Q(osm_status__isnull=False))
 
+        # ── ค้นหาแบบเจาะจงคอลัมน์ ──
+        # ต่างจาก `search` (ค้นข้ามหลายคอลัมน์) — ใช้เมื่อผู้ใช้กรอกช่องเฉพาะ
+        # เพื่อไม่ให้เลขบัตร อสม. ไปแมตช์กับเลขบัตรประชาชนของคนอื่นโดยไม่ตั้งใจ
+        if citizen_id:
+            digits = "".join(ch for ch in citizen_id if ch.isdigit())
+            if digits:
+                # ครบ 13 หลัก = ต้องตรงเป๊ะ, ไม่ครบ = ค้นแบบขึ้นต้นด้วย (คาดเดาได้กว่า contains)
+                if len(digits) >= 13:
+                    query = query.filter(citizen_id=digits[:13])
+                else:
+                    query = query.filter(citizen_id__startswith=digits)
+
+        if osm_code:
+            code = osm_code.strip()
+            if code:
+                query = query.filter(osm_code__icontains=code)
+
+        # ชื่อ/นามสกุล กรอกแยกช่อง → AND กัน (กรอกทั้งคู่ = ต้องตรงทั้งสองอย่าง)
+        if first_name:
+            name = first_name.strip()
+            if name:
+                query = query.filter(first_name__icontains=name)
+
+        if last_name:
+            surname = last_name.strip()
+            if surname:
+                query = query.filter(last_name__icontains=surname)
+
         if search:
             keyword = search.strip()
             if keyword:
@@ -212,6 +256,10 @@ class DashboardAssignmentService:
         osm_status_filter: Optional[str],
         approval_status: Optional[str],
         search: Optional[str],
+        citizen_id: Optional[str] = None,
+        osm_code: Optional[str] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         aggregate_query = cls._build_queryset(
             scope_filter=scope_filter,
@@ -223,6 +271,10 @@ class DashboardAssignmentService:
             osm_status_filter=osm_status_filter,
             approval_status=approval_status,
             search=search,
+            citizen_id=citizen_id,
+            osm_code=osm_code,
+            first_name=first_name,
+            last_name=last_name,
         )
 
         rows = await (

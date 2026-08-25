@@ -406,6 +406,10 @@ async def run_export_job(job_id: str, current_user: dict, filters: Dict[str, Any
         osm_status_filter=filters.get("osmStatus"),
         approval_status=approval_status,
         search=filters.get("search"),
+        citizen_id=filters.get("citizenId"),
+        osm_code=filters.get("osmCode"),
+        first_name=filters.get("firstName"),
+        last_name=filters.get("lastName"),
     )
 
     total = await base_query.count()

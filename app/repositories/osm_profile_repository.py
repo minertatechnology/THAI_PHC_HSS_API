@@ -22,6 +22,7 @@ from tortoise import connections
 from tortoise.expressions import Q
 from typing import Dict, Any, List, Optional
 import datetime
+import uuid as _uuid
 import bcrypt as _bcrypt
 from app.utils.logging_utils import get_logger
 
@@ -599,16 +600,31 @@ class OSMProfileRepository:
             logger.error(f"Error loading OSM profile for management {osm_id}: {exc}")
             raise
 
-    async def find_osm_by_id(osm_id: str):
+    async def find_osm_by_id(osm_id: str, *, include_deleted: bool = False):
         """
         ค้นหา OSM Profile ด้วย ID
+
+        include_deleted=False (ค่าเริ่มต้น) จะไม่คืนระเบียนที่ถูก soft-delete แล้ว
+        เพื่อให้ตรงกับหน้ารายชื่อ (/dashboard/assignments) ที่กรอง deleted_at IS NULL อยู่แล้ว
         """
+        # id ที่ไม่ใช่ UUID จะทำให้ query พังที่ระดับ driver แล้วกลายเป็น 500
+        # ถือว่า "ไม่พบข้อมูล" แทน เพื่อให้ caller ตอบ 404 ตามความเป็นจริง
+        if not OSMProfileRepository._is_valid_uuid(osm_id):
+            logger.warning("find_osm_by_id received a non-UUID id: %r", osm_id)
+            return None
+
+        osm_id = str(osm_id).strip()
+
         try:
             # ใช้ prefetch_related เฉพาะ forward relations
-            osm_profile = await OSMProfile.filter(id=osm_id).prefetch_related(
+            base_query = OSMProfile.filter(id=osm_id)
+            if not include_deleted:
+                base_query = base_query.filter(deleted_at__isnull=True)
+
+            osm_profile = await base_query.prefetch_related(
                 *OSMProfileRepository._get_forward_related_fields()
             ).first()
-            
+
             if not osm_profile:
                 return None
             
@@ -684,11 +700,24 @@ class OSMProfileRepository:
                 "trainings": trainings,
             }
         except Exception as e:
+            logger.exception("Error finding OSM profile osm_id=%s", osm_id)
             raise HTTPException(
                 status_code=500,
                 detail=f"เกิดข้อผิดพลาดในการค้นหา OSM: {str(e)}"
             )
-        
+
+    @staticmethod
+    def _is_valid_uuid(value: Any) -> bool:
+        if isinstance(value, _uuid.UUID):
+            return True
+        if not isinstance(value, str) or not value.strip():
+            return False
+        try:
+            _uuid.UUID(value.strip())
+            return True
+        except (ValueError, AttributeError, TypeError):
+            return False
+
     async def is_citizen_id_exist_and_is_first_login(citizen_id: str):
         """
         ค้นหา OSM Profile ด้วยเลขบัตรประชาชน
@@ -711,6 +740,30 @@ class OSMProfileRepository:
             return result[0]
         else:
             return None 
+
+    @staticmethod
+    async def exists_by_osm_code(osm_code: str, exclude_id: Optional[str] = None) -> bool:
+        """
+        ตรวจว่าเลขบัตร อสม. นี้ถูกใช้โดยโปรไฟล์อื่นอยู่แล้วหรือไม่
+
+        osm_code ไม่มี unique constraint ที่ระดับ DB (index อย่างเดียว) จึงต้องเช็คที่ชั้น
+        application ก่อนบันทึก มิฉะนั้นการแก้ไขเลขบัตรด้วยมือจะทำให้เกิดเลขซ้ำได้
+        ข้ามโปรไฟล์ที่ถูกลบแล้ว (soft-delete) เพื่อไม่ให้เลขเก่าไปบล็อกการใช้งานจริง
+        """
+        if not osm_code:
+            return False
+        try:
+            query = OSMProfile.filter(osm_code=osm_code, deleted_at__isnull=True)
+            if exclude_id:
+                query = query.exclude(id=exclude_id)
+            return await query.exists()
+        except Exception as e:
+            logger.error(f"Error checking duplicate osm_code={osm_code}: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"เกิดข้อผิดพลาดในการตรวจสอบเลขบัตร อสม.: {str(e)}"
+            )
+
     async def find_osm_by_citizen_id(citizen_id: str):
         """
         ค้นหา OSM Profile ด้วยเลขบัตรประชาชน
