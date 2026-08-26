@@ -649,26 +649,8 @@ class OsmService:
                         detail="เลขบัตรประชาชนนี้มีอยู่ในระบบแล้ว"
                     )
 
-            # ตรวจสอบเลขบัตร อสม. ซ้ำ (ถ้ามีการเปลี่ยนแปลง)
-            # osm_code ไม่มี unique constraint ที่ DB จึงต้องกันเลขซ้ำที่ชั้นนี้
-            new_osm_code = (osm_data.osm_code or "").strip()
-            if new_osm_code and new_osm_code != (existing_osm.osm_code or ""):
-                if await OSMProfileRepository.exists_by_osm_code(
-                    new_osm_code, exclude_id=str(existing_osm.id)
-                ):
-                    raise HTTPException(
-                        status_code=400,
-                        detail="เลขบัตร อสม. นี้มีอยู่ในระบบแล้ว"
-                    )
-
             # อัปเดตข้อมูล
             update_data = osm_data.model_dump(exclude_unset=True)
-
-            # เลขบัตร อสม. ที่ส่งมาเป็นค่าว่าง = "ไม่แก้ไข" ไม่ใช่ "ล้างค่า"
-            # (repository ถือว่า osm_code=None คือสั่งล้างเป็น NULL ซึ่งจะทำให้เลขบัตรหายโดยไม่ตั้งใจ
-            #  เมื่อผู้ใช้เปิดหน้าแก้ไขแล้วช่องนี้ว่างอยู่)
-            if "osm_code" in update_data and not update_data.get("osm_code"):
-                update_data.pop("osm_code", None)
 
             # ── แยกข้อมูล nested relation ออกจาก flat fields ──
             # trainings เป็นข้อมูลในตารางแยก (osm_profile_trainings) ไม่ใช่ field บน OSMProfile

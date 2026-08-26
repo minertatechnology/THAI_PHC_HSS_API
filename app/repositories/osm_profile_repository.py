@@ -741,29 +741,6 @@ class OSMProfileRepository:
         else:
             return None 
 
-    @staticmethod
-    async def exists_by_osm_code(osm_code: str, exclude_id: Optional[str] = None) -> bool:
-        """
-        ตรวจว่าเลขบัตร อสม. นี้ถูกใช้โดยโปรไฟล์อื่นอยู่แล้วหรือไม่
-
-        osm_code ไม่มี unique constraint ที่ระดับ DB (index อย่างเดียว) จึงต้องเช็คที่ชั้น
-        application ก่อนบันทึก มิฉะนั้นการแก้ไขเลขบัตรด้วยมือจะทำให้เกิดเลขซ้ำได้
-        ข้ามโปรไฟล์ที่ถูกลบแล้ว (soft-delete) เพื่อไม่ให้เลขเก่าไปบล็อกการใช้งานจริง
-        """
-        if not osm_code:
-            return False
-        try:
-            query = OSMProfile.filter(osm_code=osm_code, deleted_at__isnull=True)
-            if exclude_id:
-                query = query.exclude(id=exclude_id)
-            return await query.exists()
-        except Exception as e:
-            logger.error(f"Error checking duplicate osm_code={osm_code}: {e}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"เกิดข้อผิดพลาดในการตรวจสอบเลขบัตร อสม.: {str(e)}"
-            )
-
     async def find_osm_by_citizen_id(citizen_id: str):
         """
         ค้นหา OSM Profile ด้วยเลขบัตรประชาชน

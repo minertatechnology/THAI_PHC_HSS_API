@@ -224,12 +224,9 @@ class OsmCreateSchema(OsmDetailSchema):
 class OsmUpdateSchema(BaseModel):
     # Optional fields for update (same structure as creation but all nullable)
     citizen_id: Optional[str] = Field(None, min_length=13, max_length=13)
-    # ไม่ใส่ max_length ที่ Field เพราะ constraint ของ pydantic จะทำงานก่อน validator
-    # แล้วเด้ง error ภาษาอังกฤษ — ปล่อยให้ validator ด้านล่างคุมความยาวเพื่อให้ข้อความเป็นไทยทั้งหมด
-    osm_code: Optional[str] = Field(
-        None,
-        description="เลขบัตร อสม. (15 หลัก) แก้ไขได้เฉพาะตอนอัปเดต ส่งค่าว่างมา = ไม่แก้ไข",
-    )
+    # เลขบัตร อสม. — รับค่าตามที่ผู้ใช้กรอก ไม่ตรวจรูปแบบและไม่จำกัดความยาว
+    # (จงใจไม่ใส่ validator/constraint ใด ๆ เพื่อไม่ให้ข้อมูลเดิมในระบบถูกบล็อกการบันทึก)
+    osm_code: Optional[str] = None
     prefix_id: Optional[uuid.UUID] = None
     first_name: Optional[str] = Field(None, max_length=100)
     last_name: Optional[str] = Field(None, max_length=100)
@@ -316,22 +313,6 @@ class OsmUpdateSchema(BaseModel):
         """
         if isinstance(v, str) and not v.strip():
             return None
-        return v
-
-    @validator('osm_code')
-    def validate_optional_osm_code(cls, v):
-        # ช่องว่างถือว่า "ไม่แก้ไข" (service จะตัดออกก่อนบันทึก) ไม่ใช่ "ล้างเลขบัตร"
-        if v is None:
-            return None
-        v = v.strip()
-        if not v:
-            return None
-        if not v.isdigit():
-            raise ValueError('เลขบัตร อสม. ต้องเป็นตัวเลขเท่านั้น')
-        # ไม่บังคับ 15 หลัก เพราะข้อมูลเดิมในระบบมีความยาวไม่เท่ากัน การบังคับจะทำให้
-        # โปรไฟล์เก่าบันทึกไม่ได้เลยแม้แก้ไขฟิลด์อื่น — คุมแค่ไม่ให้เกินความยาวคอลัมน์ (50)
-        if len(v) > 50:
-            raise ValueError('เลขบัตร อสม. ยาวเกินกำหนด (ไม่เกิน 50 หลัก)')
         return v
 
     @validator('phone')
