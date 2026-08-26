@@ -298,6 +298,26 @@ class OsmUpdateSchema(BaseModel):
             raise ValueError('เลขบัตรประชาชนต้องเป็นตัวเลขเท่านั้น')
         return v
 
+    @validator(
+        'health_service_id',
+        'province_id',
+        'district_id',
+        'subdistrict_id',
+        'village_no',
+        'postal_code',
+        pre=True,
+    )
+    def _blank_string_to_none(cls, v):
+        """แปลงสตริงว่างเป็น None ก่อนลงฐานข้อมูล
+
+        ฟิลด์กลุ่มนี้ประกาศเป็น Optional[str] (ไม่ใช่ UUID) สตริงว่าง "" จึงผ่าน validation
+        มาได้ แล้วไปพังตอนเขียนคอลัมน์ UUID/FK เป็น 500 แทนที่จะเป็น "ไม่ระบุค่า"
+        เคสที่เจอบ่อย: เปลี่ยนจังหวัด/อำเภอ/ตำบล แล้ว frontend reset หน่วยบริการเป็น ""
+        """
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
+
     @validator('osm_code')
     def validate_optional_osm_code(cls, v):
         # ช่องว่างถือว่า "ไม่แก้ไข" (service จะตัดออกก่อนบันทึก) ไม่ใช่ "ล้างเลขบัตร"
@@ -308,8 +328,10 @@ class OsmUpdateSchema(BaseModel):
             return None
         if not v.isdigit():
             raise ValueError('เลขบัตร อสม. ต้องเป็นตัวเลขเท่านั้น')
-        if len(v) != 15:
-            raise ValueError('เลขบัตร อสม. ต้องมี 15 หลัก')
+        # ไม่บังคับ 15 หลัก เพราะข้อมูลเดิมในระบบมีความยาวไม่เท่ากัน การบังคับจะทำให้
+        # โปรไฟล์เก่าบันทึกไม่ได้เลยแม้แก้ไขฟิลด์อื่น — คุมแค่ไม่ให้เกินความยาวคอลัมน์ (50)
+        if len(v) > 50:
+            raise ValueError('เลขบัตร อสม. ยาวเกินกำหนด (ไม่เกิน 50 หลัก)')
         return v
 
     @validator('phone')

@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 import logging
 import os
 import time
+import traceback
+import uuid as _uuid
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -127,7 +129,12 @@ def _json_safe(value):
         return {key: _json_safe(val) for key, val in value.items()}
     if isinstance(value, (list, tuple, set)):
         return [_json_safe(item) for item in value]
-    return value
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    # pydantic v2 ใส่ ctx={"error": ValueError(...)} มาใน errors() ของ validator ที่ raise ValueError
+    # ถ้าปล่อยผ่าน json.dumps จะพังเป็น TypeError *ภายใน exception handler เอง*
+    # กลายเป็น 500 plain text ที่ไม่มี CORS header — หน้าเว็บจะไม่เห็น error อะไรเลย
+    return str(value)
 
 
 @app.exception_handler(RequestValidationError)
@@ -141,6 +148,52 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
 async def validation_exception_handler(request: Request, exc: ValidationError):
     detail = _json_safe(exc.errors())
     return JSONResponse(status_code=422, content={"detail": detail})
+
+
+def _cors_headers_for(request: Request) -> dict:
+    """สร้าง CORS header เองสำหรับ error response
+
+    จำเป็นเพราะ ServerErrorMiddleware ของ Starlette อยู่ "ชั้นนอกสุด" เหนือ CORSMiddleware
+    response ที่ออกจากตรงนั้นจึงไม่เคยผ่าน CORSMiddleware → browser บล็อกทิ้ง →
+    frontend เห็นเป็น network/CORS error แทนที่จะเห็นข้อความจริง (debug ไม่ได้เลย)
+    """
+    origin = request.headers.get("origin")
+    if not origin:
+        return {}
+    if "*" not in ALLOWED_ORIGINS and origin not in ALLOWED_ORIGINS:
+        return {}
+    return {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+        "Vary": "Origin",
+    }
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """ดัก exception ที่ไม่มีใครดัก แล้วตอบเป็น JSON แทน plain text 'Internal Server Error'
+
+    เดิมทีจะได้ response 21 bytes ที่ไม่มี CORS header ทำให้หน้าเว็บขึ้นแค่
+    "ไม่สามารถบันทึกข้อมูลได้" โดยไม่มีเบาะแสใด ๆ และ traceback ก็หาไม่เจอใน log
+    ตอนนี้ทุกเคสจะมี error_id ที่ใช้ grep ใน log ของ pod ได้ทันที
+    """
+    error_id = _uuid.uuid4().hex[:12]
+    logger.error(
+        "UNHANDLED_EXCEPTION error_id=%s %s %s\n%s",
+        error_id,
+        request.method,
+        request.url.path,
+        "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": f"เกิดข้อผิดพลาดภายในระบบ (รหัสอ้างอิง: {error_id})",
+            "error_id": error_id,
+            "error_type": type(exc).__name__,
+        },
+        headers=_cors_headers_for(request),
+    )
 
 # =========================
 # Routers
