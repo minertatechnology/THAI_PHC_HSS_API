@@ -9,7 +9,6 @@ from app.api.v1.schemas.thirdparty_schema import (
     ThirdPartyAddressSchema,
 )
 from app.repositories.osm_profile_repository import OSMProfileRepository
-from app.models.enum_models import ApprovalStatus, OsmStatusEnum
 
 thirdparty_router = APIRouter(prefix="/thirdparty", tags=["thirdparty"])
 
@@ -53,16 +52,11 @@ async def get_data_osm_cgd(
     ใช้ Fix Key จาก Authorization header
     """
     try:
-        osm = await OSMProfileRepository.find_osm_by_citizen_id(body.citizen_id)
-
-        # กรองเฉพาะที่อนุมัติแล้ว + active + สถานะปกติ + ไม่ถูกลบ
-        if osm and (
-            osm.approval_status != ApprovalStatus.APPROVED
-            or not osm.is_active
-            or osm.osm_status not in (OsmStatusEnum.ACTIVE, None)
-            or osm.deleted_at is not None
-        ):
-            osm = None
+        # กรองในระดับ query: อนุมัติแล้ว + active + สถานะปกติ ('' หรือ NULL) + ไม่ถูกลบ
+        # (1 เลขบัตรมีได้หลาย record จึงกรองใน query ไม่ใช่กรองหลังดึง)
+        osm = await OSMProfileRepository.find_osm_by_citizen_id_for_thirdparty(
+            body.citizen_id
+        )
 
         if not osm:
             return ThirdPartyOsmResponse(

@@ -767,6 +767,46 @@ class OSMProfileRepository:
                 detail=f"เกิดข้อผิดพลาดในการค้นหา OSM: {str(e)}"
             )
 
+    async def find_osm_by_citizen_id_for_thirdparty(citizen_id: str):
+        """
+        ค้นหา OSM Profile ด้วยเลขบัตรประชาชน สำหรับ Third Party (CGD)
+        เงื่อนไข: approval_status = 'approved' AND is_active = TRUE
+                 AND (osm_status = '' OR osm_status IS NULL) AND deleted_at IS NULL
+
+        หมายเหตุ: 1 เลขบัตรมีได้หลาย record (record เก่าที่ rejected/พ้นสภาพ + record ปัจจุบัน)
+        จึงต้องกรองใน query ไม่ใช่ดึงมาแล้วค่อยกรองใน Python
+        """
+        try:
+            osm_profile = (
+                await OSMProfile
+                .filter(
+                    Q(citizen_id=citizen_id)
+                    & Q(approval_status=ApprovalStatus.APPROVED)
+                    & Q(is_active=True)
+                    & (Q(osm_status__isnull=True) | Q(osm_status=""))
+                    & Q(deleted_at__isnull=True)
+                )
+                .order_by("-created_at")
+                .prefetch_related(*OSMProfileRepository._get_forward_related_fields())
+                .first()
+            )
+
+            if not osm_profile:
+                return None
+
+            # ใช้ fetch_related สำหรับ reverse relations
+            try:
+                await osm_profile.fetch_related(*OSMProfileRepository._get_reverse_related_fields())
+            except Exception as e:
+                print(f"Warning: Could not fetch reverse relations: {e}")
+
+            return osm_profile
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"เกิดข้อผิดพลาดในการค้นหา OSM (third party): {str(e)}"
+            )
+
     async def find_active_osm_by_citizen_id(citizen_id: str):
         """
         ดึง OSM Profile record 'active' (ยังไม่พ้นสภาพ + ยังไม่ถูกลบ) ด้วยเลขบัตรประชาชน
