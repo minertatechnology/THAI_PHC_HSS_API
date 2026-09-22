@@ -988,6 +988,7 @@ class LookupService:
                 "name_th": row.position_name_th,
                 "name_en": row.position_name_en,
                 "legacy_code": row.legacy_code,
+                "position_level": getattr(row.position_level, "value", row.position_level),
                 "is_active": row.is_active,
                 "label": LookupService._build_label(row.position_name_th, row.position_name_en)
                 or (str(row.legacy_code) if row.legacy_code is not None else None)

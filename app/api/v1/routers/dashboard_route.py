@@ -315,7 +315,7 @@ async def get_dashboard_assignments(
         description="ค้นหาเฉพาะนามสกุล (แบบมีคำนี้อยู่ในนามสกุล)",
     ),
     page: int = Query(1, ge=1, description="หน้าปัจจุบัน"),
-    pageSize: int = Query(10, ge=1, le=200, description="จำนวนรายการต่อหน้า"),
+    pageSize: int = Query(10, ge=1, le=1000, description="จำนวนรายการต่อหน้า"),
     orderBy: Optional[str] = Query(
         None,
         alias="order_by",

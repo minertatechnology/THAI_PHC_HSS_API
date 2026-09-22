@@ -11,6 +11,7 @@ from app.api.v1.schemas.oauth2_schema import (
     SetPasswordResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
+    DeleteAccountResponse,
     DirectLoginRequest,
     TokenResponse,
     RefreshRequest,
@@ -91,6 +92,20 @@ async def change_password(
     current_user: dict = Depends(get_current_user),
 ):
     return await Oauth2Controller.change_password(payload, current_user)
+
+@oauth2_router.delete("/me", response_model=DeleteAccountResponse)
+async def delete_my_account(
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Self-service account deletion (App Store 5.1.1(v)).
+
+    Deletes the caller's own gen_h / yuwa_osm profile (including credentials and
+    uploaded images), revokes all tokens and consents. Other user types are
+    managed by officials and get 403.
+    """
+    return await Oauth2Controller.delete_my_account(current_user, request)
+
 
 @oauth2_router.post("/login")
 async def oauth2_login(

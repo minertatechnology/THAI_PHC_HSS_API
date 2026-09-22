@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, Path, Query, HTTPException, status, Body, File, UploadFile
+from fastapi import APIRouter, Request, Depends, Path, Query, HTTPException, status, Body, File, Form, UploadFile
 from app.api.v1.schemas.query_schema import OsmQueryParams
 from app.api.v1.controllers.osm_controller import OsmController
 from app.api.v1.schemas.osm_schema import (
@@ -16,7 +16,7 @@ from app.api.v1.schemas.response_schema import (
     OsmProfileSummaryResponse,
     OsmCreateResponse,
 )
-from app.api.v1.schemas.upload_schema import ProfileImageUploadResponse
+from app.api.v1.schemas.upload_schema import ProfileImageUploadResponse, ClubPositionAttachmentUploadResponse
 from app.api.middleware.middleware import (
     get_current_user,
     get_current_user_optional,
@@ -24,6 +24,7 @@ from app.api.middleware.middleware import (
 )
 from app.services.permission_service import PermissionService
 from app.services.profile_image_service import ProfileImageService
+from app.services.club_position_attachment_service import ClubPositionAttachmentService
 from app.repositories.osm_profile_repository import OSMProfileRepository
 from app.models.enum_models import AdministrativeLevelEnum
 from typing import List
@@ -168,6 +169,31 @@ async def upload_osm_profile_image(
     actor_id = str(current_user.get("user_id") or osm_id)
     await OSMProfileRepository.update_osm(osm_id, {"profile_image": stored_path}, actor_id)
     return ProfileImageUploadResponse(image_url=stored_path)
+
+
+@osm_router.post(
+    "/club-position-attachments",
+    response_model=ClubPositionAttachmentUploadResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_club_position_attachment(
+    file: UploadFile = File(..., description="ไฟล์แนบ (รูปภาพ: jpg/png/webp, หนังสือรับรอง: pdf/jpg/png)"),
+    kind: str = Form("image", description="image | certificate"),
+    current_user: dict = Depends(require_scopes({"profile"})),
+):
+    """อัปโหลดไฟล์แนบของตำแหน่งชมรม อสม. (ขั้นตอนที่ 4 ของฟอร์ม)
+
+    อัปโหลดแยกก่อน แล้วนำ `path` ที่ได้ไปใส่ใน club_positions[].image_path / certificate_path
+    ตอน POST /osm/new หรือ PUT /osm/{osm_id} (ทำแบบนี้เพื่อให้ใช้ได้ทั้งตอนสร้างใหม่ที่ยังไม่มี osm_id)
+    """
+    if not await PermissionService.is_officer(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+    stored_path = await ClubPositionAttachmentService.upload(file=file, kind=kind)
+    return ClubPositionAttachmentUploadResponse(
+        kind=str(kind).strip().lower(),
+        path=stored_path,
+        url=f"/{stored_path}",
+    )
 
 
 @osm_router.patch("/{osm_id}/status")

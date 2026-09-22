@@ -25,6 +25,12 @@ class ChangePasswordResponse(BaseModel):
     message: str = "password_changed"
 
 
+class DeleteAccountResponse(BaseModel):
+    success: bool = True
+    message: str = "account_deleted"
+    user_type: str | None = None
+
+
 class PreLoginRequest(BaseModel):
     citizen_id: str
     user_type: Optional[UserType] = None

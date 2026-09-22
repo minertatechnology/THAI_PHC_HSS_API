@@ -215,7 +215,8 @@ async def list_osm_club_positions(
     include_inactive: bool = Query(False, description="รวมรายการที่ปิดใช้งาน"),
     _: dict = Depends(_require_profile_scope),
 ):
-    cache_key = f"lookup:osm-club:{keyword}:{limit}:{include_inactive}"
+    # v2: เพิ่ม position_level ใน item (เปลี่ยน key เพื่อไม่ให้ cache เดิมที่ไม่มี field นี้ค้าง)
+    cache_key = f"lookup:osm-club:v2:{keyword}:{limit}:{include_inactive}"
     cached = await cache_get(cache_key)
     if cached is not None:
         return cached

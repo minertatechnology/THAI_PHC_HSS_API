@@ -438,6 +438,11 @@ class OSMProfileRepository:
                             osm_profile_id=osm_profile.id,
                             club_position_id=club_item.club_position_id,
                             appointed_level=club_item.appointed_level,
+                            term_start_year=getattr(club_item, "term_start_year", None),
+                            term_end_year=getattr(club_item, "term_end_year", None),
+                            appointed_date=getattr(club_item, "appointed_date", None),
+                            image_path=getattr(club_item, "image_path", None),
+                            certificate_path=getattr(club_item, "certificate_path", None),
                             created_by=audit_user_id,
                             updated_by=audit_user_id,
                         )
@@ -1319,6 +1324,11 @@ class OSMProfileRepository:
                     osm_profile_id=osm_id,
                     club_position_id=club_position_id,
                     appointed_level=appointed_level,
+                    term_start_year=getattr(cp, "term_start_year", None),
+                    term_end_year=getattr(cp, "term_end_year", None),
+                    appointed_date=getattr(cp, "appointed_date", None),
+                    image_path=getattr(cp, "image_path", None),
+                    certificate_path=getattr(cp, "certificate_path", None),
                     created_by=user_id,
                     updated_by=user_id,
                 )

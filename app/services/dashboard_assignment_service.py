@@ -62,7 +62,7 @@ class DashboardAssignmentService:
         approval_status = cls._parse_approval_status(approval_status_filter)
 
         safe_page = max(page, 1)
-        safe_page_size = max(1, min(page_size, 200))
+        safe_page_size = max(1, min(page_size, 1000))
         offset = (safe_page - 1) * safe_page_size
 
         filtered_query = cls._build_queryset(

@@ -348,6 +348,8 @@ class OsmClubPosition(models.Model):
     position_name_th = fields.CharField(max_length=255, index=True)
     position_name_en = fields.CharField(max_length=255, null=True)
     legacy_code = fields.IntField(null=True, unique=True, index=True)
+    # ระดับของตำแหน่ง (หมู่บ้าน→ประเทศ) ใช้กับเงื่อนไขอายุงานขั้นต่ำของประธาน + รายงานประธานแต่ละระดับ
+    position_level = fields.CharEnumField(AdministrativeLevelEnum, null=True, index=True)
     is_active = fields.BooleanField(default=True, index=True)
     created_by = fields.CharField(max_length=255, null=True, index=True)
     updated_by = fields.CharField(max_length=255, null=True, index=True)
@@ -370,6 +372,14 @@ class OsmProfileClubPosition(models.Model):
         related_name="profile_assignments",
     )
     appointed_level = fields.CharField(max_length=255, null=True)
+    # วาระการดำรงตำแหน่ง (พ.ศ.) เช่น 2567-2570
+    term_start_year = fields.IntField(null=True, index=True)
+    term_end_year = fields.IntField(null=True)
+    # วันที่ได้รับการคัดเลือก
+    appointed_date = fields.DateField(null=True)
+    # ไฟล์แนบ: รูปภาพ / หนังสือรับรอง (path ใต้ uploads/)
+    image_path = fields.CharField(max_length=1024, null=True)
+    certificate_path = fields.CharField(max_length=1024, null=True)
     created_by = fields.CharField(max_length=255, null=False, index=True)
     updated_by = fields.CharField(max_length=255, null=True, index=True)
     created_at = fields.DatetimeField(auto_now_add=True, index=True)

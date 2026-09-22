@@ -1,5 +1,6 @@
 from typing import Any, List
 from app.services.oauth2_service import Oauth2Service
+from app.services.account_deletion_service import AccountDeletionService
 from fastapi import Request
 from app.api.v1.schemas.oauth2_schema import (
     CreateClientSchema,
@@ -119,4 +120,10 @@ class Oauth2Controller:
     @staticmethod
     async def change_password(payload: ChangePasswordRequest, current_user: dict):
         return await Oauth2Service.change_password(current_user, payload)
+
+    @staticmethod
+    async def delete_my_account(current_user: dict, request: Request | None = None):
+        ip = request.client.host if request and request.client else None
+        user_agent = request.headers.get("user-agent") if request else None
+        return await AccountDeletionService.delete_my_account(current_user, ip=ip, user_agent=user_agent)
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import List, Optional
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
@@ -972,28 +973,146 @@ class StandardReportService:
         )
 
     # ------------------------------------------------------------------
-    # President list (ตำแหน่งที่มีคำว่า ประธาน)
+    # President list — ฐานข้อมูลประธานชมรม อสม. แต่ละระดับ
+    # อ่านจาก osm_profile_club_positions (ขั้นตอนที่ 4 ตำแหน่งชมรม อสม.)
     # ------------------------------------------------------------------
+
+    # ระดับตำแหน่งชมรม: ถ้า lookup ยังไม่ได้ตั้ง position_level ให้เดาจากชื่อตำแหน่ง
+    _CLUB_LEVEL_EXPR = """COALESCE(
+            o.position_level::text,
+            CASE
+                WHEN o.position_name_th LIKE '%หมู่บ้าน%' THEN 'village'
+                WHEN o.position_name_th LIKE '%ตำบล%' THEN 'subdistrict'
+                WHEN o.position_name_th LIKE '%อำเภอ%' THEN 'district'
+                WHEN o.position_name_th LIKE '%จังหวัด%' THEN 'province'
+                WHEN o.position_name_th LIKE '%เขต%' THEN 'area'
+                WHEN o.position_name_th LIKE '%ภาค%' THEN 'region'
+                WHEN o.position_name_th LIKE '%ประเทศ%' OR o.position_name_th LIKE '%ชาติ%' THEN 'country'
+                ELSE NULL
+            END
+        )"""
+
+    # ลำดับการแสดงผลตามระดับ (ประเทศ → หมู่บ้าน)
+    _CLUB_LEVEL_RANK_EXPR = f"""CASE {_CLUB_LEVEL_EXPR}
+            WHEN 'country' THEN 1
+            WHEN 'region' THEN 2
+            WHEN 'area' THEN 3
+            WHEN 'province' THEN 4
+            WHEN 'district' THEN 5
+            WHEN 'subdistrict' THEN 6
+            WHEN 'village' THEN 7
+            ELSE 99
+        END"""
+
+    # วันที่ขึ้นทะเบียน อสม. (ใช้คำนวณระยะเวลาการเป็น อสม.) — fallback จาก osm_year (พ.ศ.)
+    _OSM_REGISTERED_EXPR = """COALESCE(
+            op.osm_registered_date,
+            CASE
+                WHEN op.osm_year IS NOT NULL AND op.osm_year BETWEEN 2400 AND 2700
+                THEN make_date(op.osm_year - 543, 1, 1)
+                ELSE NULL
+            END
+        )"""
+
+    _CLUB_LEVEL_LABELS = {
+        "country": "ระดับประเทศ",
+        "region": "ระดับภาค",
+        "area": "ระดับเขตสุขภาพ",
+        "province": "ระดับจังหวัด",
+        "district": "ระดับอำเภอ",
+        "subdistrict": "ระดับตำบล",
+        "village": "ระดับหมู่บ้าน",
+    }
+
+    _THAI_MONTHS = [
+        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม",
+    ]
+
+    @staticmethod
+    def _thai_date_label(value) -> Optional[str]:
+        if not value:
+            return None
+        try:
+            return f"{value.day} {StandardReportService._THAI_MONTHS[value.month - 1]} {value.year + 543}"
+        except Exception:  # noqa: BLE001
+            return str(value)
+
+    @staticmethod
+    def _years_between(start, today) -> Optional[int]:
+        """จำนวนปีเต็มระหว่าง start ถึง today (None ถ้าไม่มี start)"""
+        if not start:
+            return None
+        years = today.year - start.year
+        if (today.month, today.day) < (start.month, start.day):
+            years -= 1
+        return max(years, 0)
+
+    @staticmethod
+    def _build_address(row: dict) -> tuple[str, str, str]:
+        """คืน (บรรทัด 1, บรรทัด 2, รวม) เช่น
+        '99/1 หมู่ 4 ต. ตลาดขวัญ' / 'อ. เมืองนนทบุรี จ. นนทบุรี 11000'"""
+        line1_parts: List[str] = []
+        address_number = str(row.get("address_number") or "").strip()
+        if address_number:
+            line1_parts.append(address_number)
+        village_no = str(row.get("village_no") or "").strip()
+        # ข้อมูลเดิมบางแถวพิมพ์หมู่มาในบ้านเลขที่แล้ว (เช่น "82 หมู่ที่ 2" / "82 ม.2") → ไม่เติมซ้ำ
+        if village_no and not re.search(r"(หมู่|หมู)(ที่)?\s*\d|ม\.\s*\d", address_number):
+            line1_parts.append(f"หมู่ {village_no}")
+        if row.get("alley"):
+            line1_parts.append(f"ซ. {str(row['alley']).strip()}")
+        if row.get("street"):
+            line1_parts.append(f"ถ. {str(row['street']).strip()}")
+        if row.get("subdistrict_name"):
+            line1_parts.append(f"ต. {row['subdistrict_name']}")
+
+        line2_parts: List[str] = []
+        if row.get("district_name"):
+            line2_parts.append(f"อ. {row['district_name']}")
+        if row.get("province_name"):
+            line2_parts.append(f"จ. {row['province_name']}")
+        if row.get("postal_code"):
+            line2_parts.append(str(row["postal_code"]).strip())
+
+        line1 = " ".join(part for part in line1_parts if part)
+        line2 = " ".join(part for part in line2_parts if part)
+        combined = " ".join(part for part in (line1, line2) if part)
+        return line1, line2, combined
 
     @staticmethod
     async def president_list(filters: PresidentListQuery) -> PresidentListResponse:
         connection = connections.get("default")
         base_params: List[object] = []
+        level_expr = StandardReportService._CLUB_LEVEL_EXPR
+        level_rank_expr = StandardReportService._CLUB_LEVEL_RANK_EXPR
+        registered_expr = StandardReportService._OSM_REGISTERED_EXPR
+
         clauses: List[str] = [
             "op.deleted_at IS NULL",
             "(op.osm_status IS NULL OR op.osm_status = '')",
-            "opp.deleted_at IS NULL",
+            "opc.deleted_at IS NULL",
             "o.deleted_at IS NULL",
             "o.is_active = TRUE",
+            # เฉพาะ "ประธาน" (ไม่รวมรองประธาน)
             "o.position_name_th ILIKE '%ประธาน%'",
+            "o.position_name_th NOT ILIKE '%รองประธาน%'",
         ]
 
         def add_filter(condition: str, value: object) -> None:
             base_params.append(value)
             clauses.append(f"{condition} ${len(base_params)}")
 
+        level = str(filters.level or "").strip().lower()
+        if level and level in StandardReportService._CLUB_LEVEL_LABELS:
+            add_filter(f"{level_expr} =", level)
+        if filters.health_area_code:
+            add_filter("p.health_area_id =", filters.health_area_code)
         if filters.area_name:
-            add_filter("COALESCE(op.village_name, s.subdistrict_name_th, d.district_name_th, p.province_name_th) ILIKE", f"%{filters.area_name}%")
+            add_filter(
+                "COALESCE(op.village_name, s.subdistrict_name_th, d.district_name_th, p.province_name_th) ILIKE",
+                f"%{filters.area_name}%",
+            )
         if filters.province_code:
             add_filter("op.province_id =", filters.province_code)
         if filters.district_code:
@@ -1005,8 +1124,39 @@ class StandardReportService:
                 base_params.append(_c)
                 _ph.append(f"${len(base_params)}")
             clauses.append(f"op.subdistrict_id IN ({', '.join(_ph)})")
+        if filters.village_code:
+            add_filter("op.village_code =", filters.village_code)
+        search = str(filters.search or "").strip()
+        if search:
+            base_params.append(f"%{search}%")
+            ph = f"${len(base_params)}"
+            clauses.append(
+                "("
+                f"op.first_name ILIKE {ph} OR op.last_name ILIKE {ph} "
+                f"OR (op.first_name || ' ' || op.last_name) ILIKE {ph} "
+                f"OR op.osm_code ILIKE {ph} OR op.citizen_id ILIKE {ph}"
+                ")"
+            )
 
         where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+
+        # เรียงลำดับ (default: ระดับประเทศ → หมู่บ้าน, วาระล่าสุดก่อน, ชื่อ)
+        sort_order = "DESC" if str(filters.sort_order or "").lower() == "desc" else "ASC"
+        sort_key = str(filters.sort_by or "").strip().lower()
+        sort_columns = {
+            "level": f"{level_rank_expr} {sort_order}",
+            "name": f"op.first_name {sort_order}, op.last_name {sort_order}",
+            # ระยะเวลาการเป็น อสม. มาก = ขึ้นทะเบียนเร็ว → กลับทิศจากวันที่
+            "osm_years": f"{registered_expr} {'ASC' if sort_order == 'DESC' else 'DESC'} NULLS LAST",
+            "term": f"opc.term_start_year {sort_order} NULLS LAST, opc.term_end_year {sort_order} NULLS LAST",
+            "appointed_date": f"opc.appointed_date {sort_order} NULLS LAST",
+        }
+        primary_sort = sort_columns.get(sort_key)
+        default_sort = (
+            f"{level_rank_expr} ASC, opc.term_start_year DESC NULLS LAST, "
+            "p.province_name_th, d.district_name_th, s.subdistrict_name_th, op.first_name, op.last_name"
+        )
+        order_sql = f"{primary_sort}, {default_sort}" if primary_sort else default_sort
 
         params = list(base_params)
         params.append(filters.page_size)
@@ -1015,12 +1165,41 @@ class StandardReportService:
         params.append(offset)
         offset_placeholder = f"${len(params)}"
 
+        from_sql = """
+        FROM osm_profile_club_positions opc
+        INNER JOIN osm_profiles op ON op.id = opc.osm_profile_id
+        INNER JOIN osm_club_positions o ON o.id = opc.club_position_id
+        LEFT JOIN prefixes pf ON pf.id = op.prefix_id
+        LEFT JOIN provinces p ON p.province_code = op.province_id
+        LEFT JOIN districts d ON d.district_code = op.district_id
+        LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
+        LEFT JOIN health_areas ha ON ha.code = p.health_area_id
+        """
+
         list_sql = f"""
         SELECT
+            opc.id AS assignment_id,
+            op.id AS osm_id,
+            op.osm_code,
+            pf.prefix_name_th AS prefix_name,
             op.first_name,
             op.last_name,
             o.position_name_th AS position_name,
-            o.position_level::text AS position_level,
+            {level_expr} AS position_level,
+            opc.appointed_level,
+            COALESCE(NULLIF(opc.image_path, ''), NULLIF(op.profile_image, '')) AS image_path,
+            op.address_number,
+            op.village_no,
+            op.alley,
+            op.street,
+            op.postal_code,
+            {registered_expr} AS osm_registered_date,
+            opc.term_start_year,
+            opc.term_end_year,
+            opc.appointed_date,
+            NULLIF(opc.certificate_path, '') AS certificate_path,
+            ha.code AS health_area_code,
+            ha.health_area_name_th AS health_area_name,
             COALESCE(op.village_name, s.subdistrict_name_th, d.district_name_th, p.province_name_th) AS area_name,
             p.province_code AS province_code,
             p.province_name_th AS province_name,
@@ -1028,14 +1207,9 @@ class StandardReportService:
             d.district_name_th AS district_name,
             s.subdistrict_code AS subdistrict_code,
             s.subdistrict_name_th AS subdistrict_name
-        FROM osm_profile_official_positions opp
-        INNER JOIN osm_profiles op ON op.id = opp.osm_profile_id
-        INNER JOIN osm_official_positions o ON o.id = opp.official_position_id
-        LEFT JOIN provinces p ON p.province_code = op.province_id
-        LEFT JOIN districts d ON d.district_code = op.district_id
-        LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
+        {from_sql}
         {where_sql}
-        ORDER BY o.position_level NULLS LAST, o.position_name_th, p.province_name_th, d.district_name_th, s.subdistrict_name_th, op.first_name, op.last_name
+        ORDER BY {order_sql}
         LIMIT {limit_placeholder} OFFSET {offset_placeholder}
         """
 
@@ -1043,33 +1217,68 @@ class StandardReportService:
 
         count_sql = f"""
         SELECT COUNT(*) AS total
-        FROM osm_profile_official_positions opp
-        INNER JOIN osm_profiles op ON op.id = opp.osm_profile_id
-        INNER JOIN osm_official_positions o ON o.id = opp.official_position_id
-        LEFT JOIN provinces p ON p.province_code = op.province_id
-        LEFT JOIN districts d ON d.district_code = op.district_id
-        LEFT JOIN subdistricts s ON s.subdistrict_code = op.subdistrict_id
+        {from_sql}
         {where_sql}
         """
         count_result = await connection.execute_query_dict(count_sql, base_params)
         total = count_result[0]["total"] if count_result else 0
 
-        items = [
-            PresidentListItem(
-                first_name=row.get("first_name"),
-                last_name=row.get("last_name"),
-                position_name=row.get("position_name"),
-                position_level=row.get("position_level"),
-                area_name=row.get("area_name"),
-                province_code=row.get("province_code"),
-                province_name=row.get("province_name"),
-                district_code=row.get("district_code"),
-                district_name=row.get("district_name"),
-                subdistrict_code=row.get("subdistrict_code"),
-                subdistrict_name=row.get("subdistrict_name"),
+        today = datetime.now(ZoneInfo("Asia/Bangkok")).date()
+        items: List[PresidentListItem] = []
+        for row in rows:
+            level_value = row.get("position_level")
+            line1, line2, address = StandardReportService._build_address(row)
+            registered = row.get("osm_registered_date")
+            term_start = row.get("term_start_year")
+            term_end = row.get("term_end_year")
+            if term_start and term_end:
+                term_label = f"{term_start} - {term_end}"
+            elif term_start:
+                term_label = f"{term_start} - "
+            else:
+                term_label = None
+            first_name = row.get("first_name") or ""
+            last_name = row.get("last_name") or ""
+            prefix_name = row.get("prefix_name") or ""
+            has_certificate = bool(row.get("certificate_path"))
+            items.append(
+                PresidentListItem(
+                    assignment_id=str(row.get("assignment_id")) if row.get("assignment_id") else None,
+                    osm_id=str(row.get("osm_id")) if row.get("osm_id") else None,
+                    osm_code=row.get("osm_code"),
+                    prefix_name=prefix_name or None,
+                    first_name=first_name,
+                    last_name=last_name,
+                    full_name=" ".join(part for part in (prefix_name, first_name, last_name) if part).strip() or None,
+                    position_name=row.get("position_name"),
+                    position_level=level_value,
+                    level_label=StandardReportService._CLUB_LEVEL_LABELS.get(level_value or "", level_value),
+                    appointed_level=row.get("appointed_level"),
+                    image_path=row.get("image_path"),
+                    address=address or None,
+                    address_line1=line1 or None,
+                    address_line2=line2 or None,
+                    osm_registered_date=registered,
+                    osm_years=StandardReportService._years_between(registered, today),
+                    term_start_year=term_start,
+                    term_end_year=term_end,
+                    term_label=term_label,
+                    appointed_date=row.get("appointed_date"),
+                    appointed_date_label=StandardReportService._thai_date_label(row.get("appointed_date")),
+                    has_certificate=has_certificate,
+                    certificate_status="มี" if has_certificate else "ไม่มี",
+                    certificate_path=row.get("certificate_path"),
+                    health_area_code=row.get("health_area_code"),
+                    health_area_name=row.get("health_area_name"),
+                    area_name=row.get("area_name"),
+                    province_code=row.get("province_code"),
+                    province_name=row.get("province_name"),
+                    district_code=row.get("district_code"),
+                    district_name=row.get("district_name"),
+                    subdistrict_code=row.get("subdistrict_code"),
+                    subdistrict_name=row.get("subdistrict_name"),
+                )
             )
-            for row in rows
-        ]
 
         return PresidentListResponse(
             items=items,

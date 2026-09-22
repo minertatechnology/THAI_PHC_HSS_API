@@ -45,3 +45,8 @@ class ExportJobStatusResponse(BaseModel):
     expiresAt: Optional[str] = None
     downloadUrl: Optional[str] = None
     error: Optional[str] = None
+    sheetCount: int = Field(1, description="จำนวนชีทในไฟล์ (เกิน 1,000,000 แถวจะแตกชีทใหม่)")
+    truncated: bool = Field(
+        False, description="True = ข้อมูลถูกตัดเพราะชนเพดาน EXPORT_MAX_ROWS ต้องแจ้งผู้ใช้"
+    )
+    availableRows: int = Field(0, description="จำนวนแถวที่มีจริงทั้งหมด (เท่ากับ totalRows ถ้าไม่ถูกตัด)")

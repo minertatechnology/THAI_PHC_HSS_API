@@ -833,14 +833,64 @@ class PositionsByVillageResponse(BaseModel):
 
 
 class PresidentListQuery(BaseModel):
+    """รายงานรายชื่อประธานชมรม อสม. แต่ละระดับ (อ่านจากตำแหน่งชมรม อสม. ขั้นตอนที่ 4)"""
+
+    # ระดับตำแหน่งประธาน (country/region/area/province/district/subdistrict/village)
+    level: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("level", "positionLevel", "position_level"),
+    )
+    # เขตสุขภาพ (health_areas.code) — ใช้กับผู้ใช้ระดับกรม/ภาค/เขต
+    health_area_code: Optional[str] = Field(
+        default=None,
+        alias="healthAreaCode",
+        validation_alias=AliasChoices("healthAreaCode", "health_area_code", "areaCode", "area_code"),
+        serialization_alias="healthAreaCode",
+    )
+    # ค้นหาชื่อ-สกุล / รหัส อสม.
+    search: Optional[str] = Field(default=None, validation_alias=AliasChoices("search", "q", "keyword"))
     area_name: Optional[str] = Field(default=None, alias="area", serialization_alias="area")
-    province_code: Optional[str] = Field(default=None, alias="province", serialization_alias="province")
-    district_code: Optional[str] = Field(default=None, alias="district", serialization_alias="district")
+    province_code: Optional[str] = Field(
+        default=None,
+        alias="province",
+        validation_alias=AliasChoices("province", "provinceCode", "province_code"),
+        serialization_alias="province",
+    )
+    district_code: Optional[str] = Field(
+        default=None,
+        alias="district",
+        validation_alias=AliasChoices("district", "districtCode", "district_code"),
+        serialization_alias="district",
+    )
     health_service_id: Optional[str] = Field(
         None,
         validation_alias=AliasChoices("health_service_id", "healthServiceId"),
     )
-    subdistrict_code: Optional[str] = Field(default=None, alias="subdistrict", serialization_alias="subdistrict")
+    subdistrict_code: Optional[str] = Field(
+        default=None,
+        alias="subdistrict",
+        validation_alias=AliasChoices("subdistrict", "subdistrictCode", "subdistrict_code"),
+        serialization_alias="subdistrict",
+    )
+    village_code: Optional[str] = Field(
+        default=None,
+        alias="village",
+        validation_alias=AliasChoices("village", "villageCode", "village_code"),
+        serialization_alias="village",
+    )
+    # เรียงลำดับ: level | name | osm_years | term | appointed_date
+    sort_by: Optional[str] = Field(
+        default=None,
+        alias="sortBy",
+        validation_alias=AliasChoices("sortBy", "sort_by"),
+        serialization_alias="sortBy",
+    )
+    sort_order: Optional[str] = Field(
+        default=None,
+        alias="sortOrder",
+        validation_alias=AliasChoices("sortOrder", "sort_order"),
+        serialization_alias="sortOrder",
+    )
     page: int = Field(default=1, ge=1)
     page_size: int = Field(
         default=50,
@@ -855,10 +905,40 @@ class PresidentListQuery(BaseModel):
 
 
 class PresidentListItem(BaseModel):
+    assignment_id: Optional[str] = Field(default=None, alias="assignmentId", serialization_alias="assignmentId")
+    osm_id: Optional[str] = Field(default=None, alias="osmId", serialization_alias="osmId")
+    osm_code: Optional[str] = Field(default=None, alias="osmCode", serialization_alias="osmCode")
+    prefix_name: Optional[str] = Field(default=None, alias="prefixName", serialization_alias="prefixName")
     first_name: str = Field(alias="firstName", serialization_alias="firstName")
     last_name: str = Field(alias="lastName", serialization_alias="lastName")
+    full_name: Optional[str] = Field(default=None, alias="fullName", serialization_alias="fullName")
     position_name: Optional[str] = Field(default=None, alias="positionName", serialization_alias="positionName")
     position_level: Optional[str] = Field(default=None, alias="positionLevel", serialization_alias="positionLevel")
+    level_label: Optional[str] = Field(default=None, alias="levelLabel", serialization_alias="levelLabel")
+    appointed_level: Optional[str] = Field(default=None, alias="appointedLevel", serialization_alias="appointedLevel")
+    # รูปภาพ: ใช้รูปที่แนบในตำแหน่งชมรมก่อน ถ้าไม่มีใช้รูปโปรไฟล์
+    image_path: Optional[str] = Field(default=None, alias="imagePath", serialization_alias="imagePath")
+    address: Optional[str] = Field(default=None)
+    address_line1: Optional[str] = Field(default=None, alias="addressLine1", serialization_alias="addressLine1")
+    address_line2: Optional[str] = Field(default=None, alias="addressLine2", serialization_alias="addressLine2")
+    osm_registered_date: Optional[date] = Field(
+        default=None, alias="osmRegisteredDate", serialization_alias="osmRegisteredDate"
+    )
+    osm_years: Optional[int] = Field(default=None, alias="osmYears", serialization_alias="osmYears")
+    term_start_year: Optional[int] = Field(default=None, alias="termStartYear", serialization_alias="termStartYear")
+    term_end_year: Optional[int] = Field(default=None, alias="termEndYear", serialization_alias="termEndYear")
+    term_label: Optional[str] = Field(default=None, alias="termLabel", serialization_alias="termLabel")
+    appointed_date: Optional[date] = Field(default=None, alias="appointedDate", serialization_alias="appointedDate")
+    appointed_date_label: Optional[str] = Field(
+        default=None, alias="appointedDateLabel", serialization_alias="appointedDateLabel"
+    )
+    has_certificate: bool = Field(default=False, alias="hasCertificate", serialization_alias="hasCertificate")
+    certificate_status: Optional[str] = Field(
+        default=None, alias="certificateStatus", serialization_alias="certificateStatus"
+    )
+    certificate_path: Optional[str] = Field(default=None, alias="certificatePath", serialization_alias="certificatePath")
+    health_area_code: Optional[str] = Field(default=None, alias="healthAreaCode", serialization_alias="healthAreaCode")
+    health_area_name: Optional[str] = Field(default=None, alias="healthAreaName", serialization_alias="healthAreaName")
     area_name: Optional[str] = Field(default=None, alias="areaName", serialization_alias="areaName")
     province_code: Optional[str] = Field(default=None, alias="provinceCode", serialization_alias="provinceCode")
     province_name: Optional[str] = Field(default=None, alias="provinceName", serialization_alias="provinceName")

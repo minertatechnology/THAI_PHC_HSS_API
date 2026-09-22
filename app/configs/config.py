@@ -95,10 +95,14 @@ class Settings(BaseSettings):
     # (ต้องไม่อยู่ใต้ UPLOADS_ROOT มิฉะนั้น static mount /uploads จะ serve โดยไม่มี auth)
     EXPORT_FILES_DIR: str = "/app/export_files"
     EXPORT_SCHEDULER_ENABLED: bool = True
-    EXPORT_PAGE_SIZE: int = 2000          # จำนวนแถวต่อหน้า query ระหว่างสร้างไฟล์
+    # จำนวนแถวต่อ chunk ระหว่างสร้างไฟล์ (อ่านด้วย pk ทีละ chunk)
+    # 5000 = 1 ล้านแถวใช้ 200 รอบ; runner clamp เพดานบนไว้ที่ 10000 กัน bind param เกินของ Postgres
+    EXPORT_PAGE_SIZE: int = 5000
     EXPORT_FILE_TTL_HOURS: int = 6         # ไฟล์เก็บกี่ชั่วโมงก่อน sweeper ลบ
     EXPORT_HEARTBEAT_STALE_SECONDS: int = 120  # job ที่ไม่ heartbeat เกินนี้ → ถือว่าค้าง → resume
-    EXPORT_MAX_ROWS: int = 1_000_000       # จำกัดแถวสูงสุดต่อไฟล์ (กัน runaway)
+    # จำกัดแถวสูงสุดต่อไฟล์ (กัน runaway + คุมแรม: ลิสต์ id ~111 MB ต่อ 1 ล้านแถว)
+    # ไม่ใช่เพดานของชีท — เกิน SHEET_ROW_LIMIT ระบบจะแตกเป็นหลายชีทให้เอง
+    EXPORT_MAX_ROWS: int = 2_000_000
     EXPORT_JOB_TTL_HOURS: int = 12         # TTL ของ Redis job record
 
     # Environment metadata

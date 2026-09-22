@@ -2,7 +2,9 @@
 
 Design:
 - POST สร้าง job → คืน jobId ทันที (HTTP 202) แล้วรัน BackgroundTasks สร้างไฟล์จริง
-- รันเป็นหน้า (page_size) + xlsxwriter constant_memory → memory คงที่ รองรับ ~1M แถว
+- ดึง id ที่เรียงแล้วครั้งเดียว แล้วอ่านรายละเอียดทีละ chunk ด้วย pk (ไม่ใช้ OFFSET)
+  + xlsxwriter constant_memory → memory คงที่
+- เกิน SHEET_ROW_LIMIT แถว → ขึ้นชีทใหม่ในไฟล์เดิม (เพดาน .xlsx คือ 1,048,576 แถว/ชีท)
 - สถานะเก็บใน Redis (cache_*) + `.meta.json` sidecar บน PVC เผื่อ Redis evict
 - APScheduler sweeper resume job ที่ worker ตายกลางทาง (heartbeat stale)
 - APScheduler cleanup ลบไฟล์หมดอายุ
@@ -36,6 +38,9 @@ from app.cache.redis_client import (
 )
 from app.configs.config import settings
 from app.models.enum_models import AdministrativeLevelEnum
+from app.models.geography_model import District, Province, Subdistrict
+from app.models.osm_model import OSMProfile
+from app.models.personal_model import Prefix
 from app.services.dashboard_assignment_service import DashboardAssignmentService
 from app.utils.logging_utils import get_logger
 
@@ -75,6 +80,10 @@ EXPORT_HEADERS = [
 ]
 
 CITIZEN_ID_SEGMENTS = (1, 4, 5, 2, 1)
+
+# .xlsx เก็บได้สูงสุด 1,048,576 แถวต่อชีท (รวมหัวตาราง) — เป็นข้อจำกัดของรูปแบบไฟล์เอง
+# ใช้ 1,000,000 แถวข้อมูลต่อชีท เผื่อหัวตารางและให้เลขอ่านง่าย เกินนั้นขึ้นชีทใหม่
+SHEET_ROW_LIMIT = 1_000_000
 
 _export_scheduler: Optional[AsyncIOScheduler] = None
 
@@ -248,6 +257,78 @@ async def _delete_job_and_file(job: Dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
+# คอลัมน์ที่ไฟล์ export ใช้จริง — ดึงแค่นี้พอ (ไม่ hydrate OSMProfile ทั้ง object)
+EXPORT_VALUE_FIELDS = (
+    "id",
+    "osm_code",
+    "citizen_id",
+    "prefix_id",
+    "first_name",
+    "last_name",
+    "province_id",
+    "district_id",
+    "subdistrict_id",
+    "village_no",
+    "village_name",
+    "osm_status",
+    "osm_showbbody",
+)
+
+
+async def _load_lookup_name_maps() -> Dict[str, Dict[str, str]]:
+    """โหลดตาราง lookup (คำนำหน้า/จังหวัด/อำเภอ/ตำบล) เข้า dict ครั้งเดียวต่อ job
+
+    แทน prefetch_related ที่เดิมยิง 4 query ต่อหนึ่งหน้า — ทุกตารางรวมกันไม่กี่พันแถว
+    """
+    prefixes = await Prefix.all().values_list("id", "prefix_name_th")
+    provinces = await Province.all().values_list("province_code", "province_name_th")
+    districts = await District.all().values_list("district_code", "district_name_th")
+    subdistricts = await Subdistrict.all().values_list("subdistrict_code", "subdistrict_name_th")
+    return {
+        "prefix": {str(code): name for code, name in prefixes},
+        "province": {str(code): name for code, name in provinces},
+        "district": {str(code): name for code, name in districts},
+        "subdistrict": {str(code): name for code, name in subdistricts},
+    }
+
+
+def _sheet_name(sheet_index: int, sheet_total: int) -> str:
+    """ชีทเดียว → "OSM"; หลายชีท → "OSM (1)", "OSM (2)", ... (ชื่อชีท Excel จำกัด 31 ตัวอักษร)"""
+    if sheet_total <= 1:
+        return "OSM"
+    return f"OSM ({sheet_index + 1})"
+
+
+def _add_sheet(workbook, name: str, header_format) -> Any:
+    """เปิดชีทใหม่พร้อมหัวตาราง + ความกว้างคอลัมน์ (ทุกชีทหน้าตาเหมือนกัน)"""
+    worksheet = workbook.add_worksheet(name)
+    for col, header in enumerate(EXPORT_HEADERS):
+        worksheet.write(0, col, header, header_format)
+        worksheet.set_column(col, col, 18)
+    return worksheet
+
+
+def _row_from_values(rec: Dict[str, Any], name_maps: Dict[str, Dict[str, str]]) -> Dict[str, Any]:
+    """แถวจาก .values() + lookup map → dict รูปเดียวกับที่ _project_row ต้องการ
+
+    ให้ผลเท่ากับ DashboardAssignmentService._serialize_profile เฉพาะฟิลด์ที่ export ใช้
+    """
+    prefix_name = name_maps["prefix"].get(str(rec.get("prefix_id") or ""))
+    name_parts = [part for part in (prefix_name, rec.get("first_name"), rec.get("last_name")) if part]
+    return {
+        "fullName": " ".join(name_parts),
+        "citizenId": rec.get("citizen_id"),
+        "osmCode": rec.get("osm_code"),
+        "provinceNameTh": name_maps["province"].get(str(rec.get("province_id") or "")),
+        "districtNameTh": name_maps["district"].get(str(rec.get("district_id") or "")),
+        "subdistrictNameTh": name_maps["subdistrict"].get(str(rec.get("subdistrict_id") or "")),
+        "villageNo": rec.get("village_no"),
+        "villageName": rec.get("village_name"),
+        "osmStatus": rec.get("osm_status"),
+        "osmShowbbody": rec.get("osm_showbbody"),
+    }
+
+
 def _project_row(row: Dict[str, Any], *, unmask: bool, index: int) -> list:
     village_no = str(row.get("villageNo") or "").strip()
     village_name = str(row.get("villageName") or "").strip()
@@ -352,6 +433,9 @@ async def get_export_job(job_id: str, current_user: dict) -> Dict[str, Any]:
         "expiresAt": job.get("expiresAt"),
         "downloadUrl": download_url,
         "error": job.get("error"),
+        "sheetCount": int(job.get("sheetCount") or 1),
+        "truncated": bool(job.get("truncated") or False),
+        "availableRows": int(job.get("availableRows") or total),
     }
 
 
@@ -387,7 +471,7 @@ async def _run_export_job_safe(job_id: str, current_user: dict, filters: Dict[st
 
 
 async def run_export_job(job_id: str, current_user: dict, filters: Dict[str, Any]) -> None:
-    """สร้างไฟล์ xlsx จริง: scope → queryset → count → stream rows."""
+    """สร้างไฟล์ xlsx จริง: scope → queryset → ordered ids → stream rows ทีละ chunk."""
     await _update_job(job_id, {"status": JOB_STATUS_RUNNING, "error": None})
 
     # Resolve scope + build queryset (reuse DashboardAssignmentService)
@@ -412,16 +496,38 @@ async def run_export_job(job_id: str, current_user: dict, filters: Dict[str, Any
         last_name=filters.get("lastName"),
     )
 
-    total = await base_query.count()
-    if total > settings.EXPORT_MAX_ROWS:
-        total = settings.EXPORT_MAX_ROWS
-    await _update_job(job_id, {"totalRows": total})
-    await _heartbeat(job_id, 0, total)
-
     order_fields = DashboardAssignmentService._build_order_fields(
         order_by=filters.get("orderBy"),
         sort_dir=filters.get("sortDir"),
     )
+
+    # ดึงเฉพาะ id ที่เรียงแล้ว "ครั้งเดียว" — DB sort รอบเดียวจบ และได้ total มาฟรี
+    # (เดิม: .count() หนึ่งรอบ + ทุกหน้าใช้ OFFSET ซึ่งบังคับให้ DB เรียงชุดเดิมใหม่แล้ว
+    #  ข้ามแถวทิ้ง ยิ่งหน้าท้ายยิ่งช้า → รวมแล้วเป็น quadratic)
+    # ขอเกินเพดานมา 1 แถว เพื่อแยกให้ออกว่า "พอดีเพดาน" กับ "ยังมีเหลือ" ต่างกัน
+    ordered_ids = await (
+        base_query.order_by(*order_fields)
+        .limit(settings.EXPORT_MAX_ROWS + 1)
+        .values_list("id", flat=True)
+    )
+    truncated = len(ordered_ids) > settings.EXPORT_MAX_ROWS
+    if truncated:
+        ordered_ids = ordered_ids[: settings.EXPORT_MAX_ROWS]
+    total = len(ordered_ids)
+
+    # นับของจริงเฉพาะตอนที่ข้อมูลถูกตัด (กรณีหายาก) เพื่อบอกผู้ใช้ได้ว่าขาดไปเท่าไหร่
+    available_rows = total
+    if truncated:
+        available_rows = await base_query.count()
+        logger.warning(
+            "export job %s ถูกตัดที่ %d แถว จากทั้งหมด %d แถว (EXPORT_MAX_ROWS)",
+            job_id, total, available_rows,
+        )
+
+    await _update_job(job_id, {"totalRows": total})
+    await _heartbeat(job_id, 0, total)
+
+    name_maps = await _load_lookup_name_maps()
 
     officer_id = str(current_user.get("user_id"))
     file_path = _job_file_path(officer_id, job_id)
@@ -429,7 +535,9 @@ async def run_export_job(job_id: str, current_user: dict, filters: Dict[str, Any
 
     # เปิดเลขบัตรประชาชนเต็มทุกสิทธิ์ (ยกเลิกการ masking ตาม level)
     unmask = True
-    page_size = max(1, settings.EXPORT_PAGE_SIZE)
+    # clamp เพดานบน: chunk กลายเป็น id__in = 1 bind param ต่อแถว
+    # Postgres รับได้ 65535 params ต่อ statement — กันคนตั้ง EXPORT_PAGE_SIZE สูงเกินแล้วพัง
+    page_size = max(1, min(settings.EXPORT_PAGE_SIZE, 10000))
 
     # Lazy import — ถ้า XlsxWriter ยังไม่ถูกติดตั้งจะได้ไม่ทำให้ app start ไม่ได้
     try:
@@ -441,7 +549,6 @@ async def run_export_job(job_id: str, current_user: dict, filters: Dict[str, Any
 
     # xlsxwriter constant_memory: เขียนแถวแล้วทิ้งทันที → memory คงที่ตาม page_size
     workbook = xlsxwriter.Workbook(file_path, {"constant_memory": True, "use_zip64": True})
-    worksheet = workbook.add_worksheet("OSM")
     header_format = workbook.add_format(
         {
             "bold": True,
@@ -455,35 +562,40 @@ async def run_export_job(job_id: str, current_user: dict, filters: Dict[str, Any
     )
     cell_format = workbook.add_format({"border": 1, "valign": "vcenter"})
 
-    for col, header in enumerate(EXPORT_HEADERS):
-        worksheet.write(0, col, header, header_format)
-        worksheet.set_column(col, col, 18)
+    # -(-a // b) = ceil(a / b) โดยไม่ต้องกังวลเรื่องทศนิยม
+    sheet_total = max(1, -(-total // SHEET_ROW_LIMIT))
+    sheet_index = 0
+    worksheet = _add_sheet(workbook, _sheet_name(0, sheet_total), header_format)
 
     try:
         rows_written = 0
-        page = 1
-        while rows_written < total:
-            offset = (page - 1) * page_size
-            limit = min(page_size, total - rows_written)
-            if limit <= 0:
+        for start in range(0, total, page_size):
+            chunk_ids = ordered_ids[start : start + page_size]
+            if not chunk_ids:
                 break
-            items = (
-                await base_query.prefetch_related("prefix", "province", "district", "subdistrict")
-                .order_by(*order_fields)
-                .offset(offset)
-                .limit(limit)
-            )
-            if not items:
-                break
-            for profile in items:
-                if rows_written >= total:
-                    break
-                row_data = DashboardAssignmentService._serialize_profile(profile)
-                values = _project_row(row_data, unmask=unmask, index=rows_written + 1)
-                worksheet.write_row(rows_written + 1, 0, values, cell_format)
+            # อ่านทีละ chunk ด้วย pk index — ไม่มี sort/OFFSET และไม่ prefetch (ใช้ name_maps แทน)
+            records = await OSMProfile.filter(
+                id__in=chunk_ids, deleted_at__isnull=True
+            ).values(*EXPORT_VALUE_FIELDS)
+            by_id = {str(rec["id"]): rec for rec in records}
+            for row_id in chunk_ids:
+                rec = by_id.get(str(row_id))
+                if rec is None:
+                    continue  # ถูกลบระหว่างสร้างไฟล์ → ข้ามไป
+                # ชีทเต็มแล้วขึ้นชีทใหม่ (ลำดับในคอลัมน์แรกยังนับต่อเนื่องข้ามชีท)
+                target_sheet = rows_written // SHEET_ROW_LIMIT
+                if target_sheet != sheet_index:
+                    sheet_index = target_sheet
+                    worksheet = _add_sheet(
+                        workbook, _sheet_name(sheet_index, sheet_total), header_format
+                    )
+                row_in_sheet = rows_written % SHEET_ROW_LIMIT
+                values = _project_row(
+                    _row_from_values(rec, name_maps), unmask=unmask, index=rows_written + 1
+                )
+                worksheet.write_row(row_in_sheet + 1, 0, values, cell_format)
                 rows_written += 1
             await _heartbeat(job_id, rows_written, total)
-            page += 1
 
         workbook.close()
     except Exception:
@@ -502,6 +614,10 @@ async def run_export_job(job_id: str, current_user: dict, filters: Dict[str, Any
         "progress": 100,
         "filePath": file_path,
         "expiresAt": expires_at.isoformat(),
+        "sheetCount": sheet_total,
+        # ชนเพดาน EXPORT_MAX_ROWS = ข้อมูลถูกตัด ต้องแจ้งผู้ใช้ ห้ามเงียบ
+        "truncated": truncated,
+        "availableRows": available_rows,
     }
     await _update_job(job_id, job_patch)
     # เขียน sidecar หลัง set Redis (อ่าน job ล่าสุด)

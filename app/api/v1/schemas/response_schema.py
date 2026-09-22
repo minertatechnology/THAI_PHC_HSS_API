@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
+from datetime import date
 import uuid
 from enum import Enum
 from app.models.enum_models import AdministrativeLevelEnum
@@ -26,7 +27,13 @@ class ClubPositionResponse(BaseModel):
     assignment_id: uuid.UUID
     club_position_id: uuid.UUID
     club_position_name_th: Optional[str]
+    position_level: Optional[str] = None
     appointed_level: Optional[str]
+    term_start_year: Optional[int] = None
+    term_end_year: Optional[int] = None
+    appointed_date: Optional[date] = None
+    image_path: Optional[str] = None
+    certificate_path: Optional[str] = None
 
 
 class TrainingRecordResponse(BaseModel):
@@ -513,11 +520,18 @@ def club_position_to_response(link):
         return None
 
     club_position = getattr(link, "club_position", None)
+    level = getattr(club_position, "position_level", None) if club_position else None
     return ClubPositionResponse(
         assignment_id=link.id,
         club_position_id=link.club_position_id,
         club_position_name_th=getattr(club_position, "position_name_th", None) if club_position else None,
+        position_level=getattr(level, "value", level),
         appointed_level=getattr(link, "appointed_level", None),
+        term_start_year=getattr(link, "term_start_year", None),
+        term_end_year=getattr(link, "term_end_year", None),
+        appointed_date=getattr(link, "appointed_date", None),
+        image_path=getattr(link, "image_path", None),
+        certificate_path=getattr(link, "certificate_path", None),
     )
 
 

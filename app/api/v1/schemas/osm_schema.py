@@ -103,6 +103,38 @@ class ClubPositionItem(BaseModel):
         max_length=255,
         description="รายละเอียดระดับ/พื้นที่ถ้ามี",
     )
+    term_start_year: Optional[int] = Field(
+        None, ge=2400, le=2700, description="ปีเริ่มวาระ (พ.ศ.) เช่น 2567"
+    )
+    term_end_year: Optional[int] = Field(
+        None, ge=2400, le=2700, description="ปีสิ้นสุดวาระ (พ.ศ.) เช่น 2570"
+    )
+    appointed_date: Optional[date] = Field(None, description="วันที่ได้รับการคัดเลือก")
+    image_path: Optional[str] = Field(
+        None, max_length=1024, description="path รูปภาพ (จาก POST /osm/club-position-attachments)"
+    )
+    certificate_path: Optional[str] = Field(
+        None, max_length=1024, description="path หนังสือรับรอง (จาก POST /osm/club-position-attachments)"
+    )
+
+    @validator("term_end_year")
+    def _validate_term_range(cls, value, values):
+        start = values.get("term_start_year")
+        if value is not None and start is not None and value < start:
+            raise ValueError("ปีสิ้นสุดวาระต้องไม่น้อยกว่าปีเริ่มวาระ")
+        return value
+
+    @validator("image_path", "certificate_path")
+    def _validate_attachment_path(cls, value):
+        if value is None:
+            return value
+        cleaned = str(value).strip()
+        if not cleaned:
+            return None
+        # รับเฉพาะ path ใต้ uploads/ ที่ endpoint อัปโหลดคืนมา ป้องกันการยัด path อื่น
+        if cleaned.startswith("/") or ".." in cleaned or not cleaned.startswith("uploads/"):
+            raise ValueError("path ไฟล์แนบไม่ถูกต้อง")
+        return cleaned
 
 
 class TrainingRecord(BaseModel):
