@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from app.configs.config import settings
 from app.api.v1.routers.healthcheck import healthcheck_router
 from app.api.v1.routers.oauth2_route import oauth2_router
+from app.api.v1.routers.forgot_password_route import forgot_password_router
 from app.api.v1.routers.osm_route import osm_router
 from app.api.v1.routers.report_route import report_router
 from app.api.v1.routers.report_definition_route import report_definition_router
@@ -38,6 +39,7 @@ v1_router = APIRouter(prefix=f"{settings.API_V1_PREFIX}")
 
 v1_router.include_router(healthcheck_router)
 v1_router.include_router(oauth2_router)
+v1_router.include_router(forgot_password_router)
 v1_router.include_router(osm_router) 
 v1_router.include_router(report_router)
 v1_router.include_router(report_definition_router)

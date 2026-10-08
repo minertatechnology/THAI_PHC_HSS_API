@@ -155,6 +155,10 @@ class UserService:
                     user_info.update({
                         "name": full_name,  # ใช้ name แทน prefix + first_name + last_name
                         "prefix": prefix_payload,
+                        # ส่งแยกด้วย client จะได้ไม่ต้องเดาตัดคำนำหน้าออกจาก name เอง
+                        "prefix_name_th": prefix_payload.get("name_th") if prefix_payload else None,
+                        "first_name": osm_profile.first_name,
+                        "last_name": osm_profile.last_name,
                         "profile_image": getattr(osm_profile, "profile_image", None),
                     })
 
@@ -222,6 +226,9 @@ class UserService:
                     user_info.update({
                         "name": full_name,
                         "prefix": prefix_payload,
+                        "prefix_name_th": prefix_payload.get("name_th") if prefix_payload else None,
+                        "first_name": officer_profile.first_name,
+                        "last_name": officer_profile.last_name,
                         "profile_image": getattr(officer_profile, "profile_image", None),
                     })
 

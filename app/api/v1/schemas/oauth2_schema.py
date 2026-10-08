@@ -20,6 +20,10 @@ class ChangePasswordRequest(BaseModel):
     new_password: str = Field(min_length=8)
 
 
+class SetNewPasswordRequest(BaseModel):
+    new_password: str = Field(min_length=8)
+
+
 class ChangePasswordResponse(BaseModel):
     success: bool = True
     message: str = "password_changed"

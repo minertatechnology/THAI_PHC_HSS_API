@@ -11,6 +11,7 @@ from app.api.v1.schemas.oauth2_schema import (
     SetPasswordResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
+    SetNewPasswordRequest,
     DeleteAccountResponse,
     DirectLoginRequest,
     TokenResponse,
@@ -92,6 +93,15 @@ async def change_password(
     current_user: dict = Depends(get_current_user),
 ):
     return await Oauth2Controller.change_password(payload, current_user)
+
+
+@oauth2_router.post("/set-new-password", response_model=ChangePasswordResponse)
+async def set_new_password(
+    payload: SetNewPasswordRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """ตั้งรหัสผ่านใหม่โดยไม่ต้องใช้รหัสเดิม (เฉพาะแอป Smart OSM — ดู SET_NEW_PASSWORD_CLIENT_IDS)"""
+    return await Oauth2Controller.set_new_password(payload, current_user)
 
 @oauth2_router.delete("/me", response_model=DeleteAccountResponse)
 async def delete_my_account(

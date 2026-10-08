@@ -29,7 +29,7 @@ from app.repositories.client_repository import (
     OAuthClientAllowRepository,
     OAuthClientUserTypeDefaultRepository,
 )
-from fastapi import Request
+from fastapi import HTTPException, Request
 from app.utils.security import  create_access_token, create_refresh_token, create_first_login_token, decode_jwt_session_token, create_session_token, create_id_token
 from fastapi.responses import RedirectResponse
 import uuid
@@ -42,6 +42,7 @@ from app.api.v1.schemas.oauth2_schema import (
     SetPasswordResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
+    SetNewPasswordRequest,
     CreateClientBlockRequest,
     ClientBlockQueryParams,
 )
@@ -450,6 +451,72 @@ class Oauth2Service:
             log_error(logger, "change_password revoke tokens failed", exc=exc)
 
         # Invalidate all cached sessions/tokens so the password change takes effect immediately
+        from app.api.middleware.middleware import invalidate_user_sessions
+        from app.cache.redis_client import cache_delete_pattern
+        await invalidate_user_sessions(str(user_id))
+        await cache_delete_pattern("auth_me:*")
+
+        return ChangePasswordResponse()
+
+    @staticmethod
+    async def set_new_password(current_user: dict, payload: SetNewPasswordRequest) -> ChangePasswordResponse:
+        """ตั้งรหัสผ่านใหม่โดยไม่ต้องใช้รหัสเดิม เฉพาะ client ใน SET_NEW_PASSWORD_CLIENT_IDS
+
+        ผู้ใช้แอป Smart OSM เข้าผ่าน ThaiD และไม่รู้รหัสผ่านเดิม ส่วน /auth/change-password
+        ที่ระบบอื่นใช้ยังบังคับรหัสเดิมเหมือนเดิม
+        """
+        user_id = current_user.get("user_id")
+        user_type = current_user.get("user_type")
+        client_id = current_user.get("client_id")
+
+        if not user_id or not user_type:
+            raise BadRequestException(detail="user_context_missing")
+
+        allowed_clients = {c.strip() for c in settings.SET_NEW_PASSWORD_CLIENT_IDS.split(",") if c.strip()}
+        if client_id not in allowed_clients:
+            raise HTTPException(status_code=403, detail="client_not_allowed")
+
+        repo_map = {
+            "officer": OfficerProfileRepository,
+            "osm": OSMProfileRepository,
+            "yuwa_osm": YuwaOSMUserRepository,
+            "people": PeopleUserRepository,
+            "gen_h": GenHUserRepository,
+        }
+        repo = repo_map.get(user_type)
+        if not repo:
+            raise BadRequestException(detail="unsupported_user_type")
+
+        record = await repo.get_password_state(str(user_id))
+        if not record:
+            raise NotFoundException(detail="user_not_found")
+
+        stored_hash = getattr(record, "password_hash", None)
+        if stored_hash:
+            stored_bytes = stored_hash.encode() if isinstance(stored_hash, str) else stored_hash
+            try:
+                same_as_current = await asyncio.to_thread(
+                    bcrypt.checkpw, payload.new_password.encode(), stored_bytes
+                )
+            except ValueError:
+                same_as_current = False
+            if same_as_current:
+                raise BadRequestException(detail="password_unchanged")
+
+        hashed = bcrypt_hash_password(payload.new_password)
+        await repo.set_password_by_id(
+            str(user_id),
+            hashed,
+            mark_first_login=False,
+            reset_attempts=True,
+            reactivate=True,
+        )
+
+        try:
+            await RefreshTokenRepository.revoke_all_user_refresh_tokens(str(user_id), None, user_type)
+        except Exception as exc:
+            log_error(logger, "set_new_password revoke tokens failed", exc=exc)
+
         from app.api.middleware.middleware import invalidate_user_sessions
         from app.cache.redis_client import cache_delete_pattern
         await invalidate_user_sessions(str(user_id))

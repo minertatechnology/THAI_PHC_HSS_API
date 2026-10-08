@@ -2,9 +2,9 @@ from typing import Optional, List
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Path, Query, status, File, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, Path, Query, Request, status, File, UploadFile, HTTPException
 
-from app.api.middleware.middleware import require_scopes
+from app.api.middleware.middleware import invalidate_auth_me_for_authorization, require_scopes
 from app.api.v1.controllers.officer_controller import OfficerController
 from app.api.v1.schemas.officer_schema import (
     OfficerActiveStatusSchema,
@@ -178,10 +178,13 @@ async def get_officer(
 async def update_officer(
     officer_id: str,
     officer_data: OfficerUpdateSchema,
+    request: Request,
     current_user: dict = Depends(require_scopes({"profile"})),
 ):
     await _ensure_officer(current_user)
-    return await OfficerController.update_officer(officer_id, officer_data, current_user)
+    result = await OfficerController.update_officer(officer_id, officer_data, current_user)
+    await invalidate_auth_me_for_authorization(request.headers.get("authorization"))
+    return result
 
 
 @officer_router.post("/{officer_id}/profile-image", response_model=ProfileImageUploadResponse, status_code=status.HTTP_201_CREATED)

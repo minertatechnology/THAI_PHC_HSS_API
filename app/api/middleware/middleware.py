@@ -108,6 +108,18 @@ def _token_hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()[:24]
 
 
+async def invalidate_auth_me_for_authorization(authorization: Optional[str]) -> None:
+    """Drop the cached /auth/me response for the caller's own token after a profile edit.
+
+    Targeted delete (not auth_me:*) so one user's save doesn't evict everyone's cache.
+    """
+    if not authorization or not authorization.lower().startswith("bearer "):
+        return
+    token = authorization[7:].strip()
+    if token:
+        await cache_delete(f"auth_me:{_token_hash(token)}")
+
+
 async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
     """
     Middleware สำหรับตรวจสอบ access token

@@ -12,6 +12,7 @@ from app.api.v1.schemas.oauth2_schema import (
     CreateClientAllowRequest,
     ClientAllowQueryParams,
     ChangePasswordRequest,
+    SetNewPasswordRequest,
 )
 
 class Oauth2Controller:
@@ -120,6 +121,10 @@ class Oauth2Controller:
     @staticmethod
     async def change_password(payload: ChangePasswordRequest, current_user: dict):
         return await Oauth2Service.change_password(current_user, payload)
+
+    @staticmethod
+    async def set_new_password(payload: SetNewPasswordRequest, current_user: dict):
+        return await Oauth2Service.set_new_password(current_user, payload)
 
     @staticmethod
     async def delete_my_account(current_user: dict, request: Request | None = None):

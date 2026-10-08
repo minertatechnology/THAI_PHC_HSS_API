@@ -20,6 +20,7 @@ from app.api.v1.schemas.upload_schema import ProfileImageUploadResponse, ClubPos
 from app.api.middleware.middleware import (
     get_current_user,
     get_current_user_optional,
+    invalidate_auth_me_for_authorization,
     require_scopes,
 )
 from app.services.permission_service import PermissionService
@@ -139,6 +140,7 @@ async def get_osm_by_citizen_id(
 
 @osm_router.put("/{osm_id}")
 async def update_osm(
+    request: Request,
     osm_id: str = Path(..., description="ID ของ OSM Profile"),
     osm_data: OsmUpdateSchema = None,
     current_user: dict = Depends(require_scopes({"profile"}))
@@ -150,6 +152,8 @@ async def update_osm(
         if current_user.get("user_type") != "osm" or current_user.get("user_id") != osm_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
     result = await OsmController.update_osm(osm_id, osm_data, current_user)
+    # ให้ /auth/me คืนข้อมูลใหม่ทันที (ไม่งั้นค้าง cache 2 นาที → คำนำหน้า/ชื่อดูเหมือนไม่ถูกบันทึก)
+    await invalidate_auth_me_for_authorization(request.headers.get("authorization"))
     return result
 
 

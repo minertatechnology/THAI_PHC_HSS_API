@@ -74,6 +74,10 @@ class Settings(BaseSettings):
     FRONTEND_API_KEY: str | None = None
     THIRD_PARTY_API_KEY: str | None = None
 
+    # client ที่เรียก /auth/set-new-password ได้ (ตั้งรหัสใหม่โดยไม่ใช้รหัสเดิม) — คั่นด้วย comma
+    # ค่าเริ่มต้น = แอป Smart OSM mobile (ผู้ใช้เข้าผ่าน ThaiD ไม่รู้รหัสเดิม) ระบบอื่นยังต้องใช้ /auth/change-password
+    SET_NEW_PASSWORD_CLIENT_IDS: str = "6421518e-078d-4dba-8ab3-9c775a9b4479"
+
     # JWT shared configuration for ThaiD tokens
     ALGORITHM: str | None = None
     JWT_EXPIRATION_DELTA_MIN: int = 15

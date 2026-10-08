@@ -41,7 +41,7 @@ async def list_current_mobile_menus(
     items = await MobileMenuService.list_visible_menus(
         user_type=user_type, platform=platform,
     )
-    await cache_set(cache_key, items, 21600)  # 6 hours
+    await cache_set(cache_key, items, 900)  # 15 minutes
     return [MobileMenuResponse(**item) for item in items]
 
 
