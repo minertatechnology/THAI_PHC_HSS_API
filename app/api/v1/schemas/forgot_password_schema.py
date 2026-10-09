@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field, field_validator
 
 class ForgotPasswordVerifyRequest(BaseModel):
     citizen_id: str = Field(min_length=13, max_length=13)
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
     birth_date: date  # ค.ศ. YYYY-MM-DD
 
     @field_validator("citizen_id")

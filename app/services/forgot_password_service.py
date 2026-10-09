@@ -1,11 +1,14 @@
 """
-ลืมรหัสผ่าน (อสม.) แบบ self-service: ยืนยันตัวตนด้วยเลขบัตร + วันเกิด แล้วตั้งรหัสผ่านใหม่
+ลืมรหัสผ่าน (อสม.) แบบ self-service: ยืนยันตัวตนด้วยเลขบัตร + ชื่อ + สกุล + วันเกิด แล้วตั้งรหัสผ่านใหม่
+ตั้งรหัสผ่านสำเร็จจะเปิดบัญชีด้วย (is_active = true)
 
-เลขบัตร + วันเกิด เดาได้ง่ายกว่ารหัสผ่าน จึงต้องมี:
+ข้อมูลยืนยันตัวตนเหล่านี้เดาได้ง่ายกว่ารหัสผ่าน จึงต้องมี:
 - จำกัดจำนวนครั้งต่อเลขบัตร/ต่อ IP ผ่าน Redis (ถ้า Redis ใช้ไม่ได้ ให้ปิดฟีเจอร์นี้ ไม่ปล่อยให้เดาได้ไม่จำกัด)
 - reset token อายุสั้น ใช้ได้ครั้งเดียว และ purpose ต่างจาก token ของ /auth/set-password
 - ตอบ error แบบเดียวกันทุกกรณี (ไม่บอกว่าเลขบัตรมีในระบบหรือไม่)
 """
+import re
+import unicodedata
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from typing import List
@@ -44,6 +47,12 @@ def _unavailable() -> HTTPException:
     return HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="forgot_password_unavailable")
 
 
+def _normalize_name(value: str | None) -> str:
+    """เทียบชื่อแบบไม่สนช่องว่าง/zero-width space, ตัวพิมพ์เล็กใหญ่ และรูปแบบสระอำที่พิมพ์ต่างกัน (ํา กับ ำ)"""
+    text = unicodedata.normalize("NFC", value or "").replace("\u0e4d\u0e32", "\u0e33")
+    return re.sub("[\\s\u200b-\u200d\ufeff]+", "", text).casefold()
+
+
 def _eligible_osm_filter(citizen_id: str) -> Q:
     # เฉพาะ อสม. ที่อนุมัติแล้วและยังมีสถานะปกติ ไม่ให้ใช้ช่องทางนี้เปิดบัญชีที่รออนุมัติ/พ้นสภาพ
     return (
@@ -65,7 +74,13 @@ class ForgotPasswordService:
         return count <= limit
 
     @staticmethod
-    async def verify(citizen_id: str, birth_date: date, ip: str | None) -> dict:
+    async def verify(
+        citizen_id: str,
+        first_name: str,
+        last_name: str,
+        birth_date: date,
+        ip: str | None,
+    ) -> dict:
         redis = get_redis()
         if redis is None:
             raise _unavailable()
@@ -83,14 +98,24 @@ class ForgotPasswordService:
             log_error(logger, "forgot_password rate limit check failed", exc=exc)
             raise _unavailable()
 
-        profiles = await OSMProfile.filter(_eligible_osm_filter(citizen_id)).only("id", "birth_date")
+        profiles = await OSMProfile.filter(_eligible_osm_filter(citizen_id)).only(
+            "id", "first_name", "last_name", "birth_date"
+        )
         accepted_dates = {birth_date}
         try:
             # ข้อมูลเก่าบางส่วนอาจเก็บปีเป็น พ.ศ.
             accepted_dates.add(birth_date.replace(year=birth_date.year + 543))
         except ValueError:
             pass  # 29 ก.พ. ที่ปี +543 ไม่ใช่ปีอธิกสุรทิน
-        osm_ids: List[str] = [str(p.id) for p in profiles if p.birth_date in accepted_dates]
+        want_first = _normalize_name(first_name)
+        want_last = _normalize_name(last_name)
+        osm_ids: List[str] = [
+            str(p.id)
+            for p in profiles
+            if p.birth_date in accepted_dates
+            and _normalize_name(p.first_name) == want_first
+            and _normalize_name(p.last_name) == want_last
+        ]
 
         if not osm_ids:
             try:

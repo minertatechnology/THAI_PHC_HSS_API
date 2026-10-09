@@ -229,6 +229,14 @@ class OSMProfileRepository:
         if filter.subdistrict_code:
             filters["subdistrict_id"] = filter.subdistrict_code
         return filters
+
+    @staticmethod
+    def _filtered_queryset(filter: OsmQueryParams):
+        qs = OSMProfile.filter(**OSMProfileRepository._build_filter_kwargs(filter))
+        if getattr(filter, "active_only", False):
+            # osm_status ''/NULL = ปกติ; 0/1/2 = เสียชีวิต/ลาออก/พ้นสภาพ
+            qs = qs.filter(Q(deleted_at__isnull=True) & (Q(osm_status__isnull=True) | Q(osm_status="")))
+        return qs
     
     @staticmethod
     def _get_reverse_related_fields():
@@ -963,7 +971,6 @@ class OSMProfileRepository:
             raise e
     
     async def find_all_osm(filter: OsmQueryParams):
-        filters = OSMProfileRepository._build_filter_kwargs(filter)
 
         # Sorting
         field = filter.order_by or "created_at"
@@ -974,8 +981,7 @@ class OSMProfileRepository:
 
         # Query with prefetch_related เฉพาะ fields ที่จำเป็นสำหรับ list และเลือกเฉพาะคอลัมน์ที่แสดงผล
         query = (
-            OSMProfile
-            .filter(**filters)
+            OSMProfileRepository._filtered_queryset(filter)
             .order_by(order)
             .offset((filter.page - 1) * filter.limit)
             .limit(filter.limit)
@@ -1003,8 +1009,7 @@ class OSMProfileRepository:
         return await query
 
     async def count_filtered_osm(filter: OsmQueryParams) -> int:
-        filters = OSMProfileRepository._build_filter_kwargs(filter)
-        return await OSMProfile.filter(**filters).count()
+        return await OSMProfileRepository._filtered_queryset(filter).count()
 
     async def update_osm(osm_id: str, osm_data: Dict[str, Any], user_id: str):
         """

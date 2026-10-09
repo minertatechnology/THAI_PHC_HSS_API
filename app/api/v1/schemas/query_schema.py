@@ -9,6 +9,9 @@ class OsmQueryParams(BaseModel):
     last_name: Optional[str] = None
     status: Optional[str] = None
     health_service_code: Optional[str] = None
+    # True = เฉพาะ อสม. สถานะปกติ (ไม่รวมเสียชีวิต/ลาออก/พ้นสภาพ และที่ถูกลบ)
+    # ค่าเริ่มต้น False เพื่อให้ระบบอื่นที่เรียก /osm/ ได้ผลเหมือนเดิม
+    active_only: Optional[bool] = False
 
     # GeographyFilterParams fields
     province_code: Optional[str] = None

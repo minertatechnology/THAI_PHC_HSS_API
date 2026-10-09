@@ -15,7 +15,9 @@ forgot_password_router = APIRouter(prefix="/auth/forgot-password", tags=["auth"]
 @forgot_password_router.post("/verify", response_model=ForgotPasswordVerifyResponse)
 async def forgot_password_verify(payload: ForgotPasswordVerifyRequest, request: Request):
     ip = extract_request_metadata(request).get("ip")
-    return await ForgotPasswordService.verify(payload.citizen_id, payload.birth_date, ip)
+    return await ForgotPasswordService.verify(
+        payload.citizen_id, payload.first_name, payload.last_name, payload.birth_date, ip
+    )
 
 
 @forgot_password_router.post("/reset", response_model=ForgotPasswordResetResponse)
