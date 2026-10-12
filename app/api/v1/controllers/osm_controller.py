@@ -127,7 +127,9 @@ class OsmController:
         """
         try:
             user_id = current_user["user_id"]
-            result = await OsmService.update_osm(osm_id, osm_data, user_id)
+            # อสม. แก้ข้อมูลตัวเอง (แอป) ไม่ต้องลง osm_notifications; เจ้าหน้าที่แก้ (thaiphc/แอปเจ้าหน้าที่) ยังแจ้งเหมือนเดิม
+            self_edit = current_user.get("user_type") == "osm" and str(user_id) == str(osm_id)
+            result = await OsmService.update_osm(osm_id, osm_data, user_id, notify=not self_edit)
             return {
                 "status": "success",
                 "data": result,

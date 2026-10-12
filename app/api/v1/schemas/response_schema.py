@@ -181,6 +181,9 @@ class OsmProfileListResponse(BaseModel):
     osm_showbbody: Optional[str] = None
     is_active: bool = False
     approval_status: Optional[str] = None
+    # หน่วยบริการ (เพิ่มท้าย — ระบบเดิมที่อ่าน list ไม่กระทบ) ใช้ในรายชื่อ อสม. ที่ยังไม่ส่งรายงานของ workreport
+    health_service_code: Optional[str] = None
+    health_service_name_th: Optional[str] = None
 
 class OsmPublicSummaryResponse(BaseModel):
     prefix_name_th: Optional[str]
@@ -793,6 +796,8 @@ def osm_to_list_response(osm):
         osm_showbbody=_enum_to_str(osm.osm_showbbody),
         is_active=osm.is_active,
         approval_status=_enum_to_str(osm.approval_status),
+        health_service_code=getattr(osm, "health_service_id", None),
+        health_service_name_th=get_related_name(osm, 'health_service', 'health_service_name_th'),
     )
 
 def osm_to_public_summary_response(osm):

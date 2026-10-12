@@ -626,9 +626,11 @@ class OsmService:
                 detail=f"เกิดข้อผิดพลาดในการดึงข้อมูล OSM: {str(e)}"
             )
 
-    async def update_osm(osm_id: str, osm_data: OsmUpdateSchema, user_id: str):
+    async def update_osm(osm_id: str, osm_data: OsmUpdateSchema, user_id: str, notify: bool = True):
         """
         อัปเดตข้อมูล OSM Profile
+
+        notify=False: ไม่สร้าง osm_notifications (อสม. แก้ข้อมูลตัวเองผ่านแอป — ไม่ต้องแจ้งเจ้าหน้าที่)
         """
         try:
             # ตรวจสอบว่า OSM Profile มีอยู่หรือไม่
@@ -745,17 +747,18 @@ class OsmService:
             result = await OsmService.get_osm_by_id(osm_id)
 
             # --- Notification ---
-            await NotificationService.create_notification(
-                actor_id=user_id,
-                action_type="update",
-                target_type="osm",
-                target_id=osm_id,
-                target_name=f"{existing_osm.first_name} {existing_osm.last_name}".strip(),
-                citizen_id=getattr(existing_osm, "citizen_id", None),
-                province_code=getattr(existing_osm, "province_id", None),
-                district_code=getattr(existing_osm, "district_id", None),
-                subdistrict_code=getattr(existing_osm, "subdistrict_id", None),
-            )
+            if notify:
+                await NotificationService.create_notification(
+                    actor_id=user_id,
+                    action_type="update",
+                    target_type="osm",
+                    target_id=osm_id,
+                    target_name=f"{existing_osm.first_name} {existing_osm.last_name}".strip(),
+                    citizen_id=getattr(existing_osm, "citizen_id", None),
+                    province_code=getattr(existing_osm, "province_id", None),
+                    district_code=getattr(existing_osm, "district_id", None),
+                    subdistrict_code=getattr(existing_osm, "subdistrict_id", None),
+                )
 
             await cache_delete_pattern("dashboard:*")
             return result
